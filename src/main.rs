@@ -1,7 +1,7 @@
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[clap(author = "Sridhar Ratnakumar", version, about)]
+#[clap(author = "Simon Zeng", version, about)]
 /// Application configuration
 struct Args {
     /// whether to be verbose
