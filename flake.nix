@@ -19,6 +19,8 @@
           cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
           nonRustDeps = [
             pkgs.libiconv
+            pkgs.pkg-config
+            pkgs.openssl
           ];
         in
         {
@@ -27,6 +29,8 @@
             inherit (cargoToml.package) name version;
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = nonRustDeps;
+            PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
           };
 
           # Rust dev environment
@@ -37,6 +41,11 @@
             shellHook = ''
               # For rust-analyzer 'hover' tooltips to work.
               export RUST_SRC_PATH=${pkgs.rustPlatform.rustLibSrc}
+              # openssl
+              export OPENSSL_DIR="${pkgs.openssl.dev}"
+              export OPENSSL_LIB_DIR="${pkgs.openssl.out}/lib"
+              export PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig"
+              export OPENSSL_DEV = "${pkgs.openssl.dev}"
             '';
             buildInputs = nonRustDeps;
             nativeBuildInputs = with pkgs; [
