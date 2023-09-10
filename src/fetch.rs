@@ -1,8 +1,8 @@
 use std::error::Error;
 use rss::Channel;
 
-async fn example_feed() -> Result<Channel, Box<dyn Error>> {
-    let content = reqwest::get("http://example.com/feed.xml")
+pub async fn feed_from_url(url: &str) -> Result<Channel, Box<dyn Error>> {
+    let content = reqwest::get(url)
         .await?
         .bytes()
         .await?;
