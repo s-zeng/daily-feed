@@ -1,67 +1,95 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with 
+code in this repository.
 
 ## Project Overview
 
-This is a Rust CLI application called `daily-feed` that fetches RSS feeds. It's built using the rust-nix-template and uses Nix for development environment setup.
-
-It is currently extremely bare-bones, with only a starter template. Eventually 
-the application will render EPUB files from the RSS feeds, and push them to 
-kindle/boox APIs.
-
-## Development Commands
-
-### Build and Run
-- `cargo run` - Build and run the application
-- `cargo run -- [ARGS]` - Run with arguments
-- `just run [ARGS]` - Alternative way to run via justfile
-
-### Development Workflow
-- `just watch [ARGS]` - Run with auto-recompilation using cargo-watch
-- `cargo build` - Build the project
-- `cargo test` - Run tests
-- `cargo check` - Quick compile check
-
-### Formatting
-- `just fmt` - Auto-format source tree using treefmt
-- `cargo fmt` - Format Rust code specifically
-
-### Nix Environment
-- `nix develop` - Enter development shell with all dependencies
-- `nix build` - Build the project using Nix
+This is a Rust CLI application called `daily-feed` that aggregates RSS feeds and 
+generates EPUB files for offline reading. The application fetches RSS feeds 
+asynchronously, processes the content, and outputs a structured EPUB with 
+styling and table of contents.
 
 ## Architecture
 
-### Main Components
-- `src/main.rs` - Entry point with CLI argument parsing using clap
-- `src/fetch.rs` - RSS feed fetching functionality using reqwest and rss crates
+The codebase follows a modular structure:
+- `src/main.rs`: CLI entry point with argument parsing using `clap`
+- `src/config.rs`: Configuration management for feeds and output settings
+- `src/fetch.rs`: RSS fetching and EPUB generation logic
 
-### Key Dependencies
-- `clap` - Command line argument parsing
-- `rss` - RSS feed parsing
-- `reqwest` - HTTP client for fetching feeds
-- `tokio` - Async runtime
+Key data flow: Load JSON config → Fetch RSS feeds concurrently → Parse content → Generate styled EPUB
 
-### Code Structure
-The application is a simple CLI that at the moment:
-1. Parses command line arguments (currently only placeholder flags)
-2. Fetches an RSS feed from a currently hardcoded URL (Ars Technica)
-3. Parses and displays the feed content
+## Common Commands
 
-## Build System
+### Development
+```bash
+# Run the application
+just run
 
-The project uses both Cargo and Nix:
-- Standard Rust toolchain via Cargo
-- Nix flake for reproducible development environment
-- justfile for common tasks
-- treefmt for code formatting
+# Run with custom config
+just run -c path/to/config.json
+
+# Auto-recompile and run on changes
+just watch
+
+# Format code
+just fmt
+
+# Build with Nix
+nix build
+
+# Enter development shell
+nix develop
+```
+
+### Build & Run
+```bash
+# Standard cargo commands
+cargo run
+cargo build --release
+cargo check
+```
+
+## Configuration
+
+The application uses a JSON configuration file (`config.json` by default) with this structure:
+```json
+{
+  "feeds": [
+    {
+      "name": "Feed Name",
+      "url": "https://example.com/feed.rss",
+      "description": "Description"
+    }
+  ],
+  "output": {
+    "filename": "output.epub",
+    "title": "EPUB Title",
+    "author": "Author Name"
+  }
+}
+```
 
 ## Development Environment
 
-This project requires:
-- OpenSSL development libraries
-- libiconv (for macOS)
-- pkg-config
+This project uses Nix for reproducible builds and development environments. The `flake.nix` provides all necessary dependencies including OpenSSL, libiconv, and pkg-config. Use `nix develop` to enter the development shell.
 
-These dependencies are automatically provided when using `nix develop`.
+## Key Dependencies
+
+- **clap**: CLI argument parsing with derive macros
+- **rss**: RSS feed parsing
+- **reqwest**: HTTP client for async feed fetching
+- **tokio**: Async runtime
+- **epub-builder**: EPUB generation
+- **serde/serde_json**: JSON configuration handling
+- **regex**: HTML content sanitization
+
+## Testing
+
+No formal testing infrastructure is currently in place. The application handles errors gracefully and provides verbose output with the `-v` flag.
+
+## Notes
+
+- HTML content is sanitized for EPUB compatibility
+- Concurrent RSS fetching for better performance
+- Proper User-Agent headers for RSS requests
