@@ -31,6 +31,7 @@
             cargoLock.lockFile = ./Cargo.lock;
             nativeBuildInputs = nonRustDeps;
             PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+            LIBRARY_PATH = "${pkgs.libiconv}/lib";
           };
 
           # Rust dev environment
@@ -44,8 +45,10 @@
               # openssl
               export OPENSSL_DIR="${pkgs.openssl.dev}"
               export OPENSSL_LIB_DIR="${pkgs.openssl.out}/lib"
-              export PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig"
-              export OPENSSL_DEV = "${pkgs.openssl.dev}"
+              export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig"
+              export OPENSSL_DEV="${pkgs.openssl.dev}"
+              # libiconv
+              export LIBRARY_PATH="${pkgs.libiconv}/lib:$LIBRARY_PATH"
             '';
             buildInputs = nonRustDeps;
             nativeBuildInputs = with pkgs; [
