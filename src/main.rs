@@ -21,7 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("DEBUG {args:?}");
     }
     let channel = fetch::feed_from_url("https://feeds.arstechnica.com/arstechnica/index").await?;
-    let markdown = fetch::channel_to_markdown(&channel);
-    println!("{}", markdown);
+    let output_path = "feed.epub";
+    fetch::channel_to_epub(&channel, output_path)?;
+    println!("EPUB generated: {}", output_path);
     Ok(())
 }

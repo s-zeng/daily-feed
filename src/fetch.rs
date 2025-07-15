@@ -1,4 +1,6 @@
 use std::error::Error;
+use epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
+use std::fs::File;
 
 pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
     let client = reqwest::Client::new();
@@ -17,128 +19,159 @@ pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
     Ok(channel)
 }
 
-pub fn channel_to_markdown(channel: &rss::Channel) -> String {
-    let mut markdown = String::new();
+pub fn channel_to_epub(channel: &rss::Channel, output_path: &str) -> Result<(), Box<dyn Error>> {
+    let mut builder = EpubBuilder::new(ZipLibrary::new()?)?;
     
-    // Feed title as main header
-    markdown.push_str(&format!("# {}\n\n", channel.title()));
+    // Set metadata
+    builder.metadata("author", "RSS Feed")?;
+    builder.metadata("title", channel.title())?;
+    builder.metadata("description", channel.description())?;
     
-    // Feed description
-    markdown.push_str(&format!("{}\n\n", channel.description()));
-    
-    // Feed link if available
-    if let Some(link) = channel.link().strip_prefix("http").or_else(|| channel.link().strip_prefix("https")) {
-        markdown.push_str(&format!("🔗 [{}](http{})\n\n", channel.link(), link));
-    } else {
-        markdown.push_str(&format!("🔗 {}\n\n", channel.link()));
-    }
-    
-    markdown.push_str("---\n\n");
-    
-    // Items
-    for item in channel.items() {
-        // Item title as header
-        if let Some(title) = item.title() {
-            markdown.push_str(&format!("## {}\n\n", title));
-        }
+    // Add comprehensive CSS for HTML content
+    let css = r#"
+        body { font-family: serif; margin: 2em; line-height: 1.6; }
+        h1 { color: #333; border-bottom: 2px solid #333; }
+        h2 { color: #555; margin-top: 2em; }
+        h3, h4, h5, h6 { color: #666; margin-top: 1.5em; }
+        .pub-date { color: #666; font-style: italic; margin-bottom: 1em; }
+        .content { margin-bottom: 2em; }
+        .link { margin-top: 1em; }
+        hr { margin: 2em 0; border: 1px solid #ccc; }
         
-        // Publication date
-        if let Some(pub_date) = item.pub_date() {
-            markdown.push_str(&format!("📅 *{}*\n\n", pub_date));
-        }
+        /* Preserve HTML formatting */
+        p { margin: 1em 0; }
+        blockquote { margin: 1em 2em; padding-left: 1em; border-left: 3px solid #ccc; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin: 0.5em 0; }
+        code { background-color: #f4f4f4; padding: 0.2em 0.4em; font-family: monospace; }
+        pre { background-color: #f4f4f4; padding: 1em; overflow-x: auto; }
+        strong, b { font-weight: bold; }
+        em, i { font-style: italic; }
+        a { color: #0066cc; text-decoration: underline; }
+        img { max-width: 100%; height: auto; margin: 1em 0; }
+        table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+        th { background-color: #f4f4f4; font-weight: bold; }
+    "#;
+    builder.stylesheet(css.as_bytes())?;
+    
+    // Create title page
+    let title_page = format!(
+        r#"<html>
+        <head><title>{}</title></head>
+        <body>
+        <h1>{}</h1>
+        <p>{}</p>
+        <p>Source: <a href="{}">{}</a></p>
+        </body>
+        </html>"#,
+        channel.title(),
+        channel.title(),
+        channel.description(),
+        channel.link(),
+        channel.link()
+    );
+    
+    builder.add_content(EpubContent::new("title.xhtml", title_page.as_bytes())
+        .title("Title Page")
+        .reftype(ReferenceType::TitlePage))?;
+    
+    // Add each RSS item as a chapter
+    for (index, item) in channel.items().iter().enumerate() {
+        let chapter_title = item.title().unwrap_or("Untitled");
+        let pub_date = item.pub_date().unwrap_or("");
         
-        // Description/content - try content first, then description
         let content = item.content()
             .or_else(|| item.description())
             .unwrap_or("");
         
-        if !content.is_empty() {
-            // Simple HTML tag removal for basic text extraction
-            let clean_content = strip_html_tags(content);
-            markdown.push_str(&format!("{}\n\n", clean_content));
-        }
+        let clean_content = sanitize_html_for_epub(content);
         
-        // Link
-        if let Some(link) = item.link() {
-            markdown.push_str(&format!("🔗 [Read more]({})\n\n", link));
-        }
+        let chapter_html = format!(
+            r#"<html>
+            <head><title>{}</title></head>
+            <body>
+            <h1>{}</h1>
+            <div class="pub-date">{}</div>
+            <div class="content">{}</div>
+            {}
+            </body>
+            </html>"#,
+            chapter_title,
+            chapter_title,
+            pub_date,
+            clean_content,
+            if let Some(link) = item.link() {
+                format!("<div class=\"link\"><a href=\"{}\">Read original article</a></div>", link)
+            } else {
+                String::new()
+            }
+        );
         
-        markdown.push_str("---\n\n");
+        builder.add_content(EpubContent::new(
+            format!("chapter_{}.xhtml", index + 1), 
+            chapter_html.as_bytes()
+        )
+        .title(chapter_title)
+        .reftype(ReferenceType::Text))?;
     }
     
-    markdown
+    // Generate the EPUB
+    let mut output_file = File::create(output_path)?;
+    builder.generate(&mut output_file)?;
+    
+    Ok(())
 }
 
-fn strip_html_tags(html: &str) -> String {
-    let mut result = String::new();
-    let mut in_tag = false;
-    let mut tag_content = String::new();
-    let mut chars = html.chars().peekable();
+fn sanitize_html_for_epub(html: &str) -> String {
+    use regex::Regex;
     
-    while let Some(ch) = chars.next() {
-        match ch {
-            '<' => {
-                in_tag = true;
-                tag_content.clear();
-            }
-            '>' => {
-                in_tag = false;
-                // Convert block-level HTML tags to paragraph breaks
-                let tag_lower = tag_content.to_lowercase();
-                if tag_lower.starts_with("p") || tag_lower.starts_with("/p") ||
-                   tag_lower.starts_with("br") || tag_lower.starts_with("/br") ||
-                   tag_lower.starts_with("div") || tag_lower.starts_with("/div") ||
-                   tag_lower.starts_with("h1") || tag_lower.starts_with("h2") ||
-                   tag_lower.starts_with("h3") || tag_lower.starts_with("h4") ||
-                   tag_lower.starts_with("h5") || tag_lower.starts_with("h6") ||
-                   tag_lower.starts_with("/h1") || tag_lower.starts_with("/h2") ||
-                   tag_lower.starts_with("/h3") || tag_lower.starts_with("/h4") ||
-                   tag_lower.starts_with("/h5") || tag_lower.starts_with("/h6") {
-                    result.push('\n');
-                }
-                tag_content.clear();
-            }
-            _ if in_tag => {
-                tag_content.push(ch);
-            }
-            _ => {
-                // Convert common HTML entities
-                if ch == '&' {
-                    let mut entity = String::new();
-                    while let Some(&next_ch) = chars.peek() {
-                        if next_ch == ';' {
-                            chars.next(); // consume the ';'
-                            break;
-                        }
-                        entity.push(chars.next().unwrap());
-                    }
-                    
-                    match entity.as_str() {
-                        "amp" => result.push('&'),
-                        "lt" => result.push('<'),
-                        "gt" => result.push('>'),
-                        "quot" => result.push('"'),
-                        "apos" => result.push('\''),
-                        "nbsp" => result.push(' '),
-                        _ => {
-                            // Unknown entity, keep as is
-                            result.push('&');
-                            result.push_str(&entity);
-                            result.push(';');
-                        }
-                    }
-                } else {
-                    result.push(ch);
-                }
-            }
-        }
-    }
+    // EPUB supports most HTML tags, so we'll preserve them but clean up problematic ones
+    let mut result = html.to_string();
     
-    // Clean up excessive whitespace while preserving paragraph breaks
-    result
-        .lines()
-        .map(|line| line.trim())
-        .filter(|line| !line.is_empty())
-        .collect::<Vec<_>>()
-        .join("\n\n")
+    // Create regex patterns for cleaning
+    let script_regex = Regex::new(r"(?i)<script[^>]*>.*?</script>").unwrap();
+    let style_regex = Regex::new(r"(?i)<style[^>]*>.*?</style>").unwrap();
+    let style_attr_regex = Regex::new(r#"\s+style="[^"]*""#).unwrap();
+    let onclick_regex = Regex::new(r#"\s+onclick="[^"]*""#).unwrap();
+    let onload_regex = Regex::new(r#"\s+onload="[^"]*""#).unwrap();
+    let class_regex = Regex::new(r#"\s+class="[^"]*""#).unwrap();
+    let whitespace_regex = Regex::new(r"\s+").unwrap();
+    
+    // Remove or replace problematic tags and attributes for EPUB compatibility
+    result = script_regex.replace_all(&result, "").to_string();
+    result = style_regex.replace_all(&result, "").to_string();
+    result = style_attr_regex.replace_all(&result, "").to_string();
+    result = onclick_regex.replace_all(&result, "").to_string();
+    result = onload_regex.replace_all(&result, "").to_string();
+    result = class_regex.replace_all(&result, "").to_string();
+    
+    // Convert some common but potentially problematic tags to safer alternatives
+    result = result
+        .replace("<font ", "<span ")
+        .replace("</font>", "</span>");
+    
+    // Clean up excessive whitespace while preserving structure
+    result = whitespace_regex.replace_all(&result, " ").to_string();
+    
+    // Decode HTML entities (including numeric character references)
+    result = result
+        .replace("&#039;", "'")  // Decode apostrophe
+        .replace("&#8217;", "'")  // Decode right single quotation mark
+        .replace("&#8216;", "'")  // Decode left single quotation mark
+        .replace("&#8220;", "\"")  // Decode left double quotation mark
+        .replace("&#8221;", "\"")  // Decode right double quotation mark
+        .replace("&#8211;", "-")  // Decode en dash
+        .replace("&#8212;", "-")  // Decode em dash
+        .replace("&#8230;", "...")  // Decode ellipsis
+        .replace("&#160;", " ")   // Decode non-breaking space
+        .replace("&amp;", "&")   // Normalize first
+        .replace("&", "&amp;")   // Then re-encode
+        .replace("&amp;lt;", "&lt;")
+        .replace("&amp;gt;", "&gt;")
+        .replace("&amp;quot;", "&quot;")
+        .replace("&amp;apos;", "&apos;")
+        .replace("&amp;nbsp;", "&nbsp;");
+    
+    result.trim().to_string()
 }
