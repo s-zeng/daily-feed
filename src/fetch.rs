@@ -1,7 +1,18 @@
 use std::error::Error;
 
 pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
-    let content = reqwest::get(url).await?.bytes().await?;
+    let client = reqwest::Client::new();
+    let response = client
+        .get(url)
+        .header("User-Agent", "daily-feed/0.1.0")
+        .send()
+        .await?;
+    
+    if !response.status().is_success() {
+        return Err(format!("HTTP error: {}", response.status()).into());
+    }
+    
+    let content = response.bytes().await?;
     let channel = rss::Channel::read_from(&content[..])?;
     Ok(channel)
 }
