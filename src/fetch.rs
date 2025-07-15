@@ -47,11 +47,15 @@ pub fn channel_to_markdown(channel: &rss::Channel) -> String {
             markdown.push_str(&format!("📅 *{}*\n\n", pub_date));
         }
         
-        // Description/content
-        if let Some(description) = item.description() {
+        // Description/content - try content first, then description
+        let content = item.content()
+            .or_else(|| item.description())
+            .unwrap_or("");
+        
+        if !content.is_empty() {
             // Simple HTML tag removal for basic text extraction
-            let clean_description = strip_html_tags(description);
-            markdown.push_str(&format!("{}\n\n", clean_description));
+            let clean_content = strip_html_tags(content);
+            markdown.push_str(&format!("{}\n\n", clean_content));
         }
         
         // Link

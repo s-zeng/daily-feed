@@ -21,6 +21,8 @@
             pkgs.libiconv
             pkgs.pkg-config
             pkgs.openssl
+            pkgs.pandoc
+            pkgs.texlive.combined.scheme-small
           ];
         in
         {

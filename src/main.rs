@@ -20,7 +20,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.verbose {
         println!("DEBUG {args:?}");
     }
-    println!("Hello {}!", args.name.unwrap_or("world".to_string()));
     let channel = fetch::feed_from_url("https://feeds.arstechnica.com/arstechnica/index").await?;
     let markdown = fetch::channel_to_markdown(&channel);
     println!("{}", markdown);
