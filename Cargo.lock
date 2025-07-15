@@ -281,6 +281,8 @@ dependencies = [
  "regex",
  "reqwest",
  "rss",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

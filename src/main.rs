@@ -1,4 +1,5 @@
 use clap::Parser;
+mod config;
 mod fetch;
 
 #[derive(Parser, Debug)]
@@ -9,9 +10,9 @@ struct Args {
     #[arg(short = 'v')]
     verbose: bool,
 
-    /// an optional name to green
-    #[arg()]
-    name: Option<String>,
+    /// path to config file
+    #[arg(short = 'c', long = "config", default_value = "config.json")]
+    config_path: String,
 }
 
 #[tokio::main]
@@ -20,9 +21,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if args.verbose {
         println!("DEBUG {args:?}");
     }
-    let channel = fetch::feed_from_url("https://feeds.arstechnica.com/arstechnica/index").await?;
-    let output_path = "feed.epub";
-    fetch::channel_to_epub(&channel, output_path)?;
-    println!("EPUB generated: {}", output_path);
+
+    // Load configuration
+    let config = match config::Config::load_from_file(&args.config_path) {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("Failed to load config from {}: {}", args.config_path, e);
+            eprintln!("Using default configuration");
+            config::Config::default()
+        }
+    };
+
+    if args.verbose {
+        println!("Loaded {} feeds", config.feeds.len());
+    }
+
+    // Fetch all RSS feeds
+    let channels = fetch::fetch_all_feeds(&config).await?;
+
+    if channels.is_empty() {
+        eprintln!("No feeds were successfully fetched");
+        return Ok(());
+    }
+
+    // Generate EPUB
+    fetch::channels_to_epub(&channels, &config)?;
+    println!("EPUB generated: {}", config.output.filename);
+
     Ok(())
 }

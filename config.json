@@ -1,0 +1,19 @@
+{
+  "feeds": [
+    {
+      "name": "Ars Technica",
+      "url": "https://arstechnica.com/feed",
+      "description": "Technology news and insights"
+    },
+    {
+      "name": "BBC News - Technology",
+      "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
+      "description": "BBC technology news"
+    }
+  ],
+  "output": {
+    "filename": "daily-feed.epub",
+    "title": "Daily Feed Digest",
+    "author": "RSS Aggregator"
+  }
+}
