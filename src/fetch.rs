@@ -51,8 +51,7 @@ pub fn channels_to_epub(
     builder.metadata("title", &config.output.title)?;
     builder.metadata("description", "Aggregated RSS feeds")?;
     
-    // Enable automatic table of contents generation
-    builder.inline_toc();
+    // Note: We'll create a manual TOC after the title page instead of using inline_toc()
 
     // Add comprehensive CSS for HTML content
     let css = r#"
@@ -121,6 +120,56 @@ pub fn channels_to_epub(
         EpubContent::new("title.xhtml", title_page.as_bytes())
             .title("Title Page")
             .reftype(ReferenceType::TitlePage),
+    )?;
+
+    // Create manual table of contents after title page
+    let mut toc_content = format!(
+        r#"<html>
+        <head><title>Table of Contents</title></head>
+        <body>
+        <div class="toc">
+        <h1>Table of Contents</h1>
+        <ul>
+        "#
+    );
+
+    // Build TOC entries for each feed and its articles
+    let mut chapter_index = 0;
+    for (feed_name, channel) in channels {
+        chapter_index += 1;
+        
+        toc_content.push_str(&format!(
+            r#"            <li class="feed-section"><a href="feed_{}.xhtml">{}</a>
+                <ul>
+        "#,
+            chapter_index, feed_name
+        ));
+
+        // Add articles under each feed
+        for item in channel.items() {
+            chapter_index += 1;
+            let article_title = item.title().unwrap_or("Untitled");
+            toc_content.push_str(&format!(
+                r#"                    <li class="article-item"><a href="article_{}.xhtml">{}</a></li>
+        "#,
+                chapter_index, article_title
+            ));
+        }
+
+        toc_content.push_str("                </ul>\n            </li>\n");
+    }
+
+    toc_content.push_str(
+        r#"        </ul>
+        </div>
+        </body>
+        </html>"#
+    );
+
+    builder.add_content(
+        EpubContent::new("toc.xhtml", toc_content.as_bytes())
+            .title("Table of Contents")
+            .reftype(ReferenceType::Text),
     )?;
 
     // Add each feed as a section with its articles as chapters
