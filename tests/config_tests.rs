@@ -22,7 +22,7 @@ fn test_config_deserialization() {
     "#;
 
     let config: Config = serde_json::from_str(json_content).unwrap();
-    
+
     assert_eq!(config.feeds.len(), 1);
     assert_eq!(config.feeds[0].name, "Test Feed");
     assert_eq!(config.feeds[0].url, "https://test.example.com/feed.xml");
@@ -53,9 +53,9 @@ fn test_config_load_from_file() {
 
     let temp_file = NamedTempFile::new().unwrap();
     fs::write(temp_file.path(), json_content).unwrap();
-    
+
     let config = Config::load_from_file(temp_file.path().to_str().unwrap()).unwrap();
-    
+
     assert_eq!(config.feeds.len(), 1);
     assert_eq!(config.feeds[0].name, "File Test Feed");
     assert_eq!(config.output.filename, "file_test.epub");
@@ -80,7 +80,7 @@ fn test_config_load_invalid_json() {
 
     let temp_file = NamedTempFile::new().unwrap();
     fs::write(temp_file.path(), invalid_json).unwrap();
-    
+
     let result = Config::load_from_file(temp_file.path().to_str().unwrap());
     assert!(result.is_err());
 }
@@ -88,7 +88,7 @@ fn test_config_load_invalid_json() {
 #[test]
 fn test_config_default() {
     let config = Config::default();
-    
+
     assert_eq!(config.feeds.len(), 1);
     assert_eq!(config.feeds[0].name, "Ars Technica");
     assert!(config.feeds[0].url.contains("arstechnica.com"));
@@ -114,7 +114,7 @@ fn test_config_serialization() {
 
     let json = serde_json::to_string(&config).unwrap();
     let deserialized: Config = serde_json::from_str(&json).unwrap();
-    
+
     assert_eq!(deserialized.feeds.len(), 1);
     assert_eq!(deserialized.feeds[0].name, "Serialize Test");
     assert_eq!(deserialized.output.filename, "serialize_test.epub");
@@ -150,7 +150,7 @@ fn test_config_multiple_feeds() {
     "#;
 
     let config: Config = serde_json::from_str(json_content).unwrap();
-    
+
     assert_eq!(config.feeds.len(), 3);
     assert_eq!(config.feeds[0].name, "Feed 1");
     assert_eq!(config.feeds[1].name, "Feed 2");

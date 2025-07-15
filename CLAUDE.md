@@ -10,6 +10,11 @@ generates EPUB files for offline reading. The application fetches RSS feeds
 asynchronously, processes the content, and outputs a structured EPUB with 
 styling and table of contents.
 
+## Style
+
+Try to keep the style as functional as possible ("Ocaml with manual garbage 
+collection", as opposed to "C++ with borrow checker")
+
 ## Architecture
 
 The codebase follows a modular structure:
@@ -35,12 +40,6 @@ just watch
 # Format code
 just fmt
 
-# Build with Nix
-nix build
-
-# Enter development shell
-nix develop
-```
 
 ### Build & Run
 ```bash
@@ -86,7 +85,7 @@ This project uses Nix for reproducible builds and development environments. The 
 
 ## Testing
 
-No formal testing infrastructure is currently in place. The application handles errors gracefully and provides verbose output with the `-v` flag.
+Tests are written in the `tests/` directory. Run with `cargo test`
 
 ## Notes
 

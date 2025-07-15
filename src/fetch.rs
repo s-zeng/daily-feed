@@ -50,7 +50,7 @@ pub fn channels_to_epub(
     builder.metadata("author", &config.output.author)?;
     builder.metadata("title", &config.output.title)?;
     builder.metadata("description", "Aggregated RSS feeds")?;
-    
+
     // Note: We'll create a manual TOC after the title page instead of using inline_toc()
 
     // Add comprehensive CSS for HTML content
@@ -137,7 +137,7 @@ pub fn channels_to_epub(
     let mut chapter_index = 0;
     for (feed_name, channel) in channels {
         chapter_index += 1;
-        
+
         toc_content.push_str(&format!(
             r#"            <li class="feed-section"><a href="feed_{}.xhtml">{}</a>
                 <ul>
@@ -163,7 +163,7 @@ pub fn channels_to_epub(
         r#"        </ul>
         </div>
         </body>
-        </html>"#
+        </html>"#,
     );
 
     builder.add_content(
@@ -236,20 +236,15 @@ pub fn channels_to_epub(
             );
 
             let article_filename = format!("article_{}.xhtml", chapter_index);
-            
+
             // Add the article as a child of the feed section in the TOC
-            feed_content = feed_content.child(
-                TocElement::new(&article_filename, article_title)
-            );
+            feed_content = feed_content.child(TocElement::new(&article_filename, article_title));
 
             // Add the article content
             builder.add_content(
-                EpubContent::new(
-                    article_filename,
-                    article_html.as_bytes(),
-                )
-                .title(article_title)
-                .reftype(ReferenceType::Text),
+                EpubContent::new(article_filename, article_html.as_bytes())
+                    .title(article_title)
+                    .reftype(ReferenceType::Text),
             )?;
         }
 
