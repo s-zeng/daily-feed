@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Tech News Daily</title>
+    <description>Latest technology news and updates</description>
+    <link>https://technews.example.com</link>
+    <item>
+      <title>New AI Breakthrough</title>
+      <description>Scientists have achieved a major breakthrough in artificial intelligence research.</description>
+      <link>https://technews.example.com/ai-breakthrough</link>
+      <pubDate>Wed, 15 Jul 2025 09:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Cloud Computing Trends</title>
+      <description>&lt;p&gt;Cloud computing continues to evolve with new &lt;em&gt;serverless&lt;/em&gt; technologies.&lt;/p&gt;</description>
+      <link>https://technews.example.com/cloud-trends</link>
+      <pubDate>Wed, 15 Jul 2025 08:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Cybersecurity Alert</title>
+      <description>&lt;p&gt;New security vulnerabilities discovered in popular frameworks.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Update immediately&lt;/li&gt;&lt;li&gt;Review security policies&lt;/li&gt;&lt;/ul&gt;</description>
+      <link>https://technews.example.com/security-alert</link>
+      <pubDate>Wed, 15 Jul 2025 07:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>
