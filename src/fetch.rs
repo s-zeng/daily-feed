@@ -1,5 +1,5 @@
 use crate::config::Config;
-use epub_builder::{EpubBuilder, EpubContent, ReferenceType, ZipLibrary};
+use epub_builder::{EpubBuilder, EpubContent, ReferenceType, TocElement, ZipLibrary};
 use std::error::Error;
 use std::fs::File;
 
@@ -50,6 +50,9 @@ pub fn channels_to_epub(
     builder.metadata("author", &config.output.author)?;
     builder.metadata("title", &config.output.title)?;
     builder.metadata("description", "Aggregated RSS feeds")?;
+    
+    // Enable automatic table of contents generation
+    builder.inline_toc();
 
     // Add comprehensive CSS for HTML content
     let css = r#"
@@ -76,6 +79,16 @@ pub fn channels_to_epub(
         table { border-collapse: collapse; width: 100%; margin: 1em 0; }
         th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
         th { background-color: #f4f4f4; font-weight: bold; }
+        
+        /* Table of Contents styling */
+        .toc { margin: 2em 0; }
+        .toc h2 { color: #333; margin-bottom: 1em; }
+        .toc ul { list-style-type: none; padding-left: 0; }
+        .toc li { margin: 0.5em 0; }
+        .toc a { color: #0066cc; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc .feed-section { font-weight: bold; margin-top: 1em; }
+        .toc .article-item { margin-left: 2em; font-weight: normal; }
     "#;
     builder.stylesheet(css.as_bytes())?;
 
@@ -110,19 +123,45 @@ pub fn channels_to_epub(
             .reftype(ReferenceType::TitlePage),
     )?;
 
-    // Add each RSS item as a chapter from all feeds
+    // Add each feed as a section with its articles as chapters
     let mut chapter_index = 0;
     for (feed_name, channel) in channels {
+        // Create a section page for each feed
+        chapter_index += 1;
+        let feed_section_title = format!("{} - Feed", feed_name);
+        let feed_section_html = format!(
+            r#"<html>
+            <head><title>{}</title></head>
+            <body>
+            <h1>{}</h1>
+            <p><strong>Description:</strong> {}</p>
+            <p><strong>Total Articles:</strong> {}</p>
+            <hr/>
+            </body>
+            </html>"#,
+            feed_section_title,
+            feed_name,
+            channel.description(),
+            channel.items().len()
+        );
+
+        let mut feed_content = EpubContent::new(
+            format!("feed_{}.xhtml", chapter_index),
+            feed_section_html.as_bytes(),
+        )
+        .title(&feed_section_title)
+        .reftype(ReferenceType::Text);
+
+        // Add each article as a child of the feed section
         for item in channel.items() {
             chapter_index += 1;
-            let chapter_title = item.title().unwrap_or("Untitled");
+            let article_title = item.title().unwrap_or("Untitled");
             let pub_date = item.pub_date().unwrap_or("");
 
             let content = item.content().or_else(|| item.description()).unwrap_or("");
-
             let clean_content = sanitize_html_for_epub(content);
 
-            let chapter_html = format!(
+            let article_html = format!(
                 r#"<html>
                 <head><title>{}</title></head>
                 <body>
@@ -132,8 +171,8 @@ pub fn channels_to_epub(
                 {}
                 </body>
                 </html>"#,
-                chapter_title,
-                chapter_title,
+                article_title,
+                article_title,
                 pub_date,
                 feed_name,
                 clean_content,
@@ -147,15 +186,26 @@ pub fn channels_to_epub(
                 }
             );
 
+            let article_filename = format!("article_{}.xhtml", chapter_index);
+            
+            // Add the article as a child of the feed section in the TOC
+            feed_content = feed_content.child(
+                TocElement::new(&article_filename, article_title)
+            );
+
+            // Add the article content
             builder.add_content(
                 EpubContent::new(
-                    format!("chapter_{}.xhtml", chapter_index),
-                    chapter_html.as_bytes(),
+                    article_filename,
+                    article_html.as_bytes(),
                 )
-                .title(chapter_title)
+                .title(article_title)
                 .reftype(ReferenceType::Text),
             )?;
         }
+
+        // Add the feed section to the builder
+        builder.add_content(feed_content)?;
     }
 
     // Generate the EPUB
