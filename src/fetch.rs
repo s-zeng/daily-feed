@@ -72,13 +72,36 @@ pub fn channel_to_markdown(channel: &rss::Channel) -> String {
 fn strip_html_tags(html: &str) -> String {
     let mut result = String::new();
     let mut in_tag = false;
+    let mut tag_content = String::new();
     let mut chars = html.chars().peekable();
     
     while let Some(ch) = chars.next() {
         match ch {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            _ if !in_tag => {
+            '<' => {
+                in_tag = true;
+                tag_content.clear();
+            }
+            '>' => {
+                in_tag = false;
+                // Convert block-level HTML tags to paragraph breaks
+                let tag_lower = tag_content.to_lowercase();
+                if tag_lower.starts_with("p") || tag_lower.starts_with("/p") ||
+                   tag_lower.starts_with("br") || tag_lower.starts_with("/br") ||
+                   tag_lower.starts_with("div") || tag_lower.starts_with("/div") ||
+                   tag_lower.starts_with("h1") || tag_lower.starts_with("h2") ||
+                   tag_lower.starts_with("h3") || tag_lower.starts_with("h4") ||
+                   tag_lower.starts_with("h5") || tag_lower.starts_with("h6") ||
+                   tag_lower.starts_with("/h1") || tag_lower.starts_with("/h2") ||
+                   tag_lower.starts_with("/h3") || tag_lower.starts_with("/h4") ||
+                   tag_lower.starts_with("/h5") || tag_lower.starts_with("/h6") {
+                    result.push('\n');
+                }
+                tag_content.clear();
+            }
+            _ if in_tag => {
+                tag_content.push(ch);
+            }
+            _ => {
                 // Convert common HTML entities
                 if ch == '&' {
                     let mut entity = String::new();
@@ -108,10 +131,14 @@ fn strip_html_tags(html: &str) -> String {
                     result.push(ch);
                 }
             }
-            _ => {} // ignore characters inside tags
         }
     }
     
-    // Clean up excessive whitespace
-    result.split_whitespace().collect::<Vec<_>>().join(" ")
+    // Clean up excessive whitespace while preserving paragraph breaks
+    result
+        .lines()
+        .map(|line| line.trim())
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join("\n\n")
 }
