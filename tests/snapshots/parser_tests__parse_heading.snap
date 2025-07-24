@@ -1,0 +1,24 @@
+---
+source: tests/parser_tests.rs
+expression: blocks
+---
+[
+  {
+    "Heading": {
+      "level": 2,
+      "content": {
+        "spans": [
+          {
+            "text": "Test Heading",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  }
+]

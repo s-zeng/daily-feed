@@ -1,0 +1,5 @@
+---
+source: tests/epub_outputter_tests.rs
+expression: html
+---
+Hello <strong>world</strong>!

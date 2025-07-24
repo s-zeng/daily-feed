@@ -87,7 +87,7 @@ impl DocumentParser {
         Ok(article)
     }
 
-    fn parse_html_to_content_blocks(&self, html: &str) -> Result<Vec<ContentBlock>, Box<dyn Error>> {
+    pub fn parse_html_to_content_blocks(&self, html: &str) -> Result<Vec<ContentBlock>, Box<dyn Error>> {
         if html.trim().is_empty() {
             return Ok(vec![]);
         }
@@ -287,7 +287,7 @@ impl DocumentParser {
         Ok(vec![span])
     }
 
-    fn strip_html_tags(&self, html: &str) -> String {
+    pub fn strip_html_tags(&self, html: &str) -> String {
         let tag_regex = Regex::new(r"<[^>]*>").unwrap();
         let entity_regex = Regex::new(r"&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;").unwrap();
         
@@ -300,42 +300,3 @@ impl DocumentParser {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_simple_html() {
-        let parser = DocumentParser::new();
-        let html = "<p>Hello <strong>world</strong>!</p>";
-        
-        let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        insta::assert_json_snapshot!(blocks);
-    }
-
-    #[test]
-    fn test_parse_heading() {
-        let parser = DocumentParser::new();
-        let html = "<h2>Test Heading</h2>";
-        
-        let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        insta::assert_json_snapshot!(blocks);
-    }
-
-    #[test]
-    fn test_parse_list() {
-        let parser = DocumentParser::new();
-        let html = "<ul><li>Item 1</li><li>Item 2</li></ul>";
-        
-        let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        insta::assert_json_snapshot!(blocks);
-    }
-
-    #[test]
-    fn test_strip_html_tags() {
-        let parser = DocumentParser::new();
-        let html = "<p>Hello <strong>world</strong> &amp; everyone!</p>";
-        let result = parser.strip_html_tags(html);
-        insta::assert_snapshot!(result);
-    }
-}

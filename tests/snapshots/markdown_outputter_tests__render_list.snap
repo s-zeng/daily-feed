@@ -1,0 +1,6 @@
+---
+source: tests/markdown_outputter_tests.rs
+expression: markdown
+---
+- Item 1
+- Item 2

@@ -62,7 +62,7 @@ pub async fn fetch_top_comments(article_url: &str, limit: usize) -> Result<Vec<C
     Ok(sorted_comments)
 }
 
-fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn Error>> {
+pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn Error>> {
     let mut comments = Vec::new();
     
     // XenForo comment structure selectors
@@ -121,35 +121,3 @@ pub async fn fetch_top_5_comments(article_url: &str) -> Result<Vec<Comment>, Box
     fetch_top_comments(article_url, 5).await
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use scraper::Html;
-
-    #[test]
-    fn test_parse_comments_from_html() {
-        let html = r#"
-        <div class="message">
-            <div class="username">testuser1</div>
-            <div class="message-content">
-                <div class="bbWrapper">This is a test comment</div>
-            </div>
-            <div class="reactionsBar-link">5</div>
-            <time datetime="2025-01-01T12:00:00Z"></time>
-        </div>
-        <div class="message">
-            <div class="username">testuser2</div>
-            <div class="message-content">
-                <div class="bbWrapper">Another test comment</div>
-            </div>
-            <div class="reactionsBar-link">3</div>
-            <time datetime="2025-01-01T13:00:00Z"></time>
-        </div>
-        "#;
-        
-        let document = Html::parse_document(html);
-        let comments = parse_comments_from_html(&document).unwrap();
-        
-        insta::assert_json_snapshot!(comments);
-    }
-}

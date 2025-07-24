@@ -321,7 +321,7 @@ impl EpubOutputter {
         Ok(article_html)
     }
 
-    fn render_content_block_to_html(&self, block: &ContentBlock) -> Result<String, Box<dyn Error>> {
+    pub fn render_content_block_to_html(&self, block: &ContentBlock) -> Result<String, Box<dyn Error>> {
         match block {
             ContentBlock::Paragraph(content) => {
                 Ok(format!("<p>{}</p>", self.render_text_content_to_html(content)?))
@@ -362,7 +362,7 @@ impl EpubOutputter {
         }
     }
 
-    fn render_text_content_to_html(&self, content: &TextContent) -> Result<String, Box<dyn Error>> {
+    pub fn render_text_content_to_html(&self, content: &TextContent) -> Result<String, Box<dyn Error>> {
         let mut html = String::new();
         
         for span in &content.spans {
@@ -395,42 +395,3 @@ impl EpubOutputter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_render_text_content() {
-        let outputter = EpubOutputter::new().unwrap();
-        
-        let content = TextContent::from_spans(vec![
-            TextSpan::plain("Hello ".to_string()),
-            TextSpan::bold("world".to_string()),
-            TextSpan::plain("!".to_string()),
-        ]);
-        
-        let html = outputter.render_text_content_to_html(&content).unwrap();
-        insta::assert_snapshot!(html);
-    }
-
-    #[test]
-    fn test_render_paragraph() {
-        let outputter = EpubOutputter::new().unwrap();
-        
-        let block = ContentBlock::Paragraph(TextContent::plain("Test paragraph".to_string()));
-        let html = outputter.render_content_block_to_html(&block).unwrap();
-        insta::assert_snapshot!(html);
-    }
-
-    #[test]
-    fn test_render_heading() {
-        let outputter = EpubOutputter::new().unwrap();
-        
-        let block = ContentBlock::Heading {
-            level: 2,
-            content: TextContent::plain("Test Heading".to_string()),
-        };
-        let html = outputter.render_content_block_to_html(&block).unwrap();
-        insta::assert_snapshot!(html);
-    }
-}

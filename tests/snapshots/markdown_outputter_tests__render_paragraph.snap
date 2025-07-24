@@ -1,0 +1,5 @@
+---
+source: tests/markdown_outputter_tests.rs
+expression: markdown
+---
+Test paragraph

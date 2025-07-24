@@ -1,0 +1,48 @@
+---
+source: tests/ast_tests.rs
+expression: doc
+---
+{
+  "metadata": {
+    "title": "Test Document",
+    "author": "Test Author",
+    "description": null,
+    "generated_at": "2025-01-01T00:00:00.000000Z"
+  },
+  "feeds": [
+    {
+      "name": "Test Feed",
+      "description": "A test feed",
+      "url": null,
+      "articles": [
+        {
+          "title": "Test Article",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "Test content",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": null,
+            "author": null,
+            "url": null,
+            "feed_name": "Test Feed"
+          },
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

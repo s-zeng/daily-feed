@@ -1,0 +1,5 @@
+---
+source: tests/ast_tests.rs
+expression: plain_text
+---
+Hello world!
