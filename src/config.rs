@@ -9,11 +9,27 @@ pub struct Feed {
     pub description: String,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub enum OutputFormat {
+    #[serde(rename = "epub")]
+    Epub,
+    #[serde(rename = "markdown")]
+    Markdown,
+}
+
+impl Default for OutputFormat {
+    fn default() -> Self {
+        OutputFormat::Epub
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutputConfig {
     pub filename: String,
     pub title: String,
     pub author: String,
+    #[serde(default)]
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -41,6 +57,7 @@ impl Config {
                 filename: "daily-feed.epub".to_string(),
                 title: "Daily Feed Digest".to_string(),
                 author: "RSS Aggregator".to_string(),
+                format: OutputFormat::default(),
             },
         }
     }

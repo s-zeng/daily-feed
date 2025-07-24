@@ -1,7 +1,8 @@
-use crate::config::Config;
+use crate::config::{Config, OutputFormat};
 use crate::ast::Document;
 use crate::parser::DocumentParser;
 use crate::epub_outputter::EpubOutputter;
+use crate::markdown_outputter::MarkdownOutputter;
 use std::error::Error;
 
 pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
@@ -57,5 +58,22 @@ pub async fn document_to_epub(
     let mut outputter = EpubOutputter::new()?;
     outputter.generate_epub(document, output_filename)?;
     Ok(())
+}
+
+pub async fn document_to_output(
+    document: &Document,
+    output_filename: &str,
+    format: &OutputFormat,
+) -> Result<(), Box<dyn Error>> {
+    match format {
+        OutputFormat::Epub => {
+            document_to_epub(document, output_filename).await
+        }
+        OutputFormat::Markdown => {
+            let outputter = MarkdownOutputter::new();
+            outputter.generate_markdown(document, output_filename)?;
+            Ok(())
+        }
+    }
 }
 

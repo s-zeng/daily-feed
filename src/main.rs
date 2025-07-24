@@ -1,10 +1,26 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 mod ast;
 mod config;
 mod fetch;
 mod ars_comments;
 mod parser;
 mod epub_outputter;
+mod markdown_outputter;
+
+#[derive(Debug, Clone, ValueEnum)]
+enum OutputFormatArg {
+    Epub,
+    Markdown,
+}
+
+impl From<OutputFormatArg> for config::OutputFormat {
+    fn from(arg: OutputFormatArg) -> Self {
+        match arg {
+            OutputFormatArg::Epub => config::OutputFormat::Epub,
+            OutputFormatArg::Markdown => config::OutputFormat::Markdown,
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[clap(author = "Simon Zeng", version, about)]
@@ -18,9 +34,13 @@ struct Args {
     #[arg(short = 'c', long = "config", default_value = "config.json")]
     config_path: String,
 
-    /// export AST to JSON file instead of generating EPUB
+    /// export AST to JSON file instead of generating output
     #[arg(long)]
     export_ast: Option<String>,
+
+    /// output format (epub or markdown)
+    #[arg(short = 'f', long = "format", value_enum)]
+    format: Option<OutputFormatArg>,
 }
 
 #[tokio::main]
@@ -31,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Load configuration
-    let config = match config::Config::load_from_file(&args.config_path) {
+    let mut config = match config::Config::load_from_file(&args.config_path) {
         Ok(config) => config,
         Err(e) => {
             eprintln!("Failed to load config from {}: {}", args.config_path, e);
@@ -39,6 +59,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             config::Config::default()
         }
     };
+
+    // Override output format from CLI if provided
+    if let Some(format_arg) = args.format {
+        config.output.format = format_arg.into();
+    }
 
     if args.verbose {
         println!("Loaded {} feeds", config.feeds.len());
@@ -65,15 +90,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                  document.total_articles());
     }
 
-    // Export AST to JSON if requested, otherwise generate EPUB
+    // Export AST to JSON if requested, otherwise generate output in specified format
     if let Some(ast_file) = args.export_ast {
         let json = serde_json::to_string_pretty(&document)?;
         std::fs::write(&ast_file, json)?;
         println!("AST exported to: {}", ast_file);
     } else {
-        // Generate EPUB from AST
-        fetch::document_to_epub(&document, &config.output.filename).await?;
-        println!("EPUB generated: {}", config.output.filename);
+        // Generate output from AST
+        // Adjust filename extension based on format if not explicitly set
+        let output_filename = if config.output.filename.ends_with(".epub") && matches!(config.output.format, config::OutputFormat::Markdown) {
+            config.output.filename.replace(".epub", ".md")
+        } else if config.output.filename.ends_with(".md") && matches!(config.output.format, config::OutputFormat::Epub) {
+            config.output.filename.replace(".md", ".epub")
+        } else {
+            config.output.filename.clone()
+        };
+        
+        fetch::document_to_output(&document, &output_filename, &config.output.format).await?;
+        let format_name = match config.output.format {
+            config::OutputFormat::Epub => "EPUB",
+            config::OutputFormat::Markdown => "Markdown",
+        };
+        println!("{} generated: {}", format_name, output_filename);
     }
 
     Ok(())
