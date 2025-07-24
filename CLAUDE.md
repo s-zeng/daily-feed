@@ -13,7 +13,9 @@ styling and table of contents.
 ## Style
 
 Try to keep the style as functional as possible ("Ocaml with manual garbage 
-collection", as opposed to "C++ with borrow checker")
+collection", as opposed to "C++ with borrow checker"). Use features like 
+Algebraic Data Types and Traits liberally, with an algebra-oriented design 
+mindset
 
 ## Architecture
 

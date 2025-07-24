@@ -1,5 +1,5 @@
 use daily_feed::config::{Config, Feed, OutputConfig};
-use daily_feed::fetch::channels_to_epub;
+use daily_feed::fetch::{channels_to_document, document_to_epub};
 use std::fs;
 use tempfile::TempDir;
 
@@ -78,7 +78,8 @@ async fn test_channels_to_epub_single_feed() {
 
     let channels = vec![("Test Feed".to_string(), channel)];
 
-    let result = channels_to_epub(&channels, &config);
+    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let result = document_to_epub(&document, &config.output.filename).await;
     assert!(result.is_ok());
 
     // Verify EPUB file was created
@@ -129,7 +130,8 @@ async fn test_channels_to_epub_multiple_feeds() {
         ("Tech News".to_string(), tech_channel),
     ];
 
-    let result = channels_to_epub(&channels, &config);
+    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let result = document_to_epub(&document, &config.output.filename).await;
     assert!(result.is_ok());
 
     // Verify EPUB file was created
@@ -164,7 +166,8 @@ async fn test_channels_to_epub_empty_feed() {
 
     let channels = vec![("Empty Feed".to_string(), channel)];
 
-    let result = channels_to_epub(&channels, &config);
+    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let result = document_to_epub(&document, &config.output.filename).await;
     assert!(result.is_ok());
 
     // Verify EPUB file was created even with empty feed

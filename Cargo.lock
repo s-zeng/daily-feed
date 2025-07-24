@@ -225,6 +225,7 @@ dependencies = [
  "iana-time-zone",
  "js-sys",
  "num-traits",
+ "serde",
  "wasm-bindgen",
  "windows-targets 0.48.5",
 ]
@@ -334,9 +335,11 @@ name = "daily-feed"
 version = "0.1.0"
 dependencies = [
  "base64",
+ "chrono",
  "clap",
  "epub-builder",
  "futures",
+ "html-escape",
  "regex",
  "reqwest",
  "rss",

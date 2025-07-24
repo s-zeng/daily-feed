@@ -1,5 +1,5 @@
 use daily_feed::config::{Config, Feed, OutputConfig};
-use daily_feed::fetch::channels_to_epub;
+use daily_feed::fetch::{channels_to_document, document_to_epub};
 use std::fs;
 use tempfile::{NamedTempFile, TempDir};
 
@@ -100,7 +100,11 @@ fn test_full_workflow_with_local_feeds() {
     ];
 
     // Test the full workflow: load feeds -> generate EPUB
-    let result = channels_to_epub(&channels, &config);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let result = rt.block_on(async {
+        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        document_to_epub(&document, &config.output.filename).await
+    });
     assert!(result.is_ok());
 
     // Verify EPUB was created
@@ -137,7 +141,11 @@ fn test_workflow_with_empty_feeds() {
     let channels = vec![("Empty Feed".to_string(), empty_channel)];
 
     // Test workflow with empty feed
-    let result = channels_to_epub(&channels, &config);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let result = rt.block_on(async {
+        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        document_to_epub(&document, &config.output.filename).await
+    });
     assert!(result.is_ok());
 
     // Verify EPUB was created even with empty feed
@@ -165,7 +173,11 @@ fn test_workflow_with_no_feeds() {
     let channels = vec![];
 
     // Test workflow with no feeds
-    let result = channels_to_epub(&channels, &config);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let result = rt.block_on(async {
+        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        document_to_epub(&document, &config.output.filename).await
+    });
     assert!(result.is_ok());
 
     // Verify EPUB was created
@@ -278,7 +290,11 @@ fn test_epub_generation_with_html_content() {
     let channels = vec![("HTML Content Feed".to_string(), tech_channel)];
 
     // Test EPUB generation with HTML content
-    let result = channels_to_epub(&channels, &config);
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let result = rt.block_on(async {
+        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        document_to_epub(&document, &config.output.filename).await
+    });
     assert!(result.is_ok());
 
     // Verify EPUB was created
