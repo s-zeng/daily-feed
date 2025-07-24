@@ -21,6 +21,7 @@ The codebase follows a modular structure:
 - `src/main.rs`: CLI entry point with argument parsing using `clap`
 - `src/config.rs`: Configuration management for feeds and output settings
 - `src/fetch.rs`: RSS fetching and EPUB generation logic
+- `src/ars_comments.rs`: Ars Technica comment fetching functionality
 
 Key data flow: Load JSON config → Fetch RSS feeds concurrently → Parse content → Generate styled EPUB
 
@@ -82,13 +83,29 @@ This project uses Nix for reproducible builds and development environments. The 
 - **epub-builder**: EPUB generation
 - **serde/serde_json**: JSON configuration handling
 - **regex**: HTML content sanitization
+- **scraper**: HTML parsing for comment extraction
 
 ## Testing
 
 Tests are written in the `tests/` directory. Run with `cargo test`
 
+## Features
+
+### RSS Feed Aggregation
+- Concurrent RSS feed fetching for performance
+- HTML content sanitization for EPUB compatibility  
+- Proper User-Agent headers for RSS requests
+
+### Ars Technica Comment Integration
+- Fetches top comments from Ars Technica articles
+- Parses XenForo forum structure to extract comment data
+- Returns structured Comment objects with author, content, score, and timestamp
+- Main functions:
+  - `fetch_top_comments(article_url, limit)`: Fetch top N comments
+  - `fetch_top_5_comments(article_url)`: Convenience wrapper for top 5
+
 ## Notes
 
-- HTML content is sanitized for EPUB compatibility
-- Concurrent RSS fetching for better performance
-- Proper User-Agent headers for RSS requests
+- Tests include both unit tests and integration tests with real article data
+- Comment fetching handles network failures gracefully
+- HTML parsing uses CSS selectors for robust comment extraction
