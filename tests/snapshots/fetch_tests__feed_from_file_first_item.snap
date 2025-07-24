@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: item_info
+snapshot_kind: text
+---
+title: Some("Test Article 1"), link: Some("https://test.example.com/article1"), desc_contains_test: true

@@ -1,0 +1,6 @@
+---
+source: tests/integration_tests.rs
+expression: items_count.to_string()
+snapshot_kind: text
+---
+2

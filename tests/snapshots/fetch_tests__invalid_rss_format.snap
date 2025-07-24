@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: parse_result
+snapshot_kind: text
+---
+success_parsed_despite_invalid

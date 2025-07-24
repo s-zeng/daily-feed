@@ -150,11 +150,6 @@ mod tests {
         let document = Html::parse_document(html);
         let comments = parse_comments_from_html(&document).unwrap();
         
-        assert_eq!(comments.len(), 2);
-        assert_eq!(comments[0].author, "testuser1");
-        assert_eq!(comments[0].content, "This is a test comment");
-        assert_eq!(comments[0].score, 5);
-        assert_eq!(comments[1].author, "testuser2");
-        assert_eq!(comments[1].score, 3);
+        insta::assert_json_snapshot!(comments);
     }
 }

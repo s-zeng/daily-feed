@@ -1,0 +1,6 @@
+---
+source: src/ast.rs
+expression: plain_text
+snapshot_kind: text
+---
+Hello world!

@@ -160,19 +160,83 @@ This project uses Nix for reproducible builds and development environments. The 
 - **chrono**: Date/time handling with serde support
 - **base64**: Encoding utilities
 - **html-escape**: HTML entity handling
+- **insta**: Snapshot testing framework for deterministic test assertions
 
 ## Testing
 
-The project has comprehensive tests in the `tests/` directory:
+The project uses **snapshot testing** via the `insta` crate for all test assertions. This testing paradigm provides deterministic, maintainable tests that capture expected behavior through literal value snapshots.
+
+### Snapshot Testing Approach
+
+All tests follow these principles:
+- **Single assertion per test**: Each test has exactly one `insta::assert_snapshot!()` or `insta::assert_json_snapshot!()` call
+- **Deterministic snapshots**: Dynamic data (timestamps, file sizes, temp paths) is normalized to ensure reproducible results
+- **Literal value snapshots**: Snapshots contain only concrete, expected values without variables
+
+### Test Structure
+
+The project has comprehensive tests across multiple categories:
 
 - **Unit tests**: Embedded in source files (`#[cfg(test)]` modules)
-- **Integration tests**: `tests/integration_tests.rs`, `tests/fetch_tests.rs`  
-- **Golden file tests**: `tests/golden_tests.rs` with expected outputs in `tests/golden_output/`
+  - `src/ast.rs`: AST data structure tests with JSON snapshots
+  - `src/parser.rs`: HTML parsing tests with JSON snapshots
+  - `src/epub_outputter.rs`: EPUB HTML generation tests with string snapshots
+  - `src/markdown_outputter.rs`: Markdown generation tests with string snapshots
+  - `src/ars_comments.rs`: Comment parsing tests with JSON snapshots
+
+- **Integration tests**: `tests/integration_tests.rs`, `tests/fetch_tests.rs`
+  - Full workflow tests with range-based file size validation
+  - Configuration loading and serialization tests
+  - RSS feed processing tests with string and JSON snapshots
+
+- **Golden file tests**: `tests/golden_tests.rs`
+  - End-to-end pipeline tests from RSS to EPUB/Markdown
+  - AST roundtrip serialization tests
+  - Tests use normalized timestamps (`"2025-01-01T00:00:00.000000Z"`) and size ranges
+
 - **Module-specific tests**: `tests/config_tests.rs`, `tests/ars_comments_tests.rs`
-- **Cram tests**: `tests/cram_tests.rs` for CLI behavior
+  - Configuration parsing and validation with JSON snapshots
+  - Ars Technica comment extraction with structured snapshots
+
+- **Cram tests**: `tests/cram_tests.rs`
+  - CLI behavior simulation with snapshot assertions
+  - Error handling and edge case validation
+
 - **Test fixtures**: Sample RSS feeds in `tests/fixtures/`
 
-Run with `cargo test` or use `cargo test --test <test_name>` for specific test files.
+### Running Tests
+
+```bash
+# Run all tests
+cargo test
+
+# Run specific test file
+cargo test --test <test_name>
+
+# Review and accept snapshot changes
+cargo insta review
+
+# Auto-accept all snapshot changes (use carefully)
+cargo insta accept
+```
+
+### Snapshot Management
+
+- Snapshots are stored in `tests/snapshots/` directory
+- When test behavior changes, run `cargo insta review` to inspect differences
+- Accept valid changes with `cargo insta accept` or reject with `cargo insta reject`
+- Never commit `.snap.new` files - these are pending snapshot updates
+
+### Deterministic Test Strategies
+
+To ensure reproducible snapshots, the tests employ several normalization techniques:
+
+- **Timestamp normalization**: Replace dynamic timestamps with fixed values
+- **File size ranges**: Use `size > min && size < max` instead of exact sizes
+- **Path abstraction**: Extract relevant path components, ignore temp directories
+- **Content summarization**: Focus on structural properties rather than exact values
+
+This approach makes tests resilient to environmental differences while maintaining strict behavioral validation.
 
 ## Features
 

@@ -1,0 +1,6 @@
+---
+source: tests/ars_comments_tests.rs
+expression: is_error.to_string()
+snapshot_kind: text
+---
+true

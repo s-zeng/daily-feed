@@ -1,0 +1,199 @@
+---
+source: tests/cram_tests.rs
+expression: document
+snapshot_kind: text
+---
+{
+  "metadata": {
+    "title": "Cram Test Document",
+    "author": "Cram Test Author",
+    "description": "Aggregated RSS feeds",
+    "generated_at": "2025-01-01T00:00:00.000000Z"
+  },
+  "feeds": [
+    {
+      "name": "Cram Test Feed",
+      "description": "A feed for cram testing",
+      "url": "https://example.com",
+      "articles": [
+        {
+          "title": "Cram Test Article 1",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "This is ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "test content",
+                    "formatting": {
+                      "bold": true,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": " with ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "formatting",
+                    "formatting": {
+                      "bold": false,
+                      "italic": true,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": ".",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "List": {
+                "ordered": false,
+                "items": [
+                  {
+                    "spans": [
+                      {
+                        "text": "Item 1",
+                        "formatting": {
+                          "bold": false,
+                          "italic": false,
+                          "code": false,
+                          "link": null
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "spans": [
+                      {
+                        "text": "Item 2",
+                        "formatting": {
+                          "bold": false,
+                          "italic": false,
+                          "code": false,
+                          "link": null
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Mon, 01 Jan 2025 12:00:00 GMT",
+            "author": null,
+            "url": "https://example.com/article1",
+            "feed_name": "Cram Test Feed"
+          },
+          "comments": []
+        },
+        {
+          "title": "Cram Test Article 2",
+          "content": [
+            {
+              "Heading": {
+                "level": 2,
+                "content": {
+                  "spans": [
+                    {
+                      "text": "Heading",
+                      "formatting": {
+                        "bold": false,
+                        "italic": false,
+                        "code": false,
+                        "link": null
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "More content with ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "code",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": true,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": " and ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "links",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": "https://example.com"
+                    }
+                  },
+                  {
+                    "text": ".",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Mon, 01 Jan 2025 13:00:00 GMT",
+            "author": null,
+            "url": "https://example.com/article2",
+            "feed_name": "Cram Test Feed"
+          },
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: channel.description()
+snapshot_kind: text
+---
+A test RSS feed for unit testing

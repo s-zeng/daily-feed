@@ -1,0 +1,30 @@
+---
+source: tests/config_tests.rs
+expression: config
+snapshot_kind: text
+---
+{
+  "feeds": [
+    {
+      "name": "Feed 1",
+      "url": "https://feed1.example.com/feed.xml",
+      "description": "First feed"
+    },
+    {
+      "name": "Feed 2",
+      "url": "https://feed2.example.com/feed.xml",
+      "description": "Second feed"
+    },
+    {
+      "name": "Feed 3",
+      "url": "https://feed3.example.com/feed.xml",
+      "description": "Third feed"
+    }
+  ],
+  "output": {
+    "filename": "multi_feed_test.epub",
+    "title": "Multi Feed Test",
+    "author": "Multi Feed Author",
+    "format": "epub"
+  }
+}

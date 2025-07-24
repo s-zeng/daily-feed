@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: feed_info
+snapshot_kind: text
+---
+title: Empty Feed, desc: A feed with no articles, items: 0

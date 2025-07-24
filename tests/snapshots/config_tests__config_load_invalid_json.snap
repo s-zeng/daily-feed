@@ -1,0 +1,6 @@
+---
+source: tests/config_tests.rs
+expression: error_message
+snapshot_kind: text
+---
+expected `,` or `}` at line 7 column 17

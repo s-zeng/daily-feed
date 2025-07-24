@@ -236,7 +236,7 @@ mod tests {
         ]);
         
         let markdown = outputter.render_text_content_to_markdown(&content).unwrap();
-        assert_eq!(markdown, "Hello **world**!");
+        insta::assert_snapshot!(markdown);
     }
 
     #[test]
@@ -245,7 +245,7 @@ mod tests {
         
         let block = ContentBlock::Paragraph(TextContent::plain("Test paragraph".to_string()));
         let markdown = outputter.render_content_block_to_markdown(&block).unwrap();
-        assert_eq!(markdown, "Test paragraph\n\n");
+        insta::assert_snapshot!(markdown);
     }
 
     #[test]
@@ -257,16 +257,31 @@ mod tests {
             content: TextContent::plain("Test Heading".to_string()),
         };
         let markdown = outputter.render_content_block_to_markdown(&block).unwrap();
-        assert_eq!(markdown, "#### Test Heading\n\n");
+        insta::assert_snapshot!(markdown);
     }
 
     #[test]
     fn test_to_anchor() {
         let outputter = MarkdownOutputter::new();
         
-        assert_eq!(outputter.to_anchor("Hello World"), "hello-world");
-        assert_eq!(outputter.to_anchor("Test & More"), "test--more");
-        assert_eq!(outputter.to_anchor("Complex (Test) [Case]!"), "complex-test-case");
+        let result1 = outputter.to_anchor("Hello World");
+        insta::assert_snapshot!(result1, @"hello-world");
+    }
+    
+    #[test]
+    fn test_to_anchor_special_chars() {
+        let outputter = MarkdownOutputter::new();
+        
+        let result = outputter.to_anchor("Test & More");
+        insta::assert_snapshot!(result, @"test--more");
+    }
+    
+    #[test]
+    fn test_to_anchor_complex() {
+        let outputter = MarkdownOutputter::new();
+        
+        let result = outputter.to_anchor("Complex (Test) [Case]!");
+        insta::assert_snapshot!(result, @"complex-test-case");
     }
 
     #[test]
@@ -278,7 +293,7 @@ mod tests {
             content: "fn main() {\n    println!(\"Hello\");\n}".to_string(),
         };
         let markdown = outputter.render_content_block_to_markdown(&block).unwrap();
-        assert_eq!(markdown, "```rust\nfn main() {\n    println!(\"Hello\");\n}\n```\n\n");
+        insta::assert_snapshot!(markdown);
     }
 
     #[test]
@@ -293,6 +308,6 @@ mod tests {
             ],
         };
         let markdown = outputter.render_content_block_to_markdown(&block).unwrap();
-        assert_eq!(markdown, "- Item 1\n- Item 2\n\n");
+        insta::assert_snapshot!(markdown);
     }
 }

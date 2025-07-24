@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: "format!(\"result_ok: {}, file_exists: {}, file_size_valid: {}\", result.is_ok(),\nfile_exists, file_size_valid)"
+snapshot_kind: text
+---
+result_ok: true, file_exists: true, file_size_valid: true

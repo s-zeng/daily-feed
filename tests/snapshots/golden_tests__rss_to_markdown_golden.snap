@@ -1,0 +1,6 @@
+---
+source: tests/golden_tests.rs
+expression: rss_markdown_features
+snapshot_kind: text
+---
+has_title: true, has_feed: true, has_article: true, has_toc: true, feeds: 1, articles: 2

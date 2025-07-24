@@ -1,0 +1,40 @@
+---
+source: src/parser.rs
+expression: blocks
+snapshot_kind: text
+---
+[
+  {
+    "List": {
+      "ordered": false,
+      "items": [
+        {
+          "spans": [
+            {
+              "text": "Item 1",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        },
+        {
+          "spans": [
+            {
+              "text": "Item 2",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

@@ -34,52 +34,21 @@ fn create_test_rss() -> String {
 /// Expected behavior: RSS feeds are parsed into structured AST with preserved formatting
 #[tokio::test] 
 async fn cram_rss_to_ast_export() {
-    // Setup test input
     let rss_content = create_test_rss();
     let channel = rss::Channel::read_from(rss_content.as_bytes())
         .expect("Failed to parse test RSS");
     let channels = vec![("Cram Test Feed".to_string(), channel)];
     
-    // Run: RSS to AST conversion (equivalent to --export-ast)
-    let document = channels_to_document(
+    let mut document = channels_to_document(
         &channels,
         "Cram Test Document".to_string(),
         "Cram Test Author".to_string(),
     ).await.expect("Failed to convert RSS to AST");
     
-    // Expected outputs (cram-style assertions):
+    // Filter out the timestamp for reproducible snapshots
+    document.metadata.generated_at = "2025-01-01T00:00:00.000000Z".to_string();
     
-    // 1. Document metadata should be populated
-    assert_eq!(document.metadata.title, "Cram Test Document");
-    assert_eq!(document.metadata.author, "Cram Test Author");
-    assert!(document.metadata.description.is_some());
-    assert!(!document.metadata.generated_at.is_empty());
-    
-    // 2. Feed structure should be preserved
-    assert_eq!(document.feeds.len(), 1);
-    assert_eq!(document.feeds[0].name, "Cram Test Feed");
-    assert_eq!(document.feeds[0].description, Some("A feed for cram testing".to_string()));
-    assert_eq!(document.feeds[0].url, Some("https://example.com".to_string()));
-    
-    // 3. Articles should be parsed with correct count and titles
-    assert_eq!(document.feeds[0].articles.len(), 2);
-    assert_eq!(document.feeds[0].articles[0].title, "Cram Test Article 1");
-    assert_eq!(document.feeds[0].articles[1].title, "Cram Test Article 2");
-    
-    // 4. Content should be parsed into structured blocks
-    let first_article = &document.feeds[0].articles[0];
-    assert!(!first_article.content.is_empty(), "Article should have content blocks");
-    
-    // 5. JSON serialization should work (equivalent to file export)
-    let json = serde_json::to_string_pretty(&document)
-        .expect("Failed to serialize AST to JSON");
-    assert!(json.contains("\"title\": \"Cram Test Document\""));
-    assert!(json.contains("\"Cram Test Feed\""));
-    assert!(json.len() > 1000, "JSON should be substantial");
-    
-    println!("✓ RSS to AST export - Expected behavior verified");
-    println!("  Document: {} feeds, {} articles", document.feeds.len(), document.total_articles());
-    println!("  JSON size: {} bytes", json.len());
+    insta::assert_json_snapshot!(document);
 }
 
 /// Cram test: AST to EPUB conversion
@@ -89,7 +58,6 @@ async fn cram_ast_to_epub_conversion() {
     let temp_dir = TempDir::new().unwrap();
     let epub_path = temp_dir.path().join("cram_test.epub");
     
-    // Setup: Create known AST structure
     let mut document = Document::new(
         "Cram EPUB Test".to_string(),
         "Cram Author".to_string(),
@@ -103,7 +71,6 @@ async fn cram_ast_to_epub_conversion() {
         "Test Feed".to_string(),
     );
     
-    // Add various content types to test AST -> EPUB rendering
     article.content = vec![
         daily_feed::ast::ContentBlock::Paragraph(
             daily_feed::ast::TextContent::from_spans(vec![
@@ -129,27 +96,19 @@ async fn cram_ast_to_epub_conversion() {
     feed.add_article(article);
     document.add_feed(feed);
     
-    // Run: AST to EPUB conversion (equivalent to ast-to-epub command)
     document_to_epub(&document, epub_path.to_str().unwrap()).await
         .expect("Failed to convert AST to EPUB");
     
-    // Expected outputs (cram-style assertions):
+    // Use a deterministic file size check rather than exact bytes
+    let file_exists = epub_path.exists();
+    let file_size_valid = if file_exists {
+        let size = fs::metadata(&epub_path).unwrap().len();
+        size > 1000 && size < 10000 // Reasonable size range
+    } else {
+        false
+    };
     
-    // 1. EPUB file should be created
-    assert!(epub_path.exists(), "EPUB file should be created");
-    
-    // 2. EPUB should have reasonable size
-    let metadata = fs::metadata(&epub_path).unwrap();
-    assert!(metadata.len() > 1000, "EPUB should have substantial content");
-    assert!(metadata.len() < 1_000_000, "EPUB should not be excessively large");
-    
-    // 3. EPUB should be a valid file (basic check)
-    // Note: Detailed ZIP validation removed due to linking issues with bz2
-    // The fact that the file was created successfully indicates the EPUB generation worked
-    
-    println!("✓ AST to EPUB conversion - Expected behavior verified");
-    println!("  EPUB size: {} bytes", metadata.len());
-    println!("  Archive contains: mimetype, OPF, XHTML files");
+    insta::assert_snapshot!(format!("file_exists: {}, file_size_valid: {}", file_exists, file_size_valid));
 }
 
 /// Cram test: End-to-end workflow with content validation

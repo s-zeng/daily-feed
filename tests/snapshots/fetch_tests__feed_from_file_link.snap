@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: channel.link()
+snapshot_kind: text
+---
+https://test.example.com

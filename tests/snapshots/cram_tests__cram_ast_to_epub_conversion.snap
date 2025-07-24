@@ -1,0 +1,6 @@
+---
+source: tests/cram_tests.rs
+expression: "format!(\"file_exists: {}, file_size_valid: {}\", file_exists, file_size_valid)"
+snapshot_kind: text
+---
+file_exists: true, file_size_valid: true

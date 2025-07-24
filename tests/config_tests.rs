@@ -22,14 +22,7 @@ fn test_config_deserialization() {
     "#;
 
     let config: Config = serde_json::from_str(json_content).unwrap();
-
-    assert_eq!(config.feeds.len(), 1);
-    assert_eq!(config.feeds[0].name, "Test Feed");
-    assert_eq!(config.feeds[0].url, "https://test.example.com/feed.xml");
-    assert_eq!(config.feeds[0].description, "A test feed");
-    assert_eq!(config.output.filename, "test_output.epub");
-    assert_eq!(config.output.title, "Test Title");
-    assert_eq!(config.output.author, "Test Author");
+    insta::assert_json_snapshot!(config);
 }
 
 #[test]
@@ -55,16 +48,14 @@ fn test_config_load_from_file() {
     fs::write(temp_file.path(), json_content).unwrap();
 
     let config = Config::load_from_file(temp_file.path().to_str().unwrap()).unwrap();
-
-    assert_eq!(config.feeds.len(), 1);
-    assert_eq!(config.feeds[0].name, "File Test Feed");
-    assert_eq!(config.output.filename, "file_test.epub");
+    insta::assert_json_snapshot!(config);
 }
 
 #[test]
 fn test_config_load_from_nonexistent_file() {
     let result = Config::load_from_file("nonexistent.json");
-    assert!(result.is_err());
+    let error_message = result.unwrap_err().to_string();
+    insta::assert_snapshot!(error_message);
 }
 
 #[test]
@@ -82,19 +73,14 @@ fn test_config_load_invalid_json() {
     fs::write(temp_file.path(), invalid_json).unwrap();
 
     let result = Config::load_from_file(temp_file.path().to_str().unwrap());
-    assert!(result.is_err());
+    let error_message = result.unwrap_err().to_string();
+    insta::assert_snapshot!(error_message);
 }
 
 #[test]
 fn test_config_default() {
     let config = Config::default();
-
-    assert_eq!(config.feeds.len(), 1);
-    assert_eq!(config.feeds[0].name, "Ars Technica");
-    assert!(config.feeds[0].url.contains("arstechnica.com"));
-    assert_eq!(config.output.filename, "daily-feed.epub");
-    assert_eq!(config.output.title, "Daily Feed Digest");
-    assert_eq!(config.output.author, "RSS Aggregator");
+    insta::assert_json_snapshot!(config);
 }
 
 #[test]
@@ -115,10 +101,7 @@ fn test_config_serialization() {
 
     let json = serde_json::to_string(&config).unwrap();
     let deserialized: Config = serde_json::from_str(&json).unwrap();
-
-    assert_eq!(deserialized.feeds.len(), 1);
-    assert_eq!(deserialized.feeds[0].name, "Serialize Test");
-    assert_eq!(deserialized.output.filename, "serialize_test.epub");
+    insta::assert_json_snapshot!(deserialized);
 }
 
 #[test]
@@ -151,9 +134,5 @@ fn test_config_multiple_feeds() {
     "#;
 
     let config: Config = serde_json::from_str(json_content).unwrap();
-
-    assert_eq!(config.feeds.len(), 3);
-    assert_eq!(config.feeds[0].name, "Feed 1");
-    assert_eq!(config.feeds[1].name, "Feed 2");
-    assert_eq!(config.feeds[2].name, "Feed 3");
+    insta::assert_json_snapshot!(config);
 }

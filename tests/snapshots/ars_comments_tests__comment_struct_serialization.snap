@@ -1,0 +1,11 @@
+---
+source: tests/ars_comments_tests.rs
+expression: deserialized
+snapshot_kind: text
+---
+{
+  "content": "Test content",
+  "author": "Test Author",
+  "score": 10,
+  "timestamp": "2025-01-01T12:00:00Z"
+}

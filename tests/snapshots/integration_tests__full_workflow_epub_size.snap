@@ -1,0 +1,5 @@
+---
+source: tests/integration_tests.rs
+expression: "format!(\"file_exists: {}, file_size_valid: {}\", epub_path.exists(),\nfile_size_valid)"
+---
+file_exists: true, file_size_valid: true

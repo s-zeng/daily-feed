@@ -1,0 +1,6 @@
+---
+source: tests/ars_comments_tests.rs
+expression: test_result
+snapshot_kind: text
+---
+success_len_5_authors_JournalBot,Lexus Lunar Lorry,slipknottin,Wheels Of Confusion,CADirk

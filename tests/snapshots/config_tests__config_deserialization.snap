@@ -1,0 +1,20 @@
+---
+source: tests/config_tests.rs
+expression: config
+snapshot_kind: text
+---
+{
+  "feeds": [
+    {
+      "name": "Test Feed",
+      "url": "https://test.example.com/feed.xml",
+      "description": "A test feed"
+    }
+  ],
+  "output": {
+    "filename": "test_output.epub",
+    "title": "Test Title",
+    "author": "Test Author",
+    "format": "epub"
+  }
+}

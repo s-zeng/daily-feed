@@ -1,0 +1,5 @@
+---
+source: tests/golden_tests.rs
+expression: error_handling_result
+---
+feeds: 1, articles: 0, file_exists: true, file_size_valid: true

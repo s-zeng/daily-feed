@@ -1,0 +1,6 @@
+---
+source: src/epub_outputter.rs
+expression: html
+snapshot_kind: text
+---
+<h2>Test Heading</h2>

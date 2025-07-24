@@ -1,0 +1,5 @@
+---
+source: tests/integration_tests.rs
+expression: "format!(\"result_ok: {}, file_exists: {}, file_size_valid: {}\", result.is_ok(),\nepub_path.exists(), file_size_valid)"
+---
+result_ok: true, file_exists: true, file_size_valid: true

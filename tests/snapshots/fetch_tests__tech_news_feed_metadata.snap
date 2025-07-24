@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: metadata
+snapshot_kind: text
+---
+title: Tech News Daily, desc: Latest technology news and updates, items: 3

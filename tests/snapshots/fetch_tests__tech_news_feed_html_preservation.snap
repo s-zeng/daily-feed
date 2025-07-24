@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: html_check
+snapshot_kind: text
+---
+contains_ul: true, contains_li: true

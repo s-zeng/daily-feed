@@ -410,7 +410,7 @@ mod tests {
         ]);
         
         let html = outputter.render_text_content_to_html(&content).unwrap();
-        assert_eq!(html, "Hello <strong>world</strong>!");
+        insta::assert_snapshot!(html);
     }
 
     #[test]
@@ -419,7 +419,7 @@ mod tests {
         
         let block = ContentBlock::Paragraph(TextContent::plain("Test paragraph".to_string()));
         let html = outputter.render_content_block_to_html(&block).unwrap();
-        assert_eq!(html, "<p>Test paragraph</p>");
+        insta::assert_snapshot!(html);
     }
 
     #[test]
@@ -431,6 +431,6 @@ mod tests {
             content: TextContent::plain("Test Heading".to_string()),
         };
         let html = outputter.render_content_block_to_html(&block).unwrap();
-        assert_eq!(html, "<h2>Test Heading</h2>");
+        insta::assert_snapshot!(html);
     }
 }

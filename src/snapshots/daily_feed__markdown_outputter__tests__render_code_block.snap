@@ -1,0 +1,10 @@
+---
+source: src/markdown_outputter.rs
+expression: markdown
+snapshot_kind: text
+---
+```rust
+fn main() {
+    println!("Hello");
+}
+```

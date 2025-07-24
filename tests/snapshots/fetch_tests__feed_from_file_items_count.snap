@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: channel.items().len().to_string()
+snapshot_kind: text
+---
+2

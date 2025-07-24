@@ -1,0 +1,36 @@
+---
+source: src/ast.rs
+expression: content
+snapshot_kind: text
+---
+{
+  "spans": [
+    {
+      "text": "Hello ",
+      "formatting": {
+        "bold": false,
+        "italic": false,
+        "code": false,
+        "link": null
+      }
+    },
+    {
+      "text": "world",
+      "formatting": {
+        "bold": true,
+        "italic": false,
+        "code": false,
+        "link": null
+      }
+    },
+    {
+      "text": "!",
+      "formatting": {
+        "bold": false,
+        "italic": false,
+        "code": false,
+        "link": null
+      }
+    }
+  ]
+}

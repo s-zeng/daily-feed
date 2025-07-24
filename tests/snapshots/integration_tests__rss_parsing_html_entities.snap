@@ -1,0 +1,6 @@
+---
+source: tests/integration_tests.rs
+expression: contains_amp.to_string()
+snapshot_kind: text
+---
+true

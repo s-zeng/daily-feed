@@ -1,0 +1,6 @@
+---
+source: tests/fetch_tests.rs
+expression: html_tags_present
+snapshot_kind: text
+---
+has_p: true, has_ul: true, has_li: true

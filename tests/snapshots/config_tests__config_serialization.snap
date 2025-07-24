@@ -1,0 +1,20 @@
+---
+source: tests/config_tests.rs
+expression: deserialized
+snapshot_kind: text
+---
+{
+  "feeds": [
+    {
+      "name": "Serialize Test",
+      "url": "https://serialize.example.com/feed.xml",
+      "description": "Test serialization"
+    }
+  ],
+  "output": {
+    "filename": "serialize_test.epub",
+    "title": "Serialize Test Title",
+    "author": "Serialize Test Author",
+    "format": "epub"
+  }
+}

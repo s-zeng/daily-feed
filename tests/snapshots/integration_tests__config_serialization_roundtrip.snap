@@ -1,0 +1,25 @@
+---
+source: tests/integration_tests.rs
+expression: deserialized_config
+snapshot_kind: text
+---
+{
+  "feeds": [
+    {
+      "name": "Feed 1",
+      "url": "https://feed1.example.com/rss.xml",
+      "description": "First feed description"
+    },
+    {
+      "name": "Feed 2",
+      "url": "https://feed2.example.com/rss.xml",
+      "description": "Second feed description"
+    }
+  ],
+  "output": {
+    "filename": "roundtrip_test.epub",
+    "title": "Roundtrip Test",
+    "author": "Test Author",
+    "format": "epub"
+  }
+}

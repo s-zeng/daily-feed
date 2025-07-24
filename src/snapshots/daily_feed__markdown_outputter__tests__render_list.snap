@@ -1,0 +1,7 @@
+---
+source: src/markdown_outputter.rs
+expression: markdown
+snapshot_kind: text
+---
+- Item 1
+- Item 2

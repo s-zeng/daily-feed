@@ -1,0 +1,5 @@
+---
+source: tests/golden_tests.rs
+expression: workflow_result
+---
+feeds: 2, articles: 5, ast_exists: true, epub_exists: true, ast_size_valid: true, epub_size_valid: true

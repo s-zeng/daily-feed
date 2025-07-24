@@ -310,16 +310,7 @@ mod tests {
         let html = "<p>Hello <strong>world</strong>!</p>";
         
         let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        assert_eq!(blocks.len(), 1);
-        
-        if let ContentBlock::Paragraph(content) = &blocks[0] {
-            assert_eq!(content.spans.len(), 3);
-            assert_eq!(content.spans[0].text, "Hello ");
-            assert!(content.spans[1].formatting.bold);
-            assert_eq!(content.spans[1].text, "world");
-        } else {
-            panic!("Expected paragraph");
-        }
+        insta::assert_json_snapshot!(blocks);
     }
 
     #[test]
@@ -328,14 +319,7 @@ mod tests {
         let html = "<h2>Test Heading</h2>";
         
         let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        assert_eq!(blocks.len(), 1);
-        
-        if let ContentBlock::Heading { level, content } = &blocks[0] {
-            assert_eq!(*level, 2);
-            assert_eq!(content.to_plain_text(), "Test Heading");
-        } else {
-            panic!("Expected heading");
-        }
+        insta::assert_json_snapshot!(blocks);
     }
 
     #[test]
@@ -344,16 +328,7 @@ mod tests {
         let html = "<ul><li>Item 1</li><li>Item 2</li></ul>";
         
         let blocks = parser.parse_html_to_content_blocks(html).unwrap();
-        assert_eq!(blocks.len(), 1);
-        
-        if let ContentBlock::List { ordered, items } = &blocks[0] {
-            assert!(!ordered);
-            assert_eq!(items.len(), 2);
-            assert_eq!(items[0].to_plain_text(), "Item 1");
-            assert_eq!(items[1].to_plain_text(), "Item 2");
-        } else {
-            panic!("Expected list");
-        }
+        insta::assert_json_snapshot!(blocks);
     }
 
     #[test]
@@ -361,6 +336,6 @@ mod tests {
         let parser = DocumentParser::new();
         let html = "<p>Hello <strong>world</strong> &amp; everyone!</p>";
         let result = parser.strip_html_tags(html);
-        assert_eq!(result, "Hello world everyone!");
+        insta::assert_snapshot!(result);
     }
 }

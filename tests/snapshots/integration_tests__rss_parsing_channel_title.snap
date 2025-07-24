@@ -1,0 +1,6 @@
+---
+source: tests/integration_tests.rs
+expression: title
+snapshot_kind: text
+---
+Test Feed

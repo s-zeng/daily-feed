@@ -4,54 +4,108 @@ use std::fs;
 use tempfile::TempDir;
 
 #[tokio::test]
-async fn test_feed_from_file() {
+async fn test_feed_from_file_title() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
-
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-
-    assert_eq!(channel.title(), "Test Feed");
-    assert_eq!(channel.description(), "A test RSS feed for unit testing");
-    assert_eq!(channel.link(), "https://test.example.com");
-    assert_eq!(channel.items().len(), 2);
-
-    let first_item = &channel.items()[0];
-    assert_eq!(first_item.title(), Some("Test Article 1"));
-    assert_eq!(first_item.link(), Some("https://test.example.com/article1"));
-    assert!(first_item.description().unwrap().contains("test article"));
+    
+    insta::assert_snapshot!(channel.title());
 }
 
 #[tokio::test]
-async fn test_tech_news_feed() {
+async fn test_feed_from_file_description() {
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    insta::assert_snapshot!(channel.description());
+}
+
+#[tokio::test]
+async fn test_feed_from_file_link() {
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    insta::assert_snapshot!(channel.link());
+}
+
+#[tokio::test]
+async fn test_feed_from_file_items_count() {
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    insta::assert_snapshot!(channel.items().len().to_string());
+}
+
+#[tokio::test]
+async fn test_feed_from_file_first_item() {
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    let first_item = &channel.items()[0];
+    let item_info = format!("title: {:?}, link: {:?}, desc_contains_test: {}", 
+        first_item.title(), 
+        first_item.link(), 
+        first_item.description().unwrap_or("").contains("test article")
+    );
+    insta::assert_snapshot!(item_info);
+}
+
+#[tokio::test]
+async fn test_tech_news_feed_metadata() {
     let tech_news_path = "tests/fixtures/tech_news.xml";
     let rss_content = fs::read_to_string(tech_news_path).unwrap();
-
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    let metadata = format!("title: {}, desc: {}, items: {}", 
+        channel.title(), 
+        channel.description(), 
+        channel.items().len()
+    );
+    insta::assert_snapshot!(metadata);
+}
 
-    assert_eq!(channel.title(), "Tech News Daily");
-    assert_eq!(channel.description(), "Latest technology news and updates");
-    assert_eq!(channel.items().len(), 3);
-
+#[tokio::test]
+async fn test_tech_news_feed_item_titles() {
+    let tech_news_path = "tests/fixtures/tech_news.xml";
+    let rss_content = fs::read_to_string(tech_news_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
     let items = channel.items();
-    assert_eq!(items[0].title(), Some("New AI Breakthrough"));
-    assert_eq!(items[1].title(), Some("Cloud Computing Trends"));
-    assert_eq!(items[2].title(), Some("Cybersecurity Alert"));
+    let titles: Vec<_> = items.iter().map(|i| i.title().unwrap_or("")).collect();
+    insta::assert_json_snapshot!(titles);
+}
 
-    // Check HTML content is preserved
-    assert!(items[2].description().unwrap().contains("<ul>"));
-    assert!(items[2].description().unwrap().contains("<li>"));
+#[tokio::test]
+async fn test_tech_news_feed_html_preservation() {
+    let tech_news_path = "tests/fixtures/tech_news.xml";
+    let rss_content = fs::read_to_string(tech_news_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    let items = channel.items();
+    let description = items[2].description().unwrap_or("");
+    let html_check = format!("contains_ul: {}, contains_li: {}", 
+        description.contains("<ul>"),
+        description.contains("<li>")
+    );
+    insta::assert_snapshot!(html_check);
 }
 
 #[tokio::test]
 async fn test_empty_feed() {
     let empty_feed_path = "tests/fixtures/empty_feed.xml";
     let rss_content = fs::read_to_string(empty_feed_path).unwrap();
-
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-
-    assert_eq!(channel.title(), "Empty Feed");
-    assert_eq!(channel.description(), "A feed with no articles");
-    assert_eq!(channel.items().len(), 0);
+    
+    let feed_info = format!("title: {}, desc: {}, items: {}", 
+        channel.title(), 
+        channel.description(), 
+        channel.items().len()
+    );
+    insta::assert_snapshot!(feed_info);
 }
 
 #[tokio::test]
@@ -81,14 +135,16 @@ async fn test_channels_to_epub_single_feed() {
 
     let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    assert!(result.is_ok());
-
-    // Verify EPUB file was created
-    assert!(epub_path.exists());
-
-    // Verify file is not empty
-    let metadata = fs::metadata(&epub_path).unwrap();
-    assert!(metadata.len() > 0);
+    
+    let file_exists = epub_path.exists();
+    let file_size_valid = if file_exists {
+        let size = fs::metadata(&epub_path).unwrap().len();
+        size > 1000 && size < 10000 // Reasonable size range
+    } else {
+        false
+    };
+    
+    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
 }
 
 #[tokio::test]
@@ -117,12 +173,10 @@ async fn test_channels_to_epub_multiple_feeds() {
         },
     };
 
-    // Load sample RSS
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let sample_rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let sample_channel = rss::Channel::read_from(sample_rss_content.as_bytes()).unwrap();
 
-    // Load tech news RSS
     let tech_news_path = "tests/fixtures/tech_news.xml";
     let tech_news_content = fs::read_to_string(tech_news_path).unwrap();
     let tech_channel = rss::Channel::read_from(tech_news_content.as_bytes()).unwrap();
@@ -134,14 +188,16 @@ async fn test_channels_to_epub_multiple_feeds() {
 
     let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    assert!(result.is_ok());
-
-    // Verify EPUB file was created
-    assert!(epub_path.exists());
-
-    // Verify file is not empty and larger than single feed
-    let metadata = fs::metadata(&epub_path).unwrap();
-    assert!(metadata.len() > 1000); // Should be reasonably sized for multiple feeds
+    
+    let file_exists = epub_path.exists();
+    let file_size_valid = if file_exists {
+        let size = fs::metadata(&epub_path).unwrap().len();
+        size > 1000 && size < 10000 // Reasonable size range
+    } else {
+        false
+    };
+    
+    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
 }
 
 #[tokio::test]
@@ -171,35 +227,35 @@ async fn test_channels_to_epub_empty_feed() {
 
     let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    assert!(result.is_ok());
-
-    // Verify EPUB file was created even with empty feed
-    assert!(epub_path.exists());
-
-    // Verify file is not empty (should contain title page and structure)
-    let metadata = fs::metadata(&epub_path).unwrap();
-    assert!(metadata.len() > 0);
+    
+    let file_exists = epub_path.exists();
+    let file_size_valid = if file_exists {
+        let size = fs::metadata(&epub_path).unwrap().len();
+        size > 1000 && size < 10000 // Reasonable size range
+    } else {
+        false
+    };
+    
+    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
 }
 
 #[test]
 fn test_sanitize_html_for_epub() {
-    // Test access to the sanitize function by testing the feed processing
     let sample_rss_path = "tests/fixtures/tech_news.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
 
-    // Verify that HTML content is preserved in the parsed channel
     let items = channel.items();
     let cybersecurity_item = &items[2];
     let description = cybersecurity_item.description().unwrap();
 
-    // Should contain HTML tags
-    assert!(description.contains("<p>"));
-    assert!(description.contains("<ul>"));
-    assert!(description.contains("<li>"));
-
-    // This tests that the RSS parsing works correctly with HTML content
-    // The actual sanitization happens during EPUB generation
+    let html_tags_present = format!("has_p: {}, has_ul: {}, has_li: {}",
+        description.contains("<p>"),
+        description.contains("<ul>"),
+        description.contains("<li>")
+    );
+    
+    insta::assert_snapshot!(html_tags_present);
 }
 
 #[tokio::test]
@@ -214,16 +270,10 @@ async fn test_invalid_rss_format() {
     "#;
 
     let result = rss::Channel::read_from(invalid_rss.as_bytes());
-    // RSS parser should handle this gracefully or return an error
-    // We're testing that our code can handle RSS parsing errors
-    match result {
-        Ok(_) => {
-            // If it parses successfully, that's fine too
-            // The RSS parser is quite forgiving
-        }
-        Err(_) => {
-            // If it fails, we expect our code to handle this error
-            // which it does in the fetch_all_feeds function
-        }
-    }
+    let parse_result = match result {
+        Ok(_) => "success_parsed_despite_invalid".to_string(),
+        Err(e) => format!("error_{}", e.to_string().len())
+    };
+    
+    insta::assert_snapshot!(parse_result);
 }

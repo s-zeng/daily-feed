@@ -1,0 +1,10 @@
+---
+source: tests/fetch_tests.rs
+expression: titles
+snapshot_kind: text
+---
+[
+  "New AI Breakthrough",
+  "Cloud Computing Trends",
+  "Cybersecurity Alert"
+]

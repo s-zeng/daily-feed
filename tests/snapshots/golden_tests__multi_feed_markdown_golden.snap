@@ -1,0 +1,6 @@
+---
+source: tests/golden_tests.rs
+expression: multi_feed_result
+snapshot_kind: text
+---
+has_title: true, has_sample_feed: true, has_tech_news: true, has_toc: true, total_articles: 5

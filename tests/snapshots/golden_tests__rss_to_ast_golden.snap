@@ -1,0 +1,93 @@
+---
+source: tests/golden_tests.rs
+expression: document
+---
+{
+  "metadata": {
+    "title": "Golden Test Document",
+    "author": "Test Author",
+    "description": "Aggregated RSS feeds",
+    "generated_at": "2025-01-01T00:00:00.000000Z"
+  },
+  "feeds": [
+    {
+      "name": "Test Feed",
+      "description": "A test RSS feed for unit testing",
+      "url": "https://test.example.com",
+      "articles": [
+        {
+          "title": "Test Article 1",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "This is a test article with HTML content and & entities.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 10:00:00 +0000",
+            "author": null,
+            "url": "https://test.example.com/article1",
+            "feed_name": "Test Feed"
+          },
+          "comments": []
+        },
+        {
+          "title": "Test Article 2",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "This is another test article with ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "HTML",
+                    "formatting": {
+                      "bold": true,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": " content.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 11:00:00 +0000",
+            "author": null,
+            "url": "https://test.example.com/article2",
+            "feed_name": "Test Feed"
+          },
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

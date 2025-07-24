@@ -1,0 +1,5 @@
+---
+source: tests/golden_tests.rs
+expression: roundtrip_result
+---
+title_match: true, author_match: true, feeds_match: true, articles_match: true, size_diff_acceptable: true

@@ -1,0 +1,5 @@
+---
+source: tests/integration_tests.rs
+expression: config_summary
+---
+feeds: 1, title: Integration Test EPUB, author: Integration Test, format: Epub

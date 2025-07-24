@@ -1,0 +1,25 @@
+---
+source: tests/ars_comments_tests.rs
+expression: comments
+snapshot_kind: text
+---
+[
+  {
+    "content": "6",
+    "author": "U6",
+    "score": 6,
+    "timestamp": null
+  },
+  {
+    "content": "5",
+    "author": "U5",
+    "score": 5,
+    "timestamp": null
+  },
+  {
+    "content": "4",
+    "author": "U4",
+    "score": 4,
+    "timestamp": null
+  }
+]

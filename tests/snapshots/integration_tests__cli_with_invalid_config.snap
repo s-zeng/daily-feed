@@ -1,0 +1,6 @@
+---
+source: tests/integration_tests.rs
+expression: error_message
+snapshot_kind: text
+---
+missing field `feeds` at line 1 column 29

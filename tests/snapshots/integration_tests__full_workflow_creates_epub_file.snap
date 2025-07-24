@@ -1,0 +1,6 @@
+---
+source: tests/integration_tests.rs
+expression: file_exists.to_string()
+snapshot_kind: text
+---
+true
