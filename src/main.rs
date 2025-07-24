@@ -1,6 +1,7 @@
 use clap::Parser;
 mod config;
 mod fetch;
+mod ars_comments;
 
 #[derive(Parser, Debug)]
 #[clap(author = "Simon Zeng", version, about)]
@@ -45,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Generate EPUB
-    fetch::channels_to_epub(&channels, &config)?;
+    fetch::channels_to_epub(&channels, &config).await?;
     println!("EPUB generated: {}", config.output.filename);
 
     Ok(())

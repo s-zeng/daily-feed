@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::ars_comments::fetch_top_5_comments;
 use epub_builder::{EpubBuilder, EpubContent, ReferenceType, TocElement, ZipLibrary};
 use std::error::Error;
 use std::fs::File;
@@ -40,7 +41,7 @@ pub async fn fetch_all_feeds(
     Ok(results)
 }
 
-pub fn channels_to_epub(
+pub async fn channels_to_epub(
     channels: &[(String, rss::Channel)],
     config: &Config,
 ) -> Result<(), Box<dyn Error>> {
@@ -88,6 +89,14 @@ pub fn channels_to_epub(
         .toc a:hover { text-decoration: underline; }
         .toc .feed-section { font-weight: bold; margin-top: 1em; }
         .toc .article-item { margin-left: 2em; font-weight: normal; }
+        
+        /* Comments styling */
+        .comments-section { margin-top: 3em; border-top: 2px solid #ccc; padding-top: 2em; }
+        .comments-section h2 { color: #333; margin-bottom: 1em; }
+        .comment { margin: 1.5em 0; padding: 1em; background-color: #f9f9f9; border-left: 3px solid #0066cc; }
+        .comment-author { font-weight: bold; color: #333; margin-bottom: 0.5em; }
+        .comment-score { color: #666; font-size: 0.9em; margin-left: 1em; }
+        .comment-content { margin-top: 0.5em; line-height: 1.5; }
     "#;
     builder.stylesheet(css.as_bytes())?;
 
@@ -210,6 +219,44 @@ pub fn channels_to_epub(
             let content = item.content().or_else(|| item.description()).unwrap_or("");
             let clean_content = sanitize_html_for_epub(content);
 
+            // Check if this is an Ars Technica feed and fetch comments
+            let comments_html = if channel.link().contains("arstechnica.com") {
+                if let Some(article_link) = item.link() {
+                    match fetch_top_5_comments(article_link).await {
+                        Ok(comments) if !comments.is_empty() => {
+                            let mut comments_section = String::from(
+                                r#"<div class="comments-section">
+                                <h2>Top Comments</h2>"#
+                            );
+                            
+                            for comment in comments {
+                                comments_section.push_str(&format!(
+                                    r#"<div class="comment">
+                                        <div class="comment-author">{}<span class="comment-score">Score: {}</span></div>
+                                        <div class="comment-content">{}</div>
+                                    </div>"#,
+                                    comment.author,
+                                    comment.score,
+                                    sanitize_html_for_epub(&comment.content)
+                                ));
+                            }
+                            
+                            comments_section.push_str("</div>");
+                            comments_section
+                        }
+                        Ok(_) => String::new(), // No comments found
+                        Err(e) => {
+                            eprintln!("Failed to fetch comments for {}: {}", article_title, e);
+                            String::new()
+                        }
+                    }
+                } else {
+                    String::new()
+                }
+            } else {
+                String::new()
+            };
+
             let article_html = format!(
                 r#"<html>
                 <head><title>{}</title></head>
@@ -217,6 +264,7 @@ pub fn channels_to_epub(
                 <h1>{}</h1>
                 <div class="pub-date">{} - <strong>Source:</strong> {}</div>
                 <div class="content">{}</div>
+                {}
                 {}
                 </body>
                 </html>"#,
@@ -232,7 +280,8 @@ pub fn channels_to_epub(
                     )
                 } else {
                     String::new()
-                }
+                },
+                comments_html
             );
 
             let article_filename = format!("article_{}.xhtml", chapter_index);
