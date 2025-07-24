@@ -1,4 +1,4 @@
-use daily_feed::config::{Config, Feed, OutputConfig};
+use daily_feed::config::{Config, Feed, OutputConfig, OutputFormat};
 use daily_feed::fetch::{channels_to_document, document_to_epub};
 use std::fs;
 use tempfile::{NamedTempFile, TempDir};
@@ -19,6 +19,7 @@ fn test_cli_with_config_file() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Integration Test EPUB".to_string(),
             author: "Integration Test".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -82,6 +83,7 @@ fn test_full_workflow_with_local_feeds() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Workflow Test EPUB".to_string(),
             author: "Workflow Test".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -130,6 +132,7 @@ fn test_workflow_with_empty_feeds() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Empty Workflow Test EPUB".to_string(),
             author: "Empty Workflow Test".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -167,6 +170,7 @@ fn test_workflow_with_no_feeds() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "No Feeds Test EPUB".to_string(),
             author: "No Feeds Test".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -207,6 +211,7 @@ fn test_config_serialization_roundtrip() {
             filename: "roundtrip_test.epub".to_string(),
             title: "Roundtrip Test".to_string(),
             author: "Test Author".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -279,6 +284,7 @@ fn test_epub_generation_with_html_content() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "HTML Content Test".to_string(),
             author: "HTML Test".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 

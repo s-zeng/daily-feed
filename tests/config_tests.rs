@@ -1,4 +1,4 @@
-use daily_feed::config::{Config, Feed, OutputConfig};
+use daily_feed::config::{Config, Feed, OutputConfig, OutputFormat};
 use std::fs;
 use tempfile::NamedTempFile;
 
@@ -109,6 +109,7 @@ fn test_config_serialization() {
             filename: "serialize_test.epub".to_string(),
             title: "Serialize Test Title".to_string(),
             author: "Serialize Test Author".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 

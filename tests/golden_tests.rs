@@ -1,7 +1,7 @@
-use daily_feed::fetch::{channels_to_document, document_to_epub};
+use daily_feed::fetch::{channels_to_document, document_to_epub, document_to_output};
 use daily_feed::ast::Document;
+use daily_feed::config::OutputFormat;
 use std::fs;
-use std::process::{Command, Stdio};
 use tempfile::TempDir;
 
 /// Golden test for RSS to AST conversion
@@ -312,4 +312,224 @@ async fn test_ast_error_handling_golden() {
              document.feeds.len(), 
              document.total_articles());
     println!("  Generated EPUB size: {} bytes", metadata.len());
+}
+
+/// Golden test for AST to Markdown conversion
+/// This test ensures that AST documents are consistently converted to valid Markdown files
+#[tokio::test]
+async fn test_ast_to_markdown_golden() {
+    let temp_dir = TempDir::new().unwrap();
+    let markdown_path = temp_dir.path().join("golden_test.md");
+    
+    // Create a known AST structure for testing
+    let mut document = daily_feed::ast::Document::new(
+        "Golden Markdown Test".to_string(),
+        "Golden Test Author".to_string(),
+    );
+    
+    let mut feed = daily_feed::ast::Feed::new("Golden Feed".to_string())
+        .with_description("A test feed for golden markdown testing".to_string());
+    
+    // Create test article with various content types
+    let mut article = daily_feed::ast::Article::new(
+        "Golden Test Article".to_string(),
+        "Golden Feed".to_string(),
+    ).with_published_date("2025-01-01T12:00:00Z".to_string())
+     .with_url("https://example.com/article".to_string());
+    
+    // Add various content blocks to test different AST node types
+    article.content = vec![
+        daily_feed::ast::ContentBlock::Paragraph(
+            daily_feed::ast::TextContent::from_spans(vec![
+                daily_feed::ast::TextSpan::plain("This is a ".to_string()),
+                daily_feed::ast::TextSpan::bold("bold".to_string()),
+                daily_feed::ast::TextSpan::plain(" and ".to_string()),
+                daily_feed::ast::TextSpan::italic("italic".to_string()),
+                daily_feed::ast::TextSpan::plain(" text example.".to_string()),
+            ])
+        ),
+        daily_feed::ast::ContentBlock::Heading {
+            level: 2,
+            content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
+        },
+        daily_feed::ast::ContentBlock::List {
+            ordered: false,
+            items: vec![
+                daily_feed::ast::TextContent::plain("First item".to_string()),
+                daily_feed::ast::TextContent::plain("Second item".to_string()),
+            ],
+        },
+        daily_feed::ast::ContentBlock::Quote(
+            daily_feed::ast::TextContent::plain("This is a quote block".to_string())
+        ),
+        daily_feed::ast::ContentBlock::Code {
+            language: Some("rust".to_string()),
+            content: "fn main() { println!(\"Hello, world!\"); }".to_string(),
+        },
+        daily_feed::ast::ContentBlock::Link {
+            url: "https://example.com".to_string(),
+            text: "Example Link".to_string(),
+        },
+    ];
+    
+    // Add a test comment
+    let comment = daily_feed::ast::Comment {
+        author: "Test Commenter".to_string(),
+        content: vec![
+            daily_feed::ast::ContentBlock::Paragraph(
+                daily_feed::ast::TextContent::plain("This is a test comment.".to_string())
+            )
+        ],
+        score: 42,
+        timestamp: Some("2025-01-01T13:00:00Z".to_string()),
+    };
+    article.add_comment(comment);
+    
+    feed.add_article(article);
+    document.add_feed(feed);
+    
+    // Convert AST to Markdown using the outputter
+    document_to_output(&document, markdown_path.to_str().unwrap(), &OutputFormat::Markdown).await.unwrap();
+    
+    // Validate Markdown file was created and has expected properties
+    assert!(markdown_path.exists());
+    
+    let markdown_content = fs::read_to_string(&markdown_path).unwrap();
+    
+    // Validate Markdown structure
+    assert!(markdown_content.contains("# Golden Markdown Test"), "Should have document title as H1");
+    assert!(markdown_content.contains("## Golden Feed"), "Should have feed name as H2");
+    assert!(markdown_content.contains("### Golden Test Article"), "Should have article title as H3");
+    assert!(markdown_content.contains("**bold**"), "Should preserve bold formatting");
+    assert!(markdown_content.contains("*italic*"), "Should preserve italic formatting");
+    assert!(markdown_content.contains("##### Test Heading"), "Should render heading blocks");
+    assert!(markdown_content.contains("- First item"), "Should render unordered lists");
+    assert!(markdown_content.contains("> This is a quote block"), "Should render quote blocks");
+    assert!(markdown_content.contains("```rust"), "Should render code blocks with language");
+    assert!(markdown_content.contains("[Example Link](https://example.com)"), "Should render link blocks");
+    assert!(markdown_content.contains("#### Top Comments"), "Should include comments section");
+    assert!(markdown_content.contains("> **Test Commenter** (Score: 42)"), "Should render comment metadata");
+    assert!(markdown_content.contains("Table of Contents"), "Should include table of contents");
+    
+    let metadata = fs::metadata(&markdown_path).unwrap();
+    assert!(metadata.len() > 500, "Markdown should have substantial content");
+    
+    // Copy to golden output for manual inspection
+    let golden_markdown_path = "tests/golden_output/ast_to_markdown.md";
+    if let Some(parent) = std::path::Path::new(golden_markdown_path).parent() {
+        fs::create_dir_all(parent).ok();
+    }
+    fs::copy(&markdown_path, golden_markdown_path).unwrap();
+    
+    println!("Golden Markdown written to: {}", golden_markdown_path);
+    println!("Markdown size: {} bytes", metadata.len());
+}
+
+/// Golden test for RSS to Markdown conversion using fixtures
+/// This test ensures RSS feeds are consistently converted to structured Markdown
+#[tokio::test]
+async fn test_rss_to_markdown_golden() {
+    // Load a known RSS feed fixture
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
+    
+    let channels = vec![("Test Feed".to_string(), channel)];
+    
+    // Convert to AST
+    let document = channels_to_document(
+        &channels,
+        "Golden RSS to Markdown Test".to_string(),
+        "Test Author".to_string(),
+    ).await.unwrap();
+    
+    // Generate markdown from AST
+    let temp_dir = TempDir::new().unwrap();
+    let markdown_path = temp_dir.path().join("rss_to_markdown.md");
+    
+    document_to_output(&document, markdown_path.to_str().unwrap(), &OutputFormat::Markdown).await.unwrap();
+    
+    // Validate markdown file structure
+    assert!(markdown_path.exists());
+    let markdown_content = fs::read_to_string(&markdown_path).unwrap();
+    
+    // Expected structure validation
+    assert!(markdown_content.contains("# Golden RSS to Markdown Test"));
+    assert!(markdown_content.contains("## Test Feed"));
+    assert!(markdown_content.contains("### Test Article"));
+    assert!(markdown_content.contains("Table of Contents"));
+    assert!(markdown_content.contains("**Total Articles:**"));
+    
+    // Copy to golden output
+    let golden_path = "tests/golden_output/rss_to_markdown.md";
+    if let Some(parent) = std::path::Path::new(golden_path).parent() {
+        fs::create_dir_all(parent).ok();
+    }
+    fs::copy(&markdown_path, golden_path).unwrap();
+    
+    println!("Golden RSS to Markdown written to: {}", golden_path);
+    println!("Markdown contains {} feeds with {} total articles", 
+             document.feeds.len(), 
+             document.total_articles());
+}
+
+/// Golden test for multi-feed markdown output
+/// This test ensures complex documents with multiple feeds render correctly
+#[tokio::test]
+async fn test_multi_feed_markdown_golden() {
+    let temp_dir = TempDir::new().unwrap();
+    let markdown_path = temp_dir.path().join("multi_feed_test.md");
+    
+    // Load multiple test RSS feeds
+    let sample_rss_path = "tests/fixtures/sample_rss.xml";
+    let sample_rss_content = fs::read_to_string(sample_rss_path).unwrap();
+    let sample_channel = rss::Channel::read_from(sample_rss_content.as_bytes()).unwrap();
+    
+    let tech_news_path = "tests/fixtures/tech_news.xml";
+    let tech_news_content = fs::read_to_string(tech_news_path).unwrap();
+    let tech_channel = rss::Channel::read_from(tech_news_content.as_bytes()).unwrap();
+    
+    let channels = vec![
+        ("Sample Feed".to_string(), sample_channel),
+        ("Tech News".to_string(), tech_channel),
+    ];
+    
+    // Convert to AST and then to Markdown
+    let document = channels_to_document(
+        &channels,
+        "Multi-Feed Markdown Test".to_string(),
+        "Multi-Feed Author".to_string(),
+    ).await.unwrap();
+    
+    document_to_output(&document, markdown_path.to_str().unwrap(), &OutputFormat::Markdown).await.unwrap();
+    
+    // Validate multi-feed structure
+    assert!(markdown_path.exists());
+    let markdown_content = fs::read_to_string(&markdown_path).unwrap();
+    
+    assert!(markdown_content.contains("# Multi-Feed Markdown Test"));
+    assert!(markdown_content.contains("## Sample Feed"));
+    assert!(markdown_content.contains("## Tech News"));
+    assert!(markdown_content.contains("Table of Contents"));
+    
+    // Check that all feeds and articles are present in TOC
+    let toc_section = markdown_content.split("---").nth(0).unwrap_or("");
+    assert!(toc_section.contains("Sample Feed"));
+    assert!(toc_section.contains("Tech News"));
+    
+    // Validate total article count
+    assert_eq!(document.total_articles(), 5); // 2 from sample + 3 from tech news
+    assert!(markdown_content.contains("**Total Articles:** 5"));
+    
+    // Copy to golden output
+    let golden_path = "tests/golden_output/multi_feed_markdown.md";
+    if let Some(parent) = std::path::Path::new(golden_path).parent() {
+        fs::create_dir_all(parent).ok();
+    }
+    fs::copy(&markdown_path, golden_path).unwrap();
+    
+    println!("Golden multi-feed Markdown written to: {}", golden_path);
+    println!("Multi-feed document processed {} feeds with {} articles", 
+             document.feeds.len(), 
+             document.total_articles());
 }

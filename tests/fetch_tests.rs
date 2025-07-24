@@ -1,4 +1,4 @@
-use daily_feed::config::{Config, Feed, OutputConfig};
+use daily_feed::config::{Config, Feed, OutputConfig, OutputFormat};
 use daily_feed::fetch::{channels_to_document, document_to_epub};
 use std::fs;
 use tempfile::TempDir;
@@ -69,6 +69,7 @@ async fn test_channels_to_epub_single_feed() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Test EPUB".to_string(),
             author: "Test Author".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -112,6 +113,7 @@ async fn test_channels_to_epub_multiple_feeds() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Multi Feed EPUB".to_string(),
             author: "Test Author".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
@@ -157,6 +159,7 @@ async fn test_channels_to_epub_empty_feed() {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Empty EPUB".to_string(),
             author: "Test Author".to_string(),
+            format: OutputFormat::Epub,
         },
     };
 
