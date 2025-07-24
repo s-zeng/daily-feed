@@ -1,0 +1,228 @@
+{
+  "metadata": {
+    "title": "End-to-End Test",
+    "author": "Workflow Tester",
+    "description": "Aggregated RSS feeds",
+    "generated_at": "2025-07-24T16:49:13.448919+00:00"
+  },
+  "feeds": [
+    {
+      "name": "Sample Feed",
+      "description": "A test RSS feed for unit testing",
+      "url": "https://test.example.com",
+      "articles": [
+        {
+          "title": "Test Article 1",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "This is a test article with HTML content and & entities.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 10:00:00 +0000",
+            "author": null,
+            "url": "https://test.example.com/article1",
+            "feed_name": "Sample Feed"
+          },
+          "comments": []
+        },
+        {
+          "title": "Test Article 2",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "This is another test article with ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "HTML",
+                    "formatting": {
+                      "bold": true,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": " content.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 11:00:00 +0000",
+            "author": null,
+            "url": "https://test.example.com/article2",
+            "feed_name": "Sample Feed"
+          },
+          "comments": []
+        }
+      ]
+    },
+    {
+      "name": "Tech News",
+      "description": "Latest technology news and updates",
+      "url": "https://technews.example.com",
+      "articles": [
+        {
+          "title": "New AI Breakthrough",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "Scientists have achieved a major breakthrough in artificial intelligence research.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 09:00:00 +0000",
+            "author": null,
+            "url": "https://technews.example.com/ai-breakthrough",
+            "feed_name": "Tech News"
+          },
+          "comments": []
+        },
+        {
+          "title": "Cloud Computing Trends",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "Cloud computing continues to evolve with new ",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": "serverless",
+                    "formatting": {
+                      "bold": false,
+                      "italic": true,
+                      "code": false,
+                      "link": null
+                    }
+                  },
+                  {
+                    "text": " technologies.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 08:00:00 +0000",
+            "author": null,
+            "url": "https://technews.example.com/cloud-trends",
+            "feed_name": "Tech News"
+          },
+          "comments": []
+        },
+        {
+          "title": "Cybersecurity Alert",
+          "content": [
+            {
+              "Paragraph": {
+                "spans": [
+                  {
+                    "text": "New security vulnerabilities discovered in popular frameworks.",
+                    "formatting": {
+                      "bold": false,
+                      "italic": false,
+                      "code": false,
+                      "link": null
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "List": {
+                "ordered": false,
+                "items": [
+                  {
+                    "spans": [
+                      {
+                        "text": "Update immediately",
+                        "formatting": {
+                          "bold": false,
+                          "italic": false,
+                          "code": false,
+                          "link": null
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "spans": [
+                      {
+                        "text": "Review security policies",
+                        "formatting": {
+                          "bold": false,
+                          "italic": false,
+                          "code": false,
+                          "link": null
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "metadata": {
+            "published_date": "Wed, 15 Jul 2025 07:00:00 +0000",
+            "author": null,
+            "url": "https://technews.example.com/security-alert",
+            "feed_name": "Tech News"
+          },
+          "comments": []
+        }
+      ]
+    }
+  ]
+}

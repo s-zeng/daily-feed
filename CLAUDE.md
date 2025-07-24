@@ -17,6 +17,9 @@ collection", as opposed to "C++ with borrow checker"). Use features like
 Algebraic Data Types and Traits liberally, with an algebra-oriented design 
 mindset
 
+When writing new documentation files, ensure to clarify that "Documentation written 
+by Claude Code" somewhere in the file.
+
 ## Architecture
 
 The codebase follows a modular structure:
