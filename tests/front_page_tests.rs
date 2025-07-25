@@ -101,7 +101,7 @@ async fn test_front_page_generation_with_ollama() {
 
     // This test requires a running Ollama server with temperature 0
     // Skip if server is not available to avoid CI failures
-    if let Ok(front_page) = generator.generate_front_page(&document).await {
+    if let Ok(front_page) = generator.generate_front_page_from_document(&document).await {
         // Normalize the output for consistent snapshots by removing dynamic elements
         let normalized_output = normalize_ai_output(&front_page);
         assert_snapshot!("front_page_generation_ollama", normalized_output);
@@ -124,7 +124,8 @@ fn test_content_preparation() {
     let generator = FrontPageGenerator::new(provider).unwrap();
     let document = create_test_document();
 
-    let content = generator.prepare_content(&document).unwrap();
+    let headlines = document.extract_headlines();
+    let content = generator.prepare_content(&headlines).unwrap();
 
     // Normalize content by removing potential whitespace variations
     let normalized_content = normalize_markdown_content(&content);

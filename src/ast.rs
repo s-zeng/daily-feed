@@ -1,6 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Headline {
+    pub title: String,
+    pub published_date: Option<String>,
+    pub source_name: String,
+    pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Document {
     pub metadata: DocumentMetadata,
     pub feeds: Vec<Feed>,
@@ -96,6 +104,20 @@ impl Document {
 
     pub fn total_articles(&self) -> usize {
         self.feeds.iter().map(|f| f.articles.len()).sum()
+    }
+
+    pub fn extract_headlines(&self) -> Vec<Headline> {
+        self.feeds
+            .iter()
+            .flat_map(|feed| {
+                feed.articles.iter().map(|article| Headline {
+                    title: article.title.clone(),
+                    published_date: article.metadata.published_date.clone(),
+                    source_name: article.metadata.feed_name.clone(),
+                    url: article.metadata.url.clone(),
+                })
+            })
+            .collect()
     }
 }
 

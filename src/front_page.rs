@@ -1,6 +1,5 @@
 use crate::ai_client::{AiClient, AiProvider, AiClientError};
-use crate::ast::Document;
-use crate::markdown_outputter::MarkdownOutputter;
+use crate::ast::{Document, Headline};
 use std::error::Error;
 use std::fmt;
 
@@ -37,18 +36,38 @@ impl FrontPageGenerator {
         Ok(FrontPageGenerator { ai_client })
     }
 
-    pub async fn generate_front_page(&self, document: &Document) -> Result<String, FrontPageError> {
-        let content = self.prepare_content(document)?;
+    pub async fn generate_front_page(&self, headlines: &[Headline]) -> Result<String, FrontPageError> {
+        let content = self.prepare_content(headlines)?;
         let prompt = self.build_prompt(&content);
         
         let front_page = self.ai_client.generate_text(&prompt).await?;
         Ok(front_page)
     }
 
-    pub fn prepare_content(&self, document: &Document) -> Result<String, FrontPageError> {
-        let outputter = MarkdownOutputter::new();
-        outputter.render_document_to_markdown(document)
-            .map_err(|e| FrontPageError::GenerationError(format!("Failed to convert document to markdown: {}", e)))
+    pub async fn generate_front_page_from_document(&self, document: &Document) -> Result<String, FrontPageError> {
+        let headlines = document.extract_headlines();
+        self.generate_front_page(&headlines).await
+    }
+
+    pub fn prepare_content(&self, headlines: &[Headline]) -> Result<String, FrontPageError> {
+        let mut content = String::new();
+        
+        for headline in headlines {
+            content.push_str(&format!("## {}\n", headline.title));
+            content.push_str(&format!("**Source:** {}\n", headline.source_name));
+            
+            if let Some(date) = &headline.published_date {
+                content.push_str(&format!("**Published:** {}\n", date));
+            }
+            
+            if let Some(url) = &headline.url {
+                content.push_str(&format!("**URL:** {}\n", url));
+            }
+            
+            content.push_str("\n");
+        }
+        
+        Ok(content)
     }
 
     pub fn build_prompt(&self, content: &str) -> String {

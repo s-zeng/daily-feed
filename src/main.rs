@@ -110,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let front_page_generator = front_page::FrontPageGenerator::new(provider)
                 .map_err(|e| format!("Failed to create front page generator: {}", e))?;
             
-            match front_page_generator.generate_front_page(&document).await {
+            match front_page_generator.generate_front_page_from_document(&document).await {
                 Ok(front_page_content) => {
                     // Add front page as first article in first feed
                     if let Some(first_feed) = document.feeds.first_mut() {
