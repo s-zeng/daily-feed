@@ -1,0 +1,48 @@
+---
+source: src/ai_client.rs
+expression: scenarios
+---
+[
+  [
+    "successful_after_retries",
+    [
+      "Starting Anthropic API call with retry config: max_retries=2, initial_delay_ms=100, max_delay_ms=1000, backoff_multiplier=2",
+      "Anthropic API attempt 1 of 3",
+      "Anthropic API attempt 1 failed with HTTP 529: Service overloaded",
+      "HTTP 529 is retryable, will retry after backoff",
+      "Backing off for 100ms before retry attempt 2 (backoff multiplier: 2)",
+      "Next backoff delay: 200ms (capped at 1000ms)",
+      "Anthropic API attempt 2 of 3",
+      "Anthropic API attempt 2 failed with HTTP 529: Service overloaded",
+      "HTTP 529 is retryable, will retry after backoff",
+      "Backing off for 200ms before retry attempt 3 (backoff multiplier: 2)",
+      "Next backoff delay: 400ms (capped at 1000ms)",
+      "Anthropic API attempt 3 of 3",
+      "Anthropic API call succeeded on attempt 3 after 2 previous failures"
+    ]
+  ],
+  [
+    "exhausted_retries",
+    [
+      "Starting Anthropic API call with retry config: max_retries=2, initial_delay_ms=100, max_delay_ms=1000, backoff_multiplier=2",
+      "Anthropic API attempt 1 of 3",
+      "Anthropic API attempt 1 failed with HTTP 529: Service overloaded",
+      "Anthropic API attempt 2 of 3",
+      "Anthropic API attempt 2 failed with HTTP 529: Service overloaded",
+      "Anthropic API attempt 3 of 3",
+      "Anthropic API attempt 3 failed with HTTP 529: Service overloaded",
+      "Anthropic API exhausted all 3 attempts, giving up",
+      "All Anthropic API retry attempts failed"
+    ]
+  ],
+  [
+    "non_retryable_error",
+    [
+      "Starting Anthropic API call with retry config: max_retries=2, initial_delay_ms=100, max_delay_ms=1000, backoff_multiplier=2",
+      "Anthropic API attempt 1 of 3",
+      "Anthropic API attempt 1 failed with HTTP 401: Unauthorized",
+      "HTTP 401 is not retryable, giving up",
+      "All Anthropic API retry attempts failed"
+    ]
+  ]
+]

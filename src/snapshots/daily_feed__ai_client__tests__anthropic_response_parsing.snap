@@ -1,0 +1,11 @@
+---
+source: src/ai_client.rs
+expression: response
+---
+{
+  "content": [
+    {
+      "text": "Hello! How can I help you today?"
+    }
+  ]
+}

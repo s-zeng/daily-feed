@@ -20,6 +20,9 @@ mindset
 When writing new documentation files, ensure to clarify that "Documentation written 
 by Claude Code" somewhere in the file.
 
+ALL tests should be in the `tests/` directory, and should follow the snapshot 
+testing instructions in the `## Testing` section.
+
 This project is in heavy development. Whenever you make a change, make sure to 
 check `CLAUDE.md` and update it if necessary to reflect any newly added/changed 
 features or structures

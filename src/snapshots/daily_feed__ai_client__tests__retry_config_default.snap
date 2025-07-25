@@ -1,0 +1,10 @@
+---
+source: src/ai_client.rs
+expression: config
+---
+{
+  "max_retries": 3,
+  "initial_delay_ms": 1000,
+  "max_delay_ms": 30000,
+  "backoff_multiplier": 2.0
+}
