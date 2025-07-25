@@ -1,0 +1,106 @@
+use crate::ai_client::{AiClient, AiProvider, AiClientError};
+use crate::ast::Document;
+use crate::markdown_outputter::MarkdownOutputter;
+use std::error::Error;
+use std::fmt;
+
+#[derive(Debug)]
+pub enum FrontPageError {
+    AiError(AiClientError),
+    GenerationError(String),
+}
+
+impl fmt::Display for FrontPageError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FrontPageError::AiError(e) => write!(f, "AI error: {}", e),
+            FrontPageError::GenerationError(msg) => write!(f, "Generation error: {}", msg),
+        }
+    }
+}
+
+impl Error for FrontPageError {}
+
+impl From<AiClientError> for FrontPageError {
+    fn from(error: AiClientError) -> Self {
+        FrontPageError::AiError(error)
+    }
+}
+
+pub struct FrontPageGenerator {
+    ai_client: AiClient,
+}
+
+impl FrontPageGenerator {
+    pub fn new(provider: AiProvider) -> Result<Self, FrontPageError> {
+        let ai_client = AiClient::new(provider)?;
+        Ok(FrontPageGenerator { ai_client })
+    }
+
+    pub async fn generate_front_page(&self, document: &Document) -> Result<String, FrontPageError> {
+        let content = self.prepare_content(document)?;
+        let prompt = self.build_prompt(&content);
+        
+        let front_page = self.ai_client.generate_text(&prompt).await?;
+        Ok(front_page)
+    }
+
+    pub fn prepare_content(&self, document: &Document) -> Result<String, FrontPageError> {
+        let outputter = MarkdownOutputter::new();
+        outputter.render_document_to_markdown(document)
+            .map_err(|e| FrontPageError::GenerationError(format!("Failed to convert document to markdown: {}", e)))
+    }
+
+    pub fn build_prompt(&self, content: &str) -> String {
+        format!(
+            r#"You are a senior news editor tasked with creating a concise "Front Page" summary from a daily news feed. Your goal is to identify the 3-5 most important stories and present them in a way that gives readers a quick understanding of the current state of the world.
+
+Analyze the provided daily feed content and create a front page summary following these guidelines:
+
+### Content Analysis
+- **Identify Breaking News**: Look for stories marked as recent or urgent
+- **Assess Impact**: Prioritize stories affecting large populations or having long-term implications
+- **Spot Controversies**: Highlight stories generating significant debate or multiple perspectives
+- **Find Connections**: Group related stories and identify overarching themes
+- **Filter Noise**: Exclude minor local incidents, celebrity gossip, and repetitive updates
+
+### Output Structure
+1. **Opening Line**: One sentence capturing the day's most significant theme or development
+2. **Top Stories** (3-5 items):
+   - **Story Title**: Clear, descriptive headline
+   - **Summary**: 1-2 sentences explaining what happened and why it matters
+   - **Impact**: Brief note on who is affected or what comes next
+3. **World Context**: One sentence connecting these stories to broader trends if applicable
+
+### Writing Style
+- **Neutral Tone**: Present facts without editorial commentary
+- **Concise Language**: Maximum 350 words total
+- **Clear Structure**: Use bullet points or numbered lists for readability
+- **Accessible**: Avoid jargon; explain technical terms when necessary
+- **Urgent**: Convey importance and timeliness
+
+### Example Format
+
+**Today's World**: [Single sentence theme]
+
+**Top Stories:**
+• **[Story 1 Title]**: [What happened]. [Why it matters/who's affected].
+• **[Story 2 Title]**: [What happened]. [Why it matters/who's affected].
+• **[Story 3 Title]**: [What happened]. [Why it matters/who's affected].
+
+**Looking Ahead**: [Optional: upcoming developments or implications]
+
+Please create a Front Page summary from the following daily feed content. Focus on the most important and controversial stories that give the best overview of today's world:
+
+{}
+
+Remember to:
+- Lead with the most impactful story
+- Keep each summary to 1-2 sentences
+- Explain why stories matter, not just what happened
+- Maintain neutral tone while acknowledging controversy
+- Stay under 350 words total"#,
+            content
+        )
+    }
+}

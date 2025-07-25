@@ -1,7 +1,6 @@
 ---
 source: tests/config_tests.rs
 expression: config
-snapshot_kind: text
 ---
 {
   "feeds": [
@@ -26,5 +25,6 @@ snapshot_kind: text
     "title": "Multi Feed Test",
     "author": "Multi Feed Author",
     "format": "epub"
-  }
+  },
+  "front_page": null
 }

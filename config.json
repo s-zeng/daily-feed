@@ -15,5 +15,13 @@
     "filename": "daily-feed.epub",
     "title": "Daily Feed Digest",
     "author": "RSS Aggregator"
+  },
+  "front_page": {
+    "enabled": true,
+    "provider": {
+      "type": "ollama",
+      "base_url": "http://127.0.0.1:1234",
+      "model": "gemma-3-27b"
+    }
   }
 }

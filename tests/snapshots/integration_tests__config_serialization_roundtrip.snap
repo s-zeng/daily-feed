@@ -1,7 +1,6 @@
 ---
 source: tests/integration_tests.rs
 expression: deserialized_config
-snapshot_kind: text
 ---
 {
   "feeds": [
@@ -21,5 +20,6 @@ snapshot_kind: text
     "title": "Roundtrip Test",
     "author": "Test Author",
     "format": "epub"
-  }
+  },
+  "front_page": null
 }

@@ -1,0 +1,5 @@
+---
+source: tests/front_page_tests.rs
+expression: "\"Ollama server not available at http://127.0.0.1:1234\""
+---
+Ollama server not available at http://127.0.0.1:1234

@@ -1,0 +1,8 @@
+---
+source: tests/front_page_tests.rs
+expression: results
+---
+{
+  "anthropic_success": true,
+  "ollama_success": true
+}

@@ -1,0 +1,78 @@
+---
+source: tests/front_page_tests.rs
+expression: normalized_content
+---
+# Daily News Digest
+
+Today's most important stories
+
+**Author:** News Aggregator
+**Generated:** 2025-01-01T00:00:00.000000Z
+**Total Articles:** 3
+
+## Table of Contents
+
+- [Technology News](#technology-news)
+  - [Major Tech Company Announces Revolutionary AI Breakthrough](#major-tech-company-announces-revolutionary-ai-breakthrough)
+- [Political News](#political-news)
+  - [International Trade Agreement Faces Opposition](#international-trade-agreement-faces-opposition)
+- [Health News](#health-news)
+  - [Global Health Organization Issues New Guidelines](#global-health-organization-issues-new-guidelines)
+
+---
+
+## Technology News
+
+Latest technology developments
+
+**Total Articles:** 1
+
+### Major Tech Company Announces Revolutionary AI Breakthrough
+
+**Published:** 2025-01-01T00:00:00.000000Z
+**Author:** Tech Reporter
+**Source:** Technology News
+**Link:** [Read original article](https://techexample.com/ai-breakthrough)
+
+A major technology company today announced a significant breakthrough in artificial intelligence that could revolutionize healthcare, transportation, and manufacturing industries.
+
+The new AI system demonstrates unprecedented capabilities in complex reasoning and problem-solving, potentially affecting millions of jobs worldwide.
+
+
+---
+
+## Political News
+
+Global political developments
+
+**Total Articles:** 1
+
+### International Trade Agreement Faces Opposition
+
+**Published:** 2025-01-01T00:00:00.000000Z
+**Author:** Political Reporter
+**Source:** Political News
+**Link:** [Read original article](https://newsexample.com/trade-agreement)
+
+A proposed international trade agreement has generated significant opposition from labor unions and environmental groups across three continents.
+
+
+---
+
+## Health News
+
+Health and medical news
+
+**Total Articles:** 1
+
+### Global Health Organization Issues New Guidelines
+
+**Published:** 2025-01-01T00:00:00.000000Z
+**Author:** Health Reporter
+**Source:** Health News
+**Link:** [Read original article](https://healthexample.com/guidelines)
+
+The World Health Organization has released updated vaccination guidelines that will impact public health policies in over 100 countries.
+
+
+---

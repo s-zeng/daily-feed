@@ -125,6 +125,7 @@ async fn test_channels_to_epub_single_feed() {
             author: "Test Author".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -171,6 +172,7 @@ async fn test_channels_to_epub_multiple_feeds() {
             author: "Test Author".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -217,6 +219,7 @@ async fn test_channels_to_epub_empty_feed() {
             author: "Test Author".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";

@@ -97,6 +97,7 @@ fn test_config_serialization() {
             author: "Serialize Test Author".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let json = serde_json::to_string(&config).unwrap();

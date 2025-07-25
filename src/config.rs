@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
+use crate::ai_client::AiProvider;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Feed {
@@ -24,6 +25,36 @@ impl Default for OutputFormat {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct FrontPageConfig {
+    pub enabled: bool,
+    pub provider: AiProviderConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub enum AiProviderConfig {
+    #[serde(rename = "ollama")]
+    Ollama {
+        base_url: String,
+        model: String,
+    },
+    #[serde(rename = "anthropic")]
+    Anthropic {
+        api_key: String,
+        model: String,
+    },
+}
+
+impl From<AiProviderConfig> for AiProvider {
+    fn from(config: AiProviderConfig) -> Self {
+        match config {
+            AiProviderConfig::Ollama { base_url, model } => AiProvider::Ollama { base_url, model },
+            AiProviderConfig::Anthropic { api_key, model } => AiProvider::Anthropic { api_key, model },
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct OutputConfig {
     pub filename: String,
     pub title: String,
@@ -36,6 +67,7 @@ pub struct OutputConfig {
 pub struct Config {
     pub feeds: Vec<Feed>,
     pub output: OutputConfig,
+    pub front_page: Option<FrontPageConfig>,
 }
 
 impl Config {
@@ -59,6 +91,7 @@ impl Config {
                 author: "RSS Aggregator".to_string(),
                 format: OutputFormat::default(),
             },
+            front_page: None,
         }
     }
 }

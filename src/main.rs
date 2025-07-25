@@ -6,6 +6,8 @@ mod ars_comments;
 mod parser;
 mod epub_outputter;
 mod markdown_outputter;
+mod ai_client;
+mod front_page;
 
 #[derive(Debug, Clone, ValueEnum)]
 enum OutputFormatArg {
@@ -41,6 +43,10 @@ struct Args {
     /// output format (epub or markdown)
     #[arg(short = 'f', long = "format", value_enum)]
     format: Option<OutputFormatArg>,
+
+    /// enable front page generation
+    #[arg(long)]
+    front_page: bool,
 }
 
 #[tokio::main]
@@ -78,7 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Parse feeds into AST document
-    let document = fetch::channels_to_document(
+    let mut document = fetch::channels_to_document(
         &channels,
         config.output.title.clone(),
         config.output.author.clone(),
@@ -88,6 +94,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Parsed {} feeds with {} total articles", 
                  document.feeds.len(), 
                  document.total_articles());
+    }
+
+    // Generate front page if enabled (via CLI flag or config)
+    let enable_front_page = args.front_page || 
+        config.front_page.as_ref().map_or(false, |fp| fp.enabled);
+    
+    if enable_front_page {
+        if let Some(front_page_config) = &config.front_page {
+            if args.verbose {
+                println!("Generating front page...");
+            }
+            
+            let provider = front_page_config.provider.clone().into();
+            let front_page_generator = front_page::FrontPageGenerator::new(provider)
+                .map_err(|e| format!("Failed to create front page generator: {}", e))?;
+            
+            match front_page_generator.generate_front_page(&document).await {
+                Ok(front_page_content) => {
+                    // Add front page as first article in first feed
+                    if let Some(first_feed) = document.feeds.first_mut() {
+                        let front_page_article = ast::Article {
+                            title: "Front Page Summary".to_string(),
+                            content: vec![ast::ContentBlock::Paragraph(ast::TextContent::plain(front_page_content))],
+                            metadata: ast::ArticleMetadata {
+                                published_date: Some(chrono::Utc::now().to_rfc3339()),
+                                author: Some("AI Assistant".to_string()),
+                                url: None,
+                                feed_name: "Front Page".to_string(),
+                            },
+                            comments: vec![],
+                        };
+                        first_feed.articles.insert(0, front_page_article);
+                    }
+                    if args.verbose {
+                        println!("Front page generated successfully");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Warning: Failed to generate front page: {}", e);
+                }
+            }
+        } else {
+            eprintln!("Warning: Front page requested but no configuration found in config file");
+        }
     }
 
     // Export AST to JSON if requested, otherwise generate output in specified format

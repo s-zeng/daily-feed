@@ -21,6 +21,7 @@ fn test_cli_with_config_file() {
             author: "Integration Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let config_json = serde_json::to_string_pretty(&config).unwrap();
@@ -86,6 +87,7 @@ fn test_full_workflow_with_local_feeds_success() {
             author: "Workflow Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -129,6 +131,7 @@ fn test_full_workflow_creates_epub_file() {
             author: "Workflow Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -166,6 +169,7 @@ fn test_full_workflow_epub_size() {
             author: "Workflow Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -206,6 +210,7 @@ fn test_workflow_with_empty_feeds() {
             author: "Empty Workflow Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";
@@ -243,6 +248,7 @@ fn test_workflow_with_no_feeds() {
             author: "No Feeds Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let channels = vec![];
@@ -284,6 +290,7 @@ fn test_config_serialization_roundtrip() {
             author: "Test Author".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let json = serde_json::to_string_pretty(&original_config).unwrap();
@@ -341,6 +348,7 @@ fn test_epub_generation_with_html_content() {
             author: "HTML Test".to_string(),
             format: OutputFormat::Epub,
         },
+        front_page: None,
     };
 
     let tech_news_path = "tests/fixtures/tech_news.xml";

@@ -1,7 +1,6 @@
 ---
 source: tests/config_tests.rs
 expression: deserialized
-snapshot_kind: text
 ---
 {
   "feeds": [
@@ -16,5 +15,6 @@ snapshot_kind: text
     "title": "Serialize Test Title",
     "author": "Serialize Test Author",
     "format": "epub"
-  }
+  },
+  "front_page": null
 }

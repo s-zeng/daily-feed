@@ -22,7 +22,7 @@ impl MarkdownOutputter {
         Ok(())
     }
 
-    fn render_document_to_markdown(&self, document: &Document) -> Result<String, Box<dyn Error>> {
+    pub fn render_document_to_markdown(&self, document: &Document) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
         
         // Document header

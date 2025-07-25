@@ -1,7 +1,6 @@
 ---
 source: tests/config_tests.rs
 expression: config
-snapshot_kind: text
 ---
 {
   "feeds": [
@@ -16,5 +15,6 @@ snapshot_kind: text
     "title": "Daily Feed Digest",
     "author": "RSS Aggregator",
     "format": "epub"
-  }
+  },
+  "front_page": null
 }
