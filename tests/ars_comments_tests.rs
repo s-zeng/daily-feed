@@ -1,5 +1,5 @@
 use daily_feed::ars_comments::{fetch_top_comments, fetch_top_5_comments, parse_comments_from_html, Comment};
-use scraper::Html;
+use scraper::{Html, Selector};
 
 #[tokio::test]
 async fn test_fetch_top_comments_with_invalid_url() {
@@ -123,7 +123,7 @@ fn test_parse_comments_from_html() {
         <div class="message-content">
             <div class="bbWrapper">This is a test comment</div>
         </div>
-        <div class="reactionsBar-link">5</div>
+        <div class="contentVote-score contentVote-score--total">5</div>
         <time datetime="2025-01-01T12:00:00Z"></time>
     </div>
     <div class="message">
@@ -131,7 +131,7 @@ fn test_parse_comments_from_html() {
         <div class="message-content">
             <div class="bbWrapper">Another test comment</div>
         </div>
-        <div class="reactionsBar-link">3</div>
+        <div class="contentVote-score contentVote-score--total">3</div>
         <time datetime="2025-01-01T13:00:00Z"></time>
     </div>
     "#;
@@ -140,4 +140,93 @@ fn test_parse_comments_from_html() {
     let comments = parse_comments_from_html(&document).unwrap();
     
     insta::assert_json_snapshot!(comments);
+}
+
+#[tokio::test]
+async fn test_comment_scores_are_not_always_zero() {
+    let article_url = "https://arstechnica.com/science/2025/07/ancient-skull-may-have-been-half-human-half-neanderthal-child/";
+    
+    let result = fetch_top_5_comments(article_url).await;
+    
+    match result {
+        Ok(comments) => {
+            // Create a snapshot of actual comment scores to verify they're not all zeros
+            let scores: Vec<i32> = comments.iter().map(|c| c.score).collect();
+            let has_non_zero_scores = scores.iter().any(|&score| score > 0);
+            
+            // For snapshot, record both the scores and whether any are non-zero
+            let test_result = format!("scores: {:?}, has_non_zero: {}", scores, has_non_zero_scores);
+            insta::assert_snapshot!(test_result);
+        }
+        Err(e) => {
+            // If the test fails due to network issues, we still want to record it
+            insta::assert_snapshot!(format!("network_error: {}", e));
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_debug_comment_html_structure() {
+    use reqwest;
+    
+    let article_url = "https://arstechnica.com/science/2025/07/ancient-skull-may-have-been-half-human-half-neanderthal-child/";
+    let client = reqwest::Client::new();
+    
+    // Fetch the article page to extract the iframe URL
+    let response = client
+        .get(article_url)
+        .header("User-Agent", "daily-feed/0.1.0")
+        .send()
+        .await;
+    
+    if let Ok(response) = response {
+        let html_content = response.text().await.unwrap();
+        let document = Html::parse_document(&html_content);
+        
+        // Extract the iframe URL from the data-url attribute
+        let data_url_selector = Selector::parse("[data-url]").unwrap();
+        if let Some(element) = document.select(&data_url_selector).next() {
+            if let Some(iframe_url) = element.value().attr("data-url") {
+                // Fetch the forum thread page
+                let forum_response = client
+                    .get(iframe_url)
+                    .header("User-Agent", "daily-feed/0.1.0")
+                    .send()
+                    .await;
+                
+                if let Ok(forum_response) = forum_response {
+                    let forum_html = forum_response.text().await.unwrap();
+                    let forum_document = Html::parse_document(&forum_html);
+                    
+                    // Look for the first comment's reactions structure
+                    let comment_selector = Selector::parse(".message").unwrap();
+                    if let Some(first_comment) = forum_document.select(&comment_selector).next() {
+                        // Extract just the reactions part of the first comment
+                        let _reactions_html = first_comment.html();
+                        
+                        // Find all elements that might contain score info
+                        let score_related_elements: Vec<String> = first_comment
+                            .select(&Selector::parse("*").unwrap())
+                            .filter_map(|el| {
+                                let classes = el.value().classes().collect::<Vec<_>>();
+                                let text = el.text().collect::<String>().trim().to_string();
+                                if (classes.iter().any(|c| c.contains("reaction") || c.contains("score") || c.contains("like")) 
+                                    || text.chars().all(|c| c.is_ascii_digit()))
+                                    && !text.is_empty() {
+                                    Some(format!("classes: {:?}, text: '{}'", classes, text))
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
+                        
+                        insta::assert_snapshot!(format!("score_elements: {:?}", score_related_elements));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    insta::assert_snapshot!("debug_failed");
 }

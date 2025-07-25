@@ -92,11 +92,19 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
             continue;
         }
         
-        // Extract score (reactions/likes)
+        // Extract score (reactions/likes) - try multiple selectors
+        let vote_score_selector = Selector::parse(".contentVote-score--total").unwrap();
         let score = comment_element
-            .select(&score_selector)
+            .select(&vote_score_selector)
             .next()
-            .and_then(|el| el.text().collect::<String>().parse::<i32>().ok())
+            .and_then(|el| el.text().collect::<String>().trim().parse::<i32>().ok())
+            .or_else(|| {
+                // Fallback to original selector
+                comment_element
+                    .select(&score_selector)
+                    .next()
+                    .and_then(|el| el.text().collect::<String>().trim().parse::<i32>().ok())
+            })
             .unwrap_or(0);
         
         // Extract timestamp

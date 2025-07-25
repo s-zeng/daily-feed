@@ -1,0 +1,5 @@
+---
+source: tests/ars_comments_tests.rs
+expression: test_result
+---
+scores: [79, 71, 53, 51, 45], has_non_zero: true
