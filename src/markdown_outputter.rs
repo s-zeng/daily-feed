@@ -36,8 +36,21 @@ impl MarkdownOutputter {
         markdown.push_str(&format!("**Generated:** {}\n", document.metadata.generated_at));
         markdown.push_str(&format!("**Total Articles:** {}\n\n", document.total_articles()));
         
+        // Front page summary (if present)
+        if let Some(front_page_content) = &document.front_page {
+            markdown.push_str("## Front Page Summary\n\n");
+            markdown.push_str(front_page_content);
+            markdown.push_str("\n\n---\n\n");
+        }
+        
         // Table of contents
         markdown.push_str("## Table of Contents\n\n");
+        
+        // Add front page to TOC if it exists
+        if document.front_page.is_some() {
+            markdown.push_str("- [Front Page Summary](#front-page-summary)\n");
+        }
+        
         for feed in &document.feeds {
             markdown.push_str(&format!("- [{}](#{})\n", feed.name, self.to_anchor(&feed.name)));
             for article in &feed.articles {

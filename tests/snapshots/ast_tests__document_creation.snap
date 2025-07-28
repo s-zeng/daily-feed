@@ -9,6 +9,7 @@ expression: doc
     "description": null,
     "generated_at": "2025-01-01T00:00:00.000000Z"
   },
+  "front_page": null,
   "feeds": [
     {
       "name": "Test Feed",

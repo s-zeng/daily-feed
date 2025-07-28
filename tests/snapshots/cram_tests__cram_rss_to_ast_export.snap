@@ -1,7 +1,6 @@
 ---
 source: tests/cram_tests.rs
 expression: document
-snapshot_kind: text
 ---
 {
   "metadata": {
@@ -10,6 +9,7 @@ snapshot_kind: text
     "description": "Aggregated RSS feeds",
     "generated_at": "2025-01-01T00:00:00.000000Z"
   },
+  "front_page": null,
   "feeds": [
     {
       "name": "Cram Test Feed",

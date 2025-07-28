@@ -86,3 +86,117 @@ fn test_render_list() {
     let markdown = outputter.render_content_block_to_markdown(&block).unwrap();
     insta::assert_snapshot!(markdown);
 }
+
+#[test]
+fn test_render_document_with_front_page() {
+    let outputter = MarkdownOutputter::new();
+    
+    let article = Article {
+        title: "Test Article".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain("Article content".to_string()))],
+        metadata: ArticleMetadata {
+            published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
+            author: Some("Test Author".to_string()),
+            url: Some("https://example.com/article".to_string()),
+            feed_name: "Test Feed".to_string(),
+        },
+        comments: vec![],
+    };
+    
+    let feed = Feed {
+        name: "Test Feed".to_string(),
+        description: Some("A test feed".to_string()),
+        url: Some("https://example.com/feed".to_string()),
+        articles: vec![article],
+    };
+    
+    let document = Document {
+        metadata: DocumentMetadata {
+            title: "Test Document".to_string(),
+            author: "Test Author".to_string(),
+            description: Some("Test description".to_string()),
+            generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
+        },
+        front_page: Some("This is a front page summary with important news highlights.".to_string()),
+        feeds: vec![feed],
+    };
+    
+    let markdown = outputter.render_document_to_markdown(&document).unwrap();
+    insta::assert_snapshot!(markdown);
+}
+
+#[test]
+fn test_render_document_without_front_page() {
+    let outputter = MarkdownOutputter::new();
+    
+    let article = Article {
+        title: "Test Article".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain("Article content".to_string()))],
+        metadata: ArticleMetadata {
+            published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
+            author: Some("Test Author".to_string()),
+            url: Some("https://example.com/article".to_string()),
+            feed_name: "Test Feed".to_string(),
+        },
+        comments: vec![],
+    };
+    
+    let feed = Feed {
+        name: "Test Feed".to_string(),
+        description: Some("A test feed".to_string()),
+        url: Some("https://example.com/feed".to_string()),
+        articles: vec![article],
+    };
+    
+    let document = Document {
+        metadata: DocumentMetadata {
+            title: "Test Document".to_string(),
+            author: "Test Author".to_string(),
+            description: Some("Test description".to_string()),
+            generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
+        },
+        front_page: None,
+        feeds: vec![feed],
+    };
+    
+    let markdown = outputter.render_document_to_markdown(&document).unwrap();
+    insta::assert_snapshot!(markdown);
+}
+
+#[test]
+fn test_front_page_multiline_content() {
+    let outputter = MarkdownOutputter::new();
+    
+    let article = Article {
+        title: "Test Article".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain("Article content".to_string()))],
+        metadata: ArticleMetadata {
+            published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
+            author: Some("Test Author".to_string()),
+            url: Some("https://example.com/article".to_string()),
+            feed_name: "Test Feed".to_string(),
+        },
+        comments: vec![],
+    };
+    
+    let feed = Feed {
+        name: "Test Feed".to_string(),
+        description: Some("A test feed".to_string()),
+        url: Some("https://example.com/feed".to_string()),
+        articles: vec![article],
+    };
+    
+    let document = Document {
+        metadata: DocumentMetadata {
+            title: "Test Document".to_string(),
+            author: "Test Author".to_string(),
+            description: Some("Test description".to_string()),
+            generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
+        },
+        front_page: Some("# Breaking News\n\nMultiple important stories today:\n\n- Economic markets show volatility\n- Technology sector announces breakthrough\n- Climate summit reaches agreement".to_string()),
+        feeds: vec![feed],
+    };
+    
+    let markdown = outputter.render_document_to_markdown(&document).unwrap();
+    insta::assert_snapshot!(markdown);
+}

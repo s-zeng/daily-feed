@@ -85,6 +85,7 @@ fn create_test_document() -> Document {
             description: Some("Today's most important stories".to_string()),
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
+        front_page: None,
         feeds: vec![tech_feed, politics_feed, health_feed],
     }
 }

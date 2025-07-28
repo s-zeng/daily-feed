@@ -1,0 +1,49 @@
+---
+source: tests/markdown_outputter_tests.rs
+expression: markdown
+---
+# Test Document
+
+Test description
+
+**Author:** Test Author
+**Generated:** 2025-01-01T00:00:00.000000Z
+**Total Articles:** 1
+
+## Front Page Summary
+
+# Breaking News
+
+Multiple important stories today:
+
+- Economic markets show volatility
+- Technology sector announces breakthrough
+- Climate summit reaches agreement
+
+---
+
+## Table of Contents
+
+- [Front Page Summary](#front-page-summary)
+- [Test Feed](#test-feed)
+  - [Test Article](#test-article)
+
+---
+
+## Test Feed
+
+A test feed
+
+**Total Articles:** 1
+
+### Test Article
+
+**Published:** 2025-01-01T00:00:00.000000Z
+**Author:** Test Author
+**Source:** Test Feed
+**Link:** [Read original article](https://example.com/article)
+
+Article content
+
+
+---

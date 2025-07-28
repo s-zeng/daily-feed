@@ -17,6 +17,7 @@ impl EpubOutputter {
         self.set_metadata(document)?;
         self.add_stylesheet()?;
         self.add_title_page(document)?;
+        self.add_front_page(document)?;
         self.add_table_of_contents(document)?;
         self.add_content(document)?;
         self.write_to_file(output_filename)?;
@@ -156,6 +157,28 @@ impl EpubOutputter {
         Ok(())
     }
 
+    fn add_front_page(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
+        if let Some(front_page_content) = &document.front_page {
+            let front_page_html = format!(
+                r#"<html>
+                <head><title>Front Page Summary</title></head>
+                <body>
+                <h1>Front Page Summary</h1>
+                <div class="content">{}</div>
+                </body>
+                </html>"#,
+                front_page_content
+            );
+
+            self.builder.add_content(
+                EpubContent::new("front_page.xhtml", front_page_html.as_bytes())
+                    .title("Front Page Summary")
+                    .reftype(ReferenceType::Text),
+            )?;
+        }
+        Ok(())
+    }
+
     fn add_table_of_contents(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
         let mut toc_content = format!(
             r#"<html>
@@ -166,6 +189,14 @@ impl EpubOutputter {
             <ul>
             "#
         );
+
+        // Add front page to TOC if it exists
+        if document.front_page.is_some() {
+            toc_content.push_str(
+                r#"            <li class="feed-section"><a href="front_page.xhtml">Front Page Summary</a></li>
+            "#
+            );
+        }
 
         let mut chapter_index = 0;
         for feed in &document.feeds {

@@ -11,6 +11,7 @@ pub struct Headline {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Document {
     pub metadata: DocumentMetadata,
+    pub front_page: Option<String>,
     pub feeds: Vec<Feed>,
 }
 
@@ -94,6 +95,7 @@ impl Document {
                 description: None,
                 generated_at: chrono::Utc::now().to_rfc3339(),
             },
+            front_page: None,
             feeds: Vec::new(),
         }
     }

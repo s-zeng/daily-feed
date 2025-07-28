@@ -112,21 +112,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             match front_page_generator.generate_front_page_from_document(&document).await {
                 Ok(front_page_content) => {
-                    // Add front page as first article in first feed
-                    if let Some(first_feed) = document.feeds.first_mut() {
-                        let front_page_article = ast::Article {
-                            title: "Front Page Summary".to_string(),
-                            content: vec![ast::ContentBlock::Paragraph(ast::TextContent::plain(front_page_content))],
-                            metadata: ast::ArticleMetadata {
-                                published_date: Some(chrono::Utc::now().to_rfc3339()),
-                                author: Some("AI Assistant".to_string()),
-                                url: None,
-                                feed_name: "Front Page".to_string(),
-                            },
-                            comments: vec![],
-                        };
-                        first_feed.articles.insert(0, front_page_article);
-                    }
+                    // Add front page to document structure
+                    document.front_page = Some(front_page_content);
                     if args.verbose {
                         println!("Front page generated successfully");
                     }
