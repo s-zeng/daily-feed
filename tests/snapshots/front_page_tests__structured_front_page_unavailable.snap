@@ -1,0 +1,5 @@
+---
+source: tests/front_page_tests.rs
+expression: "\"Ollama server not available for structured front page test\""
+---
+Ollama server not available for structured front page test

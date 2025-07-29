@@ -37,10 +37,12 @@ impl MarkdownOutputter {
         markdown.push_str(&format!("**Total Articles:** {}\n\n", document.total_articles()));
         
         // Front page summary (if present)
-        if let Some(front_page_content) = &document.front_page {
+        if let Some(front_page_blocks) = &document.front_page {
             markdown.push_str("## Front Page Summary\n\n");
-            markdown.push_str(front_page_content);
-            markdown.push_str("\n\n---\n\n");
+            for block in front_page_blocks {
+                markdown.push_str(&self.render_content_block_to_markdown(block)?);
+            }
+            markdown.push_str("\n---\n\n");
         }
         
         // Table of contents

@@ -11,7 +11,7 @@ pub struct Headline {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Document {
     pub metadata: DocumentMetadata,
-    pub front_page: Option<String>,
+    pub front_page: Option<Vec<ContentBlock>>,
     pub feeds: Vec<Feed>,
 }
 
@@ -103,6 +103,10 @@ impl Document {
 
     pub fn add_feed(&mut self, feed: Feed) {
         self.feeds.push(feed);
+    }
+
+    pub fn set_front_page(&mut self, front_page: Vec<ContentBlock>) {
+        self.front_page = Some(front_page);
     }
 
     pub fn total_articles(&self) -> usize {

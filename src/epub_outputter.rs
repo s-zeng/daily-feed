@@ -158,7 +158,12 @@ impl EpubOutputter {
     }
 
     fn add_front_page(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
-        if let Some(front_page_content) = &document.front_page {
+        if let Some(front_page_blocks) = &document.front_page {
+            let mut content_html = String::new();
+            for block in front_page_blocks {
+                content_html.push_str(&self.render_content_block_to_html(block)?);
+            }
+            
             let front_page_html = format!(
                 r#"<html>
                 <head><title>Front Page Summary</title></head>
@@ -167,7 +172,7 @@ impl EpubOutputter {
                 <div class="content">{}</div>
                 </body>
                 </html>"#,
-                front_page_content
+                content_html
             );
 
             self.builder.add_content(

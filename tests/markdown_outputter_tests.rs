@@ -117,7 +117,9 @@ fn test_render_document_with_front_page() {
             description: Some("Test description".to_string()),
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
-        front_page: Some("This is a front page summary with important news highlights.".to_string()),
+        front_page: Some(vec![
+            ContentBlock::Paragraph(TextContent::plain("This is a front page summary with important news highlights.".to_string()))
+        ]),
         feeds: vec![feed],
     };
     
@@ -193,7 +195,18 @@ fn test_front_page_multiline_content() {
             description: Some("Test description".to_string()),
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
-        front_page: Some("# Breaking News\n\nMultiple important stories today:\n\n- Economic markets show volatility\n- Technology sector announces breakthrough\n- Climate summit reaches agreement".to_string()),
+        front_page: Some(vec![
+            ContentBlock::Heading { level: 1, content: TextContent::plain("Breaking News".to_string()) },
+            ContentBlock::Paragraph(TextContent::plain("Multiple important stories today:".to_string())),
+            ContentBlock::List { 
+                ordered: false, 
+                items: vec![
+                    TextContent::plain("Economic markets show volatility".to_string()),
+                    TextContent::plain("Technology sector announces breakthrough".to_string()),
+                    TextContent::plain("Climate summit reaches agreement".to_string()),
+                ]
+            }
+        ]),
         feeds: vec![feed],
     };
     

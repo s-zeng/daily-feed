@@ -1,0 +1,150 @@
+---
+source: tests/front_page_tests.rs
+expression: content_blocks
+---
+[
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "Today's World: ",
+          "formatting": {
+            "bold": true,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        },
+        {
+          "text": "Technology and global health developments dominate today's news landscape",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 2,
+      "content": {
+        "spans": [
+          {
+            "text": "Top Stories",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "List": {
+      "ordered": false,
+      "items": [
+        {
+          "spans": [
+            {
+              "text": "AI Breakthrough Announced: ",
+              "formatting": {
+                "bold": true,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Major tech company reveals revolutionary AI system with unprecedented capabilities. ",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Could affect millions of jobs across multiple industries",
+              "formatting": {
+                "bold": false,
+                "italic": true,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        },
+        {
+          "spans": [
+            {
+              "text": "Trade Agreement Opposition: ",
+              "formatting": {
+                "bold": true,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "International trade deal faces resistance from unions and environmental groups. ",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Policy decisions may impact three continents",
+              "formatting": {
+                "bold": false,
+                "italic": true,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 3,
+      "content": {
+        "spans": [
+          {
+            "text": "Looking Ahead",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "These developments reflect broader tensions between technological advancement and social stability",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  }
+]

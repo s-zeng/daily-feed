@@ -1,0 +1,181 @@
+---
+source: tests/front_page_tests.rs
+expression: front_page_blocks
+---
+[
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "Today's World: ",
+          "formatting": {
+            "bold": true,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        },
+        {
+          "text": "Significant developments in technology, trade policy, and global health are shaping the start of 2025.",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 2,
+      "content": {
+        "spans": [
+          {
+            "text": "Top Stories",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "List": {
+      "ordered": false,
+      "items": [
+        {
+          "spans": [
+            {
+              "text": "Major Tech Company Announces Revolutionary AI Breakthrough: ",
+              "formatting": {
+                "bold": true,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "A leading technology company has unveiled a new artificial intelligence system with capabilities exceeding current standards. This breakthrough could accelerate automation across various industries and raise questions about future workforce needs. ",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Affects tech industry, labor market, and potentially all sectors utilizing AI; further development and deployment are expected.",
+              "formatting": {
+                "bold": false,
+                "italic": true,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        },
+        {
+          "spans": [
+            {
+              "text": "International Trade Agreement Faces Opposition: ",
+              "formatting": {
+                "bold": true,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "A recently proposed international trade agreement is encountering resistance from several nations and advocacy groups. Concerns center around potential job losses, environmental impacts, and fair labor practices. ",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Affects international commerce, national economies, and global supply chains; negotiations are ongoing with uncertain outcome.",
+              "formatting": {
+                "bold": false,
+                "italic": true,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        },
+        {
+          "spans": [
+            {
+              "text": "Global Health Organization Issues New Guidelines: ",
+              "formatting": {
+                "bold": true,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "The Global Health Organization released updated guidelines regarding preventative measures for a widespread viral illness. The new recommendations emphasize early detection and revised treatment protocols. ",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            },
+            {
+              "text": "Affects global healthcare systems, public health initiatives, and individuals at risk of infection; implementation will vary by country.",
+              "formatting": {
+                "bold": false,
+                "italic": true,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 3,
+      "content": {
+        "spans": [
+          {
+            "text": "Looking Ahead",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "These developments reflect ongoing trends of rapid technological advancement, shifting geopolitical dynamics in trade, and the constant need to address emerging global health challenges.",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  }
+]

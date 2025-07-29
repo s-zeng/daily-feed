@@ -110,12 +110,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let front_page_generator = front_page::FrontPageGenerator::new(provider)
                 .map_err(|e| format!("Failed to create front page generator: {}", e))?;
             
-            match front_page_generator.generate_front_page_from_document(&document).await {
-                Ok(front_page_content) => {
-                    // Add front page to document structure
-                    document.front_page = Some(front_page_content);
+            match front_page_generator.generate_structured_front_page_from_document(&document).await {
+                Ok(front_page_blocks) => {
+                    // Add structured front page to document
+                    document.set_front_page(front_page_blocks);
                     if args.verbose {
-                        println!("Front page generated successfully");
+                        println!("Structured front page generated successfully");
                     }
                 }
                 Err(e) => {
