@@ -1,4 +1,5 @@
 use reqwest;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use scraper::{Html, Selector};
 use std::error::Error;
@@ -7,7 +8,8 @@ use std::error::Error;
 pub struct Comment {
     pub content: String,
     pub author: String,
-    pub score: i32,
+    pub upvotes: u32,
+    pub downvotes: u32,
     pub timestamp: Option<String>,
 }
 
@@ -54,9 +56,13 @@ pub async fn fetch_top_comments(article_url: &str, limit: usize) -> Result<Vec<C
     // Parse comments from the forum HTML
     let comments = parse_comments_from_html(&forum_document)?;
     
-    // Sort by score (descending) and take top N
+    // Sort by net score (upvotes - downvotes, descending) and take top N
     let mut sorted_comments = comments;
-    sorted_comments.sort_by(|a, b| b.score.cmp(&a.score));
+    sorted_comments.sort_by(|a, b| {
+        let a_net = a.upvotes as i32 - a.downvotes as i32;
+        let b_net = b.upvotes as i32 - b.downvotes as i32;
+        b_net.cmp(&a_net)
+    });
     sorted_comments.truncate(limit);
     
     Ok(sorted_comments)
@@ -69,8 +75,7 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
     let comment_selector = Selector::parse(".message").unwrap();
     let author_selector = Selector::parse(".username").unwrap();
     let content_selector = Selector::parse(".message-content .bbWrapper").unwrap();
-    let score_selector = Selector::parse(".reactionsBar-link").unwrap();
-    let timestamp_selector = Selector::parse("time").unwrap();
+    let timestamp_selector = Selector::parse(".message-meta time, .message-attribution time, .message-date time").unwrap();
     
     for comment_element in document.select(&comment_selector) {
         // Extract author
@@ -92,32 +97,71 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
             continue;
         }
         
-        // Extract score (reactions/likes) - try multiple selectors
-        let vote_score_selector = Selector::parse(".contentVote-score--total").unwrap();
-        let score = comment_element
-            .select(&vote_score_selector)
+        // Extract upvotes and downvotes - try multiple methods
+        let upvote_selector = Selector::parse(".contentVote-score--positive").unwrap();
+        let downvote_selector = Selector::parse(".contentVote-score--negative").unwrap();
+        let combined_selector = Selector::parse(".contentVote-scores").unwrap();
+        
+        // Try to parse upvotes from positive score element
+        let mut upvotes = comment_element
+            .select(&upvote_selector)
             .next()
-            .and_then(|el| el.text().collect::<String>().trim().parse::<i32>().ok())
-            .or_else(|| {
-                // Fallback to original selector
-                comment_element
-                    .select(&score_selector)
-                    .next()
-                    .and_then(|el| el.text().collect::<String>().trim().parse::<i32>().ok())
+            .and_then(|el| el.text().collect::<String>().trim().parse::<u32>().ok())
+            .unwrap_or(0);
+            
+        // Try to parse downvotes from negative score element
+        // Note: downvote elements contain negative numbers (e.g., "-2"), so we need to handle the sign
+        let mut downvotes = comment_element
+            .select(&downvote_selector)
+            .next()
+            .and_then(|el| {
+                let text = el.text().collect::<String>().trim().to_string();
+                // Handle negative numbers by removing the minus sign
+                if text.starts_with('-') {
+                    text[1..].parse::<u32>().ok()
+                } else {
+                    text.parse::<u32>().ok()
+                }
             })
             .unwrap_or(0);
+            
+        // Always try parsing from combined format as it may contain more accurate data
+        if let Some(combined_element) = comment_element.select(&combined_selector).next() {
+            let combined_text = combined_element.text().collect::<String>();
+            // Look for pattern like "(number/number)" with flexible whitespace, newlines, and tabs
+            // The format can be "(0\n\t\t\t\t\t/\n\t\t\t\t\t0)" or similar variations
+            if let Some(captures) = Regex::new(r"\(\s*(\d+)\s*[/\n\t\s]*(\d+)\s*\)")
+                .unwrap()
+                .captures(&combined_text) {
+                // Use the parsed values if they're higher than what we found in individual elements
+                if let (Ok(combined_upvotes), Ok(combined_downvotes)) = 
+                    (captures[1].parse::<u32>(), captures[2].parse::<u32>()) {
+                    upvotes = std::cmp::max(upvotes, combined_upvotes);
+                    downvotes = std::cmp::max(downvotes, combined_downvotes);
+                }
+            }
+        }
         
-        // Extract timestamp
+        // Extract timestamp - try specific selectors first, then fallback to any time element
         let timestamp = comment_element
             .select(&timestamp_selector)
             .next()
             .and_then(|el| el.value().attr("datetime"))
+            .or_else(|| {
+                // Fallback to any time element if specific selectors don't match
+                let fallback_selector = Selector::parse("time").unwrap();
+                comment_element
+                    .select(&fallback_selector)
+                    .next()
+                    .and_then(|el| el.value().attr("datetime"))
+            })
             .map(|s| s.to_string());
         
         comments.push(Comment {
             content,
             author,
-            score,
+            upvotes,
+            downvotes,
             timestamp,
         });
     }

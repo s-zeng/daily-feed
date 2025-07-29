@@ -310,11 +310,12 @@ impl EpubOutputter {
                 
                 comments_section.push_str(&format!(
                     r#"<div class="comment">
-                        <div class="comment-author">{}<span class="comment-score">Score: {}</span></div>
+                        <div class="comment-author">{}<span class="comment-score">↑{} ↓{}</span></div>
                         <div class="comment-content">{}</div>
                     </div>"#,
                     comment.author,
-                    comment.score,
+                    comment.upvotes,
+                    comment.downvotes,
                     comment_content
                 ));
             }

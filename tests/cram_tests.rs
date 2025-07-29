@@ -545,7 +545,8 @@ async fn cram_ast_to_markdown_comprehensive() {
                 ],
             },
         ],
-        score: 123,
+        upvotes: 150,
+        downvotes: 27,
         timestamp: Some("2025-01-01T13:30:00Z".to_string()),
     };
     article.add_comment(comment);

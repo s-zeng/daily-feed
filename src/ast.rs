@@ -51,7 +51,8 @@ pub struct ArticleMetadata {
 pub struct Comment {
     pub author: String,
     pub content: Vec<ContentBlock>,
-    pub score: i32,
+    pub upvotes: u32,
+    pub downvotes: u32,
     pub timestamp: Option<String>,
 }
 

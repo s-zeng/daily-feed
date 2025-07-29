@@ -87,7 +87,8 @@ async fn test_ast_to_epub_golden() {
                 daily_feed::ast::TextContent::plain("This is a test comment.".to_string())
             )
         ],
-        score: 42,
+        upvotes: 50,
+        downvotes: 8,
         timestamp: Some("2025-01-01T13:00:00Z".to_string()),
     };
     article.add_comment(comment);
@@ -289,7 +290,8 @@ async fn test_ast_to_markdown_golden() {
                 daily_feed::ast::TextContent::plain("This is a test comment.".to_string())
             )
         ],
-        score: 42,
+        upvotes: 50,
+        downvotes: 8,
         timestamp: Some("2025-01-01T13:00:00Z".to_string()),
     };
     article.add_comment(comment);

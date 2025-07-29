@@ -6,13 +6,15 @@ expression: comments
   {
     "content": "This is a test comment",
     "author": "testuser1",
-    "score": 5,
+    "upvotes": 8,
+    "downvotes": 3,
     "timestamp": "2025-01-01T12:00:00Z"
   },
   {
     "content": "Another test comment",
     "author": "testuser2",
-    "score": 3,
+    "upvotes": 5,
+    "downvotes": 2,
     "timestamp": "2025-01-01T13:00:00Z"
   }
 ]

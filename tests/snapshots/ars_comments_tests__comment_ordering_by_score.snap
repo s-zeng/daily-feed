@@ -1,25 +1,27 @@
 ---
 source: tests/ars_comments_tests.rs
 expression: comments
-snapshot_kind: text
 ---
 [
   {
     "content": "High score comment",
     "author": "User2",
-    "score": 10,
+    "upvotes": 15,
+    "downvotes": 5,
     "timestamp": null
   },
   {
     "content": "Medium score comment",
     "author": "User3",
-    "score": 5,
+    "upvotes": 8,
+    "downvotes": 3,
     "timestamp": null
   },
   {
     "content": "Low score comment",
     "author": "User1",
-    "score": 1,
+    "upvotes": 3,
+    "downvotes": 2,
     "timestamp": null
   }
 ]

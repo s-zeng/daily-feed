@@ -1,6 +1,5 @@
 ---
 source: tests/golden_tests.rs
 expression: markdown_features
-snapshot_kind: text
 ---
-has_h1: true, has_h2: true, has_bold: true, has_toc: true, size: 671
+has_h1: true, has_h2: true, has_bold: true, has_toc: true, size: 672

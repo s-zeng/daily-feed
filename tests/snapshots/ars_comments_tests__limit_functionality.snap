@@ -1,25 +1,27 @@
 ---
 source: tests/ars_comments_tests.rs
 expression: comments
-snapshot_kind: text
 ---
 [
   {
     "content": "6",
     "author": "U6",
-    "score": 6,
+    "upvotes": 6,
+    "downvotes": 0,
     "timestamp": null
   },
   {
     "content": "5",
     "author": "U5",
-    "score": 5,
+    "upvotes": 5,
+    "downvotes": 0,
     "timestamp": null
   },
   {
     "content": "4",
     "author": "U4",
-    "score": 4,
+    "upvotes": 4,
+    "downvotes": 0,
     "timestamp": null
   }
 ]

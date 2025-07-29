@@ -1,0 +1,20 @@
+---
+source: tests/ars_comments_tests.rs
+expression: comments
+---
+[
+  {
+    "content": "This is a real world comment structure",
+    "author": "realuser",
+    "upvotes": 0,
+    "downvotes": 0,
+    "timestamp": "2025-01-01T12:00:00Z"
+  },
+  {
+    "content": "Comment with actual votes",
+    "author": "anotheruser",
+    "upvotes": 20,
+    "downvotes": 5,
+    "timestamp": "2025-01-01T13:00:00Z"
+  }
+]

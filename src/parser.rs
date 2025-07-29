@@ -71,7 +71,8 @@ impl DocumentParser {
                             let comment = Comment {
                                 author: raw_comment.author,
                                 content: comment_content,
-                                score: raw_comment.score,
+                                upvotes: raw_comment.upvotes,
+                                downvotes: raw_comment.downvotes,
                                 timestamp: raw_comment.timestamp,
                             };
                             article.add_comment(comment);

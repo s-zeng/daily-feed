@@ -127,7 +127,7 @@ impl MarkdownOutputter {
     fn render_comment_to_markdown(&self, comment: &Comment) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
         
-        markdown.push_str(&format!("> **{}** (Score: {})\n", comment.author, comment.score));
+        markdown.push_str(&format!("> **{}** (↑{} ↓{})\n", comment.author, comment.upvotes, comment.downvotes));
         if let Some(timestamp) = &comment.timestamp {
             markdown.push_str(&format!("> *{}*\n", timestamp));
         }
