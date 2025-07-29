@@ -1,0 +1,13 @@
+---
+source: tests/ars_comments_tests.rs
+expression: comments
+---
+[
+  {
+    "content": "This is before the quote.\n            \n            \n            \n            This is after the quote text.",
+    "author": "testuser",
+    "upvotes": 5,
+    "downvotes": 1,
+    "timestamp": "2025-01-01T12:00:00Z"
+  }
+]

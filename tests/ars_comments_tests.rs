@@ -158,6 +158,30 @@ fn test_parse_comments_from_html() {
 }
 
 #[test]
+fn test_click_to_expand_filtering() {
+    let html = r#"
+    <div class="message">
+        <div class="username">testuser</div>
+        <div class="message-content">
+            <div class="bbWrapper">This is before the quote.
+            
+            Click to expand...
+            
+            This is after the quote text.</div>
+        </div>
+        <div class="contentVote-score--positive">5</div>
+        <div class="contentVote-score--negative">1</div>
+        <time datetime="2025-01-01T12:00:00Z"></time>
+    </div>
+    "#;
+    
+    let document = Html::parse_document(html);
+    let comments = parse_comments_from_html(&document).unwrap();
+    
+    insta::assert_json_snapshot!(comments);
+}
+
+#[test]
 fn test_parse_comments_with_real_world_html_structure() {
     // Test with the actual HTML structure we see in the debug output
     let html = r#"

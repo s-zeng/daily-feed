@@ -86,11 +86,14 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
             .unwrap_or_else(|| "Anonymous".to_string());
         
         // Extract content
-        let content = comment_element
+        let mut content = comment_element
             .select(&content_selector)
             .next()
             .map(|el| el.text().collect::<String>().trim().to_string())
             .unwrap_or_else(|| String::new());
+        
+        // Remove "Click to expand..." text from collapsible quotes
+        content = content.replace("Click to expand...", "").trim().to_string();
         
         // Skip empty comments
         if content.is_empty() {

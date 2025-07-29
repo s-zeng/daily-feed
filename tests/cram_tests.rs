@@ -613,7 +613,7 @@ async fn cram_ast_to_markdown_comprehensive() {
     
     // 11. Comments section
     assert!(markdown_content.contains("#### Top Comments"));
-    assert!(markdown_content.contains("> **Comprehensive Commenter** (Score: 123)"));
+    assert!(markdown_content.contains("> **Comprehensive Commenter** (↑150 ↓27)"));
     assert!(markdown_content.contains("> *2025-01-01T13:30:00Z*"));
     assert!(markdown_content.contains("> This comment has **bold text** and a [link](https://comment.example.com)"));
     assert!(markdown_content.contains("> - Comment list item 1"));
