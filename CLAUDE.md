@@ -48,7 +48,7 @@ The application processes data through several transformation phases, similar to
 
 3. **AST Transformation Phase**: Document AST ↔ JSON Serialization
    - AST can be exported to JSON format (`--export-ast` flag)
-   - AST can be loaded from JSON (via `ast-to-epub` binary)
+   - AST can be loaded from JSON (via `ast-converter` binary)
    - Enables intermediate representation persistence and debugging
 
 4. **Code Generation Phase**: Document AST → EPUB Output (`epub_outputter.rs`)
@@ -67,7 +67,7 @@ The application processes data through several transformation phases, similar to
 - `src/ast.rs`: Core AST data structures with algebraic types
 - `src/epub_outputter.rs`: AST → EPUB code generation (backend)
 - `src/ars_comments.rs`: Specialized comment extraction (domain-specific parser)
-- `src/bin/ast_to_epub.rs`: Standalone AST → EPUB converter
+- `src/bin/ast-converter.rs`: Standalone AST → EPUB/Markdown converter
 
 ### Data Flow Pipeline
 
@@ -121,8 +121,9 @@ cargo check
 # Export AST to JSON for debugging
 cargo run -- --export-ast document.json
 
-# Convert AST JSON back to EPUB
-cargo run --bin ast-to-epub -- -i document.json -o output.epub
+# Convert AST JSON to EPUB or Markdown
+cargo run --bin ast-converter -- -i document.json -o output.epub
+cargo run --bin ast-converter -- -i document.json -o output.md -f markdown
 ```
 
 ## Configuration
