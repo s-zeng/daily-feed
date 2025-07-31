@@ -1,13 +1,5 @@
 ---
 source: tests/front_page_tests.rs
-expression: normalized_output
+expression: "format!(\"Generated {} content blocks successfully\", content_blocks.len())"
 ---
-**Today's World**: Rapid advancements in artificial intelligence are poised to reshape global economies and public health strategies, while international cooperation faces increasing challenges.
-
-**Top Stories:**
-
-• **Major Tech Company Announces Revolutionary AI Breakthrough**: A leading technology firm unveiled a new artificial intelligence model demonstrating significant improvements in processing speed and accuracy, exceeding current industry standards. This development could accelerate automation across various sectors and raises questions about potential workforce displacement and ethical considerations surrounding AI deployment.
-• **International Trade Agreement Faces Opposition**: A proposed international trade agreement is encountering strong resistance from several nations, citing concerns over potential job losses and environmental impacts. The stalled negotiations threaten to disrupt global supply chains and could lead to increased tariffs, impacting businesses and consumers worldwide.
-• **Global Health Organization Issues New Guidelines on Pandemic Preparedness**: The Global Health Organization released updated guidelines emphasizing proactive surveillance and rapid response strategies for emerging infectious diseases. These recommendations follow recent outbreaks and aim to strengthen international collaboration in preventing future pandemics, though funding and implementation remain key challenges.
-
-**Looking Ahead**: The convergence of these developments – AI’s potential, trade instability, and public health concerns – suggests a period of significant global transition requiring careful management and international cooperation to mitigate risks and maximize benefits.
+Generated 15 content blocks successfully

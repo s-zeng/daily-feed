@@ -102,10 +102,13 @@ async fn test_front_page_generation_with_ollama() {
 
     // This test requires a running Ollama server with temperature 0
     // Skip if server is not available to avoid CI failures
-    if let Ok(front_page) = generator.generate_front_page_from_document(&document).await {
-        // Normalize the output for consistent snapshots by removing dynamic elements
-        let normalized_output = normalize_ai_output(&front_page);
-        assert_snapshot!("front_page_generation_ollama", normalized_output);
+    if let Ok(content_blocks) = generator.generate_structured_front_page_from_document(&document).await {
+        // Just test that we get some content blocks - the structure is tested elsewhere
+        assert!(!content_blocks.is_empty());
+        assert_snapshot!(
+            "front_page_generation_ollama", 
+            format!("Generated {} content blocks successfully", content_blocks.len())
+        );
     } else {
         // If Ollama server is not available, test the error case
         assert_snapshot!(
@@ -125,8 +128,7 @@ fn test_content_preparation() {
     let generator = FrontPageGenerator::new(provider).unwrap();
     let document = create_test_document();
 
-    let headlines = document.extract_headlines();
-    let content = generator.prepare_content(&headlines).unwrap();
+    let content = generator.prepare_content_by_source(&document).unwrap();
 
     // Normalize content by removing potential whitespace variations
     let normalized_content = normalize_markdown_content(&content);
@@ -143,29 +145,13 @@ fn test_prompt_construction() {
     let generator = FrontPageGenerator::new(provider).unwrap();
     let test_content = "Sample news content for testing prompt construction";
 
-    let prompt = generator.build_prompt(test_content);
+    let prompt = generator.build_structured_prompt_by_source(test_content);
 
     // Normalize the prompt for consistent snapshots
     let normalized_prompt = normalize_prompt_content(&prompt);
     assert_snapshot!("prompt_construction_template", normalized_prompt);
 }
 
-fn normalize_ai_output(output: &str) -> String {
-    // Remove any timestamps, URLs, or other dynamic content that might vary between runs
-    // This ensures consistent snapshot testing with AI-generated content
-    output
-        .lines()
-        .map(|line| {
-            // Remove specific URLs and replace with placeholders
-            line.replace("https://techexample.com/ai-breakthrough", "[TECH_URL]")
-                .replace("https://newsexample.com/trade-agreement", "[NEWS_URL]")
-                .replace("https://healthexample.com/guidelines", "[HEALTH_URL]")
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-        .trim()
-        .to_string()
-}
 
 fn normalize_markdown_content(content: &str) -> String {
     // Normalize markdown content for consistent snapshots
@@ -228,13 +214,13 @@ fn test_structured_prompt_construction() {
     let generator = FrontPageGenerator::new(provider).unwrap();
     let test_content = "Sample news content for structured prompt testing";
 
-    let prompt = generator.build_structured_prompt(test_content);
+    let prompt = generator.build_structured_prompt_by_source(test_content);
 
     // Check that prompt contains JSON structure request
     assert!(prompt.contains("JSON response"));
     assert!(prompt.contains("theme"));
-    assert!(prompt.contains("stories"));
-    assert!(prompt.contains("impact"));
+    assert!(prompt.contains("sources"));
+    assert!(prompt.contains("summary"));
     assert!(prompt.contains("context"));
 
     let normalized_prompt = prompt.replace(
@@ -443,7 +429,7 @@ fn test_markdown_response_parsing() {
 
 **Looking Ahead**: These developments may influence economic stability through the coming quarter"#;
 
-    let result = generator.parse_structured_response(markdown_response).unwrap();
+    let result = generator.parse_structured_response_by_source(markdown_response).unwrap();
     
     // Debug: print the parsed result to understand what was parsed
     println!("Parsed theme: '{}'", result.theme);

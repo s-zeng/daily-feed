@@ -2,17 +2,23 @@
 source: tests/front_page_tests.rs
 expression: normalized_content
 ---
-## Major Tech Company Announces Revolutionary AI Breakthrough
-**Source:** Technology News
-**Published:** 2025-01-01T00:00:00.000000Z
-**URL:** https://techexample.com/ai-breakthrough
+# Source: Technology News
+**Description:** Latest technology developments
+**URL:** https://techexample.com
 
-## International Trade Agreement Faces Opposition
-**Source:** Political News
-**Published:** 2025-01-01T00:00:00.000000Z
-**URL:** https://newsexample.com/trade-agreement
+**Articles:**
+- Major Tech Company Announces Revolutionary AI Breakthrough (2025-01-01T00:00:00.000000Z)
 
-## Global Health Organization Issues New Guidelines
-**Source:** Health News
-**Published:** 2025-01-01T00:00:00.000000Z
-**URL:** https://healthexample.com/guidelines
+# Source: Political News
+**Description:** Global political developments
+**URL:** https://newsexample.com
+
+**Articles:**
+- International Trade Agreement Faces Opposition (2025-01-01T00:00:00.000000Z)
+
+# Source: Health News
+**Description:** Health and medical news
+**URL:** https://healthexample.com
+
+**Articles:**
+- Global Health Organization Issues New Guidelines (2025-01-01T00:00:00.000000Z)

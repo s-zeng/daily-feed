@@ -2,30 +2,31 @@
 source: tests/front_page_tests.rs
 expression: normalized_prompt
 ---
-You are a senior news editor creating a structured "Front Page" summary from daily news feeds. 
+You are a senior news editor creating a structured "Front Page" summary organized by news sources. 
 
 Analyze the provided content and return a JSON response with this exact structure:
 
 {
-  "theme": "One sentence capturing the day's most significant theme or development",
-  "stories": [
+  "theme": "One sentence capturing the day's most significant theme or development across all sources",
+  "sources": [
     {
-      "title": "Clear, descriptive headline",
-      "summary": "1-2 sentences explaining what happened and why it matters",
-      "impact": "Brief note on who is affected or what comes next"
+      "name": "Source name",
+      "summary": "2-3 sentences summarizing the main themes and developments from this source",
+      "key_stories": ["Key story title 1", "Key story title 2", "Key story title 3"]
     }
   ],
-  "context": "Optional sentence connecting stories to broader trends"
+  "context": "Optional sentence connecting stories across sources to broader trends"
 }
 
 Guidelines:
-- Identify 3-5 most important stories
-- Prioritize breaking news, high impact, and controversial stories
-- Keep summaries concise but informative
+- For each source, provide a thematic summary of their coverage
+- Include 2-4 most important story titles from each source
 - Maintain neutral tone
-- Focus on stories affecting large populations or having long-term implications
+- Focus on what each source is emphasizing or covering uniquely
+- Keep source summaries concise but informative
+- The overall theme should reflect patterns across all sources
 
-Daily feed content:
+Daily feed content organized by source:
 [TEST_CONTENT_PLACEHOLDER]
 
 Return only valid JSON with the structure above.
