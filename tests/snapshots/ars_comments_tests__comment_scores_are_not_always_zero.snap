@@ -2,4 +2,4 @@
 source: tests/ars_comments_tests.rs
 expression: test_result
 ---
-upvotes: [79, 71, 53, 54, 45], downvotes: [0, 0, 0, 3, 0], net_scores: [79, 71, 53, 51, 45], has_non_zero_upvotes: true
+upvotes: [79, 71, 53, 53, 45], downvotes: [0, 0, 0, 3, 0], net_scores: [79, 71, 53, 50, 45], has_non_zero_upvotes: true

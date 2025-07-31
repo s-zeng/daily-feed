@@ -4,16 +4,20 @@ expression: result
 ---
 {
   "theme": "Technology regulation and AI advancement dominate headlines as governments impose new controls while companies push boundaries.",
-  "stories": [
+  "sources": [
     {
-      "title": "Trump Administration Restricts CDC Health Publications",
+      "name": "Health News",
       "summary": "The Trump administration is reportedly limiting the CDC's flagship health journal, raising concerns about scientific communication during public health crises.",
-      "impact": "Public health professionals and researchers may face reduced access to critical health information and guidance"
+      "key_stories": [
+        "Trump Administration Restricts CDC Health Publications"
+      ]
     },
     {
-      "title": "UK Implements Age Verification for Pornography Sites",
+      "name": "Technology Policy News",
       "summary": "Around 6,000 porn sites in the UK have begun requiring age verification, with VPNs topping download charts as users seek to bypass restrictions.",
-      "impact": "Millions of UK internet users must now provide personal ID for adult content access, raising privacy concerns"
+      "key_stories": [
+        "UK Implements Age Verification for Pornography Sites"
+      ]
     }
   ],
   "context": "These developments reflect growing tensions between technological innovation and regulatory control, with governments worldwide struggling to balance innovation with public safety and democratic values."

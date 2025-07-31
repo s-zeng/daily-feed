@@ -33,7 +33,40 @@ expression: content_blocks
       "content": {
         "spans": [
           {
-            "text": "Top Stories",
+            "text": "Technology News",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "Major tech company reveals revolutionary AI system with unprecedented capabilities that could affect millions of jobs across multiple industries.",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 3,
+      "content": {
+        "spans": [
+          {
+            "text": "Key Stories",
             "formatting": {
               "bold": false,
               "italic": false,
@@ -52,59 +85,10 @@ expression: content_blocks
         {
           "spans": [
             {
-              "text": "AI Breakthrough Announced: ",
-              "formatting": {
-                "bold": true,
-                "italic": false,
-                "code": false,
-                "link": null
-              }
-            },
-            {
-              "text": "Major tech company reveals revolutionary AI system with unprecedented capabilities. ",
+              "text": "AI Breakthrough Announced",
               "formatting": {
                 "bold": false,
                 "italic": false,
-                "code": false,
-                "link": null
-              }
-            },
-            {
-              "text": "Could affect millions of jobs across multiple industries",
-              "formatting": {
-                "bold": false,
-                "italic": true,
-                "code": false,
-                "link": null
-              }
-            }
-          ]
-        },
-        {
-          "spans": [
-            {
-              "text": "Trade Agreement Opposition: ",
-              "formatting": {
-                "bold": true,
-                "italic": false,
-                "code": false,
-                "link": null
-              }
-            },
-            {
-              "text": "International trade deal faces resistance from unions and environmental groups. ",
-              "formatting": {
-                "bold": false,
-                "italic": false,
-                "code": false,
-                "link": null
-              }
-            },
-            {
-              "text": "Policy decisions may impact three continents",
-              "formatting": {
-                "bold": false,
-                "italic": true,
                 "code": false,
                 "link": null
               }
@@ -116,7 +100,78 @@ expression: content_blocks
   },
   {
     "Heading": {
+      "level": 2,
+      "content": {
+        "spans": [
+          {
+            "text": "Political News",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "Paragraph": {
+      "spans": [
+        {
+          "text": "International trade deal faces resistance from unions and environmental groups with policy decisions that may impact three continents.",
+          "formatting": {
+            "bold": false,
+            "italic": false,
+            "code": false,
+            "link": null
+          }
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
       "level": 3,
+      "content": {
+        "spans": [
+          {
+            "text": "Key Stories",
+            "formatting": {
+              "bold": false,
+              "italic": false,
+              "code": false,
+              "link": null
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "List": {
+      "ordered": false,
+      "items": [
+        {
+          "spans": [
+            {
+              "text": "Trade Agreement Opposition",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "Heading": {
+      "level": 2,
       "content": {
         "spans": [
           {

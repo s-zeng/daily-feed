@@ -32,16 +32,17 @@ impl From<AiClientError> for FrontPageError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StructuredFrontPage {
     pub theme: String,
-    pub stories: Vec<TopStory>,
+    pub sources: Vec<SourceSummary>,
     pub context: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TopStory {
-    pub title: String,
+pub struct SourceSummary {
+    pub name: String,
     pub summary: String,
-    pub impact: String,
+    pub key_stories: Vec<String>,
 }
+
 
 pub struct FrontPageGenerator {
     ai_client: AiClient,
@@ -59,8 +60,8 @@ impl FrontPageGenerator {
     }
 
     pub async fn generate_structured_front_page_from_document(&self, document: &Document) -> Result<Vec<ContentBlock>, FrontPageError> {
-        let headlines = document.extract_headlines();
-        self.generate_structured_front_page(&headlines).await
+        let structured_data = self.generate_structured_data_by_source(document).await?;
+        Ok(self.convert_to_ast(&structured_data))
     }
 
     async fn generate_structured_data(&self, headlines: &[Headline]) -> Result<StructuredFrontPage, FrontPageError> {
@@ -69,6 +70,14 @@ impl FrontPageGenerator {
         
         let response = self.ai_client.generate_text(&prompt).await?;
         self.parse_structured_response(&response)
+    }
+
+    async fn generate_structured_data_by_source(&self, document: &Document) -> Result<StructuredFrontPage, FrontPageError> {
+        let content = self.prepare_content_by_source(document)?;
+        let prompt = self.build_structured_prompt_by_source(&content);
+        
+        let response = self.ai_client.generate_text(&prompt).await?;
+        self.parse_structured_response_by_source(&response)
     }
 
     pub fn convert_to_ast(&self, front_page: &StructuredFrontPage) -> Vec<ContentBlock> {
@@ -83,36 +92,39 @@ impl FrontPageGenerator {
             TextSpan::plain(front_page.theme.clone()),
         ])));
 
-        // Add heading for top stories
-        blocks.push(ContentBlock::Heading {
-            level: 2,
-            content: TextContent::plain("Top Stories".to_string()),
-        });
+        // Add each source summary
+        for source in &front_page.sources {
+            // Add source heading
+            blocks.push(ContentBlock::Heading {
+                level: 2,
+                content: TextContent::plain(source.name.clone()),
+            });
 
-        // Add each story as a list item with structured content
-        let story_items: Vec<TextContent> = front_page.stories.iter().map(|story| {
-            TextContent::from_spans(vec![
-                TextSpan {
-                    text: format!("{}: ", story.title),
-                    formatting: TextFormatting { bold: true, ..Default::default() },
-                },
-                TextSpan::plain(format!("{} ", story.summary)),
-                TextSpan {
-                    text: story.impact.clone(),
-                    formatting: TextFormatting { italic: true, ..Default::default() },
-                },
-            ])
-        }).collect();
+            // Add source summary
+            blocks.push(ContentBlock::Paragraph(TextContent::plain(source.summary.clone())));
 
-        blocks.push(ContentBlock::List {
-            ordered: false,
-            items: story_items,
-        });
+            // Add key stories if present
+            if !source.key_stories.is_empty() {
+                blocks.push(ContentBlock::Heading {
+                    level: 3,
+                    content: TextContent::plain("Key Stories".to_string()),
+                });
+
+                let story_items: Vec<TextContent> = source.key_stories.iter()
+                    .map(|story| TextContent::plain(story.clone()))
+                    .collect();
+
+                blocks.push(ContentBlock::List {
+                    ordered: false,
+                    items: story_items,
+                });
+            }
+        }
 
         // Add context if present
         if let Some(context) = &front_page.context {
             blocks.push(ContentBlock::Heading {
-                level: 3,
+                level: 2,
                 content: TextContent::plain("Looking Ahead".to_string()),
             });
             blocks.push(ContentBlock::Paragraph(TextContent::plain(context.clone())));
@@ -202,14 +214,37 @@ impl FrontPageGenerator {
         response.to_string()
     }
 
-    fn parse_markdown_response(&self, response: &str) -> Result<StructuredFrontPage, FrontPageError> {
+    fn parse_markdown_response(&self, _response: &str) -> Result<StructuredFrontPage, FrontPageError> {
+        // This is a legacy method that returns an empty sources structure
+        // since the old format is no longer supported in the new per-source approach
+        Ok(StructuredFrontPage {
+            theme: "Multiple developing stories shape today's landscape".to_string(),
+            sources: Vec::new(),
+            context: None,
+        })
+    }
+
+    pub fn parse_structured_response_by_source(&self, response: &str) -> Result<StructuredFrontPage, FrontPageError> {
+        // First, try to extract JSON from markdown code blocks
+        let json_content = self.extract_json_from_response(response);
+        
+        // Try to parse as JSON first
+        if let Ok(structured) = serde_json::from_str::<StructuredFrontPage>(&json_content) {
+            return Ok(structured);
+        }
+
+        // If JSON parsing fails, try to extract structured data from markdown-like format
+        self.parse_markdown_response_by_source(response)
+    }
+
+    fn parse_markdown_response_by_source(&self, response: &str) -> Result<StructuredFrontPage, FrontPageError> {
         let lines: Vec<&str> = response.lines().collect();
         let mut theme = String::new();
-        let mut stories = Vec::new();
+        let mut sources = Vec::new();
         let mut context = None;
         
         let mut current_section = "theme";
-        let mut current_story: Option<TopStory> = None;
+        let mut current_source: Option<SourceSummary> = None;
         
         for line in lines {
             let line = line.trim();
@@ -233,10 +268,30 @@ impl FrontPageGenerator {
                     theme = clean_line;
                 }
                 continue;
-            } else if line.contains("Top Stories") || line.contains("**Top Stories**") {
-                current_section = "stories";
+            } else if line.starts_with("##") || line.contains("**") && !line.contains("Looking Ahead") {
+                // This might be a source name
+                if let Some(source) = current_source.take() {
+                    sources.push(source);
+                }
+                
+                let source_name = line
+                    .replace("##", "")
+                    .replace("**", "")
+                    .replace(":", "")
+                    .trim()
+                    .to_string();
+                
+                current_source = Some(SourceSummary {
+                    name: source_name,
+                    summary: String::new(),
+                    key_stories: Vec::new(),
+                });
+                current_section = "source";
                 continue;
             } else if line.contains("Looking Ahead") || line.contains("**Looking Ahead**") {
+                if let Some(source) = current_source.take() {
+                    sources.push(source);
+                }
                 current_section = "context";
                 continue;
             }
@@ -257,35 +312,19 @@ impl FrontPageGenerator {
                         theme.push_str(&clean_line);
                     }
                 }
-                "stories" => {
-                    if line.starts_with("• **") || line.starts_with("- **") || line.starts_with("* **") {
-                        // Save previous story if exists
-                        if let Some(story) = current_story.take() {
-                            stories.push(story);
-                        }
-                        
-                        // Extract title from bullet point
-                        let without_bullet = line.trim_start_matches(&['•', '-', '*', ' '][..]).trim();
-                        // Look for pattern: **Title**: content
-                        if let Some(first_star) = without_bullet.find("**") {
-                            let after_first_star = &without_bullet[first_star + 2..];
-                            if let Some(title_end) = after_first_star.find("**:") {
-                                let title = after_first_star[..title_end].to_string();
-                                let rest = after_first_star[title_end + 3..].trim().to_string();
-                            
-                                current_story = Some(TopStory {
-                                    title,
-                                    summary: rest,
-                                    impact: String::new(),
-                                });
+                "source" => {
+                    if let Some(ref mut source) = current_source {
+                        if line.starts_with("• ") || line.starts_with("- ") || line.starts_with("* ") {
+                            // This is a key story
+                            let story = line.trim_start_matches(&['•', '-', '*', ' '][..]).trim().to_string();
+                            source.key_stories.push(story);
+                        } else {
+                            // This is part of the summary
+                            if !source.summary.is_empty() {
+                                source.summary.push(' ');
                             }
+                            source.summary.push_str(line);
                         }
-                    } else if let Some(ref mut story) = current_story {
-                        // Continue building the story content
-                        if !story.summary.is_empty() {
-                            story.summary.push(' ');
-                        }
-                        story.summary.push_str(line);
                     }
                 }
                 "context" => {
@@ -303,12 +342,12 @@ impl FrontPageGenerator {
             }
         }
         
-        // Save the last story
-        if let Some(story) = current_story {
-            stories.push(story);
+        // Save the last source
+        if let Some(source) = current_source {
+            sources.push(source);
         }
         
-        if theme.is_empty() && stories.is_empty() {
+        if theme.is_empty() && sources.is_empty() {
             return Err(FrontPageError::ParseError(
                 "Could not parse structured front page from AI response".to_string()
             ));
@@ -316,7 +355,7 @@ impl FrontPageGenerator {
         
         Ok(StructuredFrontPage {
             theme: if theme.is_empty() { "Multiple developing stories shape today's landscape".to_string() } else { theme },
-            stories,
+            sources,
             context,
         })
     }
@@ -354,6 +393,40 @@ Return only valid JSON with the structure above."#,
         )
     }
 
+    pub fn build_structured_prompt_by_source(&self, content: &str) -> String {
+        format!(
+            r#"You are a senior news editor creating a structured "Front Page" summary organized by news sources. 
+
+Analyze the provided content and return a JSON response with this exact structure:
+
+{{
+  "theme": "One sentence capturing the day's most significant theme or development across all sources",
+  "sources": [
+    {{
+      "name": "Source name",
+      "summary": "2-3 sentences summarizing the main themes and developments from this source",
+      "key_stories": ["Key story title 1", "Key story title 2", "Key story title 3"]
+    }}
+  ],
+  "context": "Optional sentence connecting stories across sources to broader trends"
+}}
+
+Guidelines:
+- For each source, provide a thematic summary of their coverage
+- Include 2-4 most important story titles from each source
+- Maintain neutral tone
+- Focus on what each source is emphasizing or covering uniquely
+- Keep source summaries concise but informative
+- The overall theme should reflect patterns across all sources
+
+Daily feed content organized by source:
+{}
+
+Return only valid JSON with the structure above."#,
+            content
+        )
+    }
+
     pub async fn generate_front_page(&self, headlines: &[Headline]) -> Result<String, FrontPageError> {
         let content = self.prepare_content(headlines)?;
         let prompt = self.build_prompt(&content);
@@ -380,6 +453,38 @@ Return only valid JSON with the structure above."#,
             
             if let Some(url) = &headline.url {
                 content.push_str(&format!("**URL:** {}\n", url));
+            }
+            
+            content.push_str("\n");
+        }
+        
+        Ok(content)
+    }
+
+    pub fn prepare_content_by_source(&self, document: &Document) -> Result<String, FrontPageError> {
+        let mut content = String::new();
+        
+        for feed in &document.feeds {
+            content.push_str(&format!("# Source: {}\n", feed.name));
+            
+            if let Some(description) = &feed.description {
+                content.push_str(&format!("**Description:** {}\n", description));
+            }
+            
+            if let Some(url) = &feed.url {
+                content.push_str(&format!("**URL:** {}\n", url));
+            }
+            
+            content.push_str("\n**Articles:**\n");
+            
+            for article in &feed.articles {
+                content.push_str(&format!("- {}", article.title));
+                
+                if let Some(date) = &article.metadata.published_date {
+                    content.push_str(&format!(" ({})", date));
+                }
+                
+                content.push_str("\n");
             }
             
             content.push_str("\n");

@@ -4,16 +4,20 @@ expression: result
 ---
 {
   "theme": "Global tensions rise amid technological breakthroughs",
-  "stories": [
+  "sources": [
     {
-      "title": "Tech Innovation Surge",
-      "summary": "Multiple companies unveil groundbreaking technologies this week.",
-      "impact": "Market disruption expected across sectors"
+      "name": "Technology News",
+      "summary": "Multiple companies unveil groundbreaking technologies this week with market disruption expected across sectors.",
+      "key_stories": [
+        "Tech Innovation Surge"
+      ]
     },
     {
-      "title": "Climate Policy Changes",
-      "summary": "New international agreements target emissions reduction.",
-      "impact": "Industries must adapt within two years"
+      "name": "Climate News",
+      "summary": "New international agreements target emissions reduction with industries adapting within two years.",
+      "key_stories": [
+        "Climate Policy Changes"
+      ]
     }
   ],
   "context": "These changes signal a shift toward sustainable technology adoption"
