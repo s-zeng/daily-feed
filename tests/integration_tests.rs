@@ -28,9 +28,10 @@ fn test_cli_with_config_file() {
     fs::write(&config_path, config_json).unwrap();
 
     let loaded_config = Config::load_from_file(config_path.to_str().unwrap()).unwrap();
-    
+
     // Create deterministic snapshot by removing temp path
-    let config_summary = format!("feeds: {}, title: {}, author: {}, format: {:?}",
+    let config_summary = format!(
+        "feeds: {}, title: {}, author: {}, format: {:?}",
         loaded_config.feeds.len(),
         loaded_config.output.title,
         loaded_config.output.author,
@@ -105,10 +106,16 @@ fn test_full_workflow_with_local_feeds_success() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
         document_to_epub(&document, &config.output.filename).await
     });
-    
+
     insta::assert_debug_snapshot!(result);
 }
 
@@ -118,13 +125,11 @@ fn test_full_workflow_creates_epub_file() {
     let epub_path = temp_dir.path().join("workflow_test.epub");
 
     let config = Config {
-        feeds: vec![
-            Feed {
-                name: "Sample Feed".to_string(),
-                url: "https://sample.example.com/feed.xml".to_string(),
-                description: "Sample RSS feed".to_string(),
-            },
-        ],
+        feeds: vec![Feed {
+            name: "Sample Feed".to_string(),
+            url: "https://sample.example.com/feed.xml".to_string(),
+            description: "Sample RSS feed".to_string(),
+        }],
         output: OutputConfig {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Workflow Test EPUB".to_string(),
@@ -142,10 +147,18 @@ fn test_full_workflow_creates_epub_file() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
-        document_to_epub(&document, &config.output.filename).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
+        document_to_epub(&document, &config.output.filename)
+            .await
+            .unwrap();
     });
-    
+
     let file_exists = epub_path.exists();
     insta::assert_snapshot!(file_exists.to_string());
 }
@@ -156,13 +169,11 @@ fn test_full_workflow_epub_size() {
     let epub_path = temp_dir.path().join("workflow_test.epub");
 
     let config = Config {
-        feeds: vec![
-            Feed {
-                name: "Sample Feed".to_string(),
-                url: "https://sample.example.com/feed.xml".to_string(),
-                description: "Sample RSS feed".to_string(),
-            },
-        ],
+        feeds: vec![Feed {
+            name: "Sample Feed".to_string(),
+            url: "https://sample.example.com/feed.xml".to_string(),
+            description: "Sample RSS feed".to_string(),
+        }],
         output: OutputConfig {
             filename: epub_path.to_str().unwrap().to_string(),
             title: "Workflow Test EPUB".to_string(),
@@ -180,17 +191,29 @@ fn test_full_workflow_epub_size() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
-        document_to_epub(&document, &config.output.filename).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
+        document_to_epub(&document, &config.output.filename)
+            .await
+            .unwrap();
     });
-    
+
     let file_size_valid = if epub_path.exists() {
         let size = fs::metadata(&epub_path).unwrap().len();
         size > 3000 && size < 10000
     } else {
         false
     };
-    insta::assert_snapshot!(format!("file_exists: {}, file_size_valid: {}", epub_path.exists(), file_size_valid));
+    insta::assert_snapshot!(format!(
+        "file_exists: {}, file_size_valid: {}",
+        epub_path.exists(),
+        file_size_valid
+    ));
 }
 
 #[test]
@@ -221,18 +244,29 @@ fn test_workflow_with_empty_feeds() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
         document_to_epub(&document, &config.output.filename).await
     });
-    
+
     let file_size_valid = if epub_path.exists() {
         let size = fs::metadata(&epub_path).unwrap().len();
         size > 1000 && size < 10000
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), epub_path.exists(), file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        epub_path.exists(),
+        file_size_valid
+    ));
 }
 
 #[test]
@@ -255,18 +289,29 @@ fn test_workflow_with_no_feeds() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
         document_to_epub(&document, &config.output.filename).await
     });
-    
+
     let file_size_valid = if epub_path.exists() {
         let size = fs::metadata(&epub_path).unwrap().len();
         size > 1000 && size < 10000
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), epub_path.exists(), file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        epub_path.exists(),
+        file_size_valid
+    ));
 }
 
 #[test]
@@ -295,7 +340,7 @@ fn test_config_serialization_roundtrip() {
 
     let json = serde_json::to_string_pretty(&original_config).unwrap();
     let deserialized_config: Config = serde_json::from_str(&json).unwrap();
-    
+
     insta::assert_json_snapshot!(deserialized_config);
 }
 
@@ -304,7 +349,7 @@ fn test_rss_parsing_channel_title() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let title = channel.title();
     insta::assert_snapshot!(title);
 }
@@ -314,7 +359,7 @@ fn test_rss_parsing_items_count() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let items_count = channel.items().len();
     insta::assert_snapshot!(items_count.to_string());
 }
@@ -324,7 +369,7 @@ fn test_rss_parsing_html_entities() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let first_item = &channel.items()[0];
     let description = first_item.description().unwrap();
     let contains_amp = description.contains("&amp;");
@@ -359,16 +404,27 @@ fn test_epub_generation_with_html_content() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+        let document = channels_to_document(
+            &channels,
+            config.output.title.clone(),
+            config.output.author.clone(),
+        )
+        .await
+        .unwrap();
         document_to_epub(&document, &config.output.filename).await
     });
-    
+
     let file_size_valid = if epub_path.exists() {
         let size = fs::metadata(&epub_path).unwrap().len();
         size > 3000 && size < 10000
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), epub_path.exists(), file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        epub_path.exists(),
+        file_size_valid
+    ));
 }

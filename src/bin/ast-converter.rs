@@ -21,13 +21,17 @@ impl From<OutputFormatArg> for OutputFormat {
 }
 
 #[derive(Parser, Debug)]
-#[clap(author = "Simon Zeng", version, about = "Convert AST JSON to output format")]
+#[clap(
+    author = "Simon Zeng",
+    version,
+    about = "Convert AST JSON to output format"
+)]
 struct Args {
     /// Path to AST JSON file
     #[arg(short = 'i', long = "input")]
     input: String,
 
-    /// Output filename 
+    /// Output filename
     #[arg(short = 'o', long = "output")]
     output: String,
 
@@ -44,9 +48,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let json_content = std::fs::read_to_string(&args.input)?;
     let document: Document = serde_json::from_str(&json_content)?;
 
-    println!("Loaded document: {} with {} feeds", 
-             document.metadata.title, 
-             document.feeds.len());
+    println!(
+        "Loaded document: {} with {} feeds",
+        document.metadata.title,
+        document.feeds.len()
+    );
 
     // Generate output from AST
     let format: OutputFormat = args.format.into();

@@ -2,8 +2,8 @@ use daily_feed::ai_client::AiProvider;
 use daily_feed::ast::{
     Article, ArticleMetadata, ContentBlock, Document, DocumentMetadata, Feed, TextContent,
 };
-use daily_feed::front_page::{FrontPageGenerator, StructuredFrontPage, SourceSummary};
-use insta::{assert_snapshot, assert_json_snapshot};
+use daily_feed::front_page::{FrontPageGenerator, SourceSummary, StructuredFrontPage};
+use insta::{assert_json_snapshot, assert_snapshot};
 
 fn create_test_document() -> Document {
     let breaking_article = Article {
@@ -102,12 +102,18 @@ async fn test_front_page_generation_with_ollama() {
 
     // This test requires a running Ollama server with temperature 0
     // Skip if server is not available to avoid CI failures
-    if let Ok(content_blocks) = generator.generate_structured_front_page_from_document(&document).await {
+    if let Ok(content_blocks) = generator
+        .generate_structured_front_page_from_document(&document)
+        .await
+    {
         // Just test that we get some content blocks - the structure is tested elsewhere
         assert!(!content_blocks.is_empty());
         assert_snapshot!(
-            "front_page_generation_ollama", 
-            format!("Generated {} content blocks successfully", content_blocks.len())
+            "front_page_generation_ollama",
+            format!(
+                "Generated {} content blocks successfully",
+                content_blocks.len()
+            )
         );
     } else {
         // If Ollama server is not available, test the error case
@@ -152,7 +158,6 @@ fn test_prompt_construction() {
     assert_snapshot!("prompt_construction_template", normalized_prompt);
 }
 
-
 fn normalize_markdown_content(content: &str) -> String {
     // Normalize markdown content for consistent snapshots
     content
@@ -183,17 +188,29 @@ async fn test_structured_front_page_generation() {
     let document = create_test_document();
 
     // This test requires a running Ollama server - skip if not available
-    if let Ok(front_page_blocks) = generator.generate_structured_front_page_from_document(&document).await {
+    if let Ok(front_page_blocks) = generator
+        .generate_structured_front_page_from_document(&document)
+        .await
+    {
         // Test that we get proper ContentBlock structure
         assert!(!front_page_blocks.is_empty());
-        
+
         // Check structure contains expected elements
-        let has_paragraph = front_page_blocks.iter().any(|block| matches!(block, ContentBlock::Paragraph(_)));
-        let has_heading = front_page_blocks.iter().any(|block| matches!(block, ContentBlock::Heading { .. }));
-        let has_list = front_page_blocks.iter().any(|block| matches!(block, ContentBlock::List { .. }));
-        
-        assert!(has_paragraph || has_heading || has_list, "Should have at least one content block type");
-        
+        let has_paragraph = front_page_blocks
+            .iter()
+            .any(|block| matches!(block, ContentBlock::Paragraph(_)));
+        let has_heading = front_page_blocks
+            .iter()
+            .any(|block| matches!(block, ContentBlock::Heading { .. }));
+        let has_list = front_page_blocks
+            .iter()
+            .any(|block| matches!(block, ContentBlock::List { .. }));
+
+        assert!(
+            has_paragraph || has_heading || has_list,
+            "Should have at least one content block type"
+        );
+
         assert_json_snapshot!("structured_front_page_blocks", front_page_blocks);
     } else {
         // Test graceful handling when Ollama is unavailable
@@ -238,7 +255,7 @@ fn test_ast_conversion() {
     };
 
     let generator = FrontPageGenerator::new(provider).unwrap();
-    
+
     let test_front_page = StructuredFrontPage {
         theme: "Technology and global health developments dominate today's news landscape".to_string(),
         sources: vec![
@@ -257,14 +274,14 @@ fn test_ast_conversion() {
     };
 
     let content_blocks = generator.convert_to_ast(&test_front_page);
-    
+
     // Verify structure
     assert!(!content_blocks.is_empty());
-    
+
     // Should have: theme paragraph, 2 sources (each with heading, summary, key stories heading, list), context heading, context paragraph
     // = 1 + 2 * 4 + 2 = 11 blocks
     assert_eq!(content_blocks.len(), 11);
-    
+
     // Check first block is theme paragraph
     match &content_blocks[0] {
         ContentBlock::Paragraph(content) => {
@@ -274,22 +291,27 @@ fn test_ast_conversion() {
         }
         _ => panic!("First block should be a paragraph with theme"),
     }
-    
+
     // Check we have headings for each source
     assert!(content_blocks.iter().any(|block| matches!(
-        block, 
+        block,
         ContentBlock::Heading { level: 2, content } if content.to_plain_text() == "Technology News"
     )));
     assert!(content_blocks.iter().any(|block| matches!(
-        block, 
+        block,
         ContentBlock::Heading { level: 2, content } if content.to_plain_text() == "Political News"
     )));
-    
+
     // Check we have lists with stories (one per source)
-    let story_lists: Vec<_> = content_blocks.iter().filter(|block| matches!(
-        block,
-        ContentBlock::List { ordered: false, items } if !items.is_empty()
-    )).collect();
+    let story_lists: Vec<_> = content_blocks
+        .iter()
+        .filter(|block| {
+            matches!(
+                block,
+                ContentBlock::List { ordered: false, items } if !items.is_empty()
+            )
+        })
+        .collect();
     assert_eq!(story_lists.len(), 2); // One list per source
 
     assert_json_snapshot!("ast_conversion_result", content_blocks);
@@ -303,7 +325,7 @@ fn test_json_response_parsing() {
     };
 
     let generator = FrontPageGenerator::new(provider).unwrap();
-    
+
     let json_response = r#"{
         "theme": "Global tensions rise amid technological breakthroughs",
         "sources": [
@@ -321,13 +343,21 @@ fn test_json_response_parsing() {
         "context": "These changes signal a shift toward sustainable technology adoption"
     }"#;
 
-    let result = generator.parse_structured_response_by_source(json_response).unwrap();
-    
-    assert_eq!(result.theme, "Global tensions rise amid technological breakthroughs");
+    let result = generator
+        .parse_structured_response_by_source(json_response)
+        .unwrap();
+
+    assert_eq!(
+        result.theme,
+        "Global tensions rise amid technological breakthroughs"
+    );
     assert_eq!(result.sources.len(), 2);
     assert_eq!(result.sources[0].name, "Technology News");
     assert_eq!(result.sources[1].key_stories[0], "Climate Policy Changes");
-    assert_eq!(result.context, Some("These changes signal a shift toward sustainable technology adoption".to_string()));
+    assert_eq!(
+        result.context,
+        Some("These changes signal a shift toward sustainable technology adoption".to_string())
+    );
 
     assert_json_snapshot!("json_parsing_result", result);
 }
@@ -340,7 +370,7 @@ fn test_json_extraction_from_markdown_code_blocks() {
     };
 
     let generator = FrontPageGenerator::new(provider).unwrap();
-    
+
     // Test the actual problematic format from test-ast.json
     let wrapped_json_response = r#"```json
 {
@@ -361,13 +391,22 @@ fn test_json_extraction_from_markdown_code_blocks() {
 }
 ```"#;
 
-    let result = generator.parse_structured_response_by_source(wrapped_json_response).unwrap();
-    
+    let result = generator
+        .parse_structured_response_by_source(wrapped_json_response)
+        .unwrap();
+
     assert!(result.theme.contains("Technology regulation"));
     assert_eq!(result.sources.len(), 2);
-    assert_eq!(result.sources[0].key_stories[0], "Trump Administration Restricts CDC Health Publications");
+    assert_eq!(
+        result.sources[0].key_stories[0],
+        "Trump Administration Restricts CDC Health Publications"
+    );
     assert!(result.context.is_some());
-    assert!(result.context.as_ref().unwrap().contains("technological innovation"));
+    assert!(result
+        .context
+        .as_ref()
+        .unwrap()
+        .contains("technological innovation"));
 
     assert_json_snapshot!("wrapped_json_parsing_result", result);
 }
@@ -380,23 +419,29 @@ fn test_json_extraction_methods() {
     };
 
     let generator = FrontPageGenerator::new(provider).unwrap();
-    
+
     // Test markdown code block extraction
     let markdown_wrapped = r#"```json
 {"theme": "test theme", "stories": [], "context": null}
 ```"#;
-    
+
     let extracted = generator.extract_json_from_response(markdown_wrapped);
-    assert_eq!(extracted.trim(), r#"{"theme": "test theme", "stories": [], "context": null}"#);
-    
+    assert_eq!(
+        extracted.trim(),
+        r#"{"theme": "test theme", "stories": [], "context": null}"#
+    );
+
     // Test generic code block extraction
     let generic_wrapped = r#"```
 {"theme": "another test", "stories": [], "context": null}
 ```"#;
-    
+
     let extracted2 = generator.extract_json_from_response(generic_wrapped);
-    assert_eq!(extracted2.trim(), r#"{"theme": "another test", "stories": [], "context": null}"#);
-    
+    assert_eq!(
+        extracted2.trim(),
+        r#"{"theme": "another test", "stories": [], "context": null}"#
+    );
+
     // Test standalone JSON extraction
     let standalone = r#"Here is the JSON:
 {
@@ -405,7 +450,7 @@ fn test_json_extraction_methods() {
   "context": null
 }
 That's the response."#;
-    
+
     let extracted3 = generator.extract_json_from_response(standalone);
     assert!(extracted3.contains("standalone test"));
 }
@@ -419,7 +464,7 @@ fn test_markdown_response_parsing() {
     };
 
     let generator = FrontPageGenerator::new(provider).unwrap();
-    
+
     let markdown_response = r#"**Today's World**: Economic uncertainty shapes global markets as policy changes unfold.
 
 **Top Stories:**
@@ -429,20 +474,32 @@ fn test_markdown_response_parsing() {
 
 **Looking Ahead**: These developments may influence economic stability through the coming quarter"#;
 
-    let result = generator.parse_structured_response_by_source(markdown_response).unwrap();
-    
+    let result = generator
+        .parse_structured_response_by_source(markdown_response)
+        .unwrap();
+
     // Debug: print the parsed result to understand what was parsed
     println!("Parsed theme: '{}'", result.theme);
     println!("Number of sources: {}", result.sources.len());
     for (i, source) in result.sources.iter().enumerate() {
         println!("Source {}: '{}'", i, source.name);
     }
-    
+
     // The parser will extract the first line after the colon, so adjust the assertion
-    assert!(result.theme.contains("Economic uncertainty") || result.theme.contains("economic") || result.theme.contains("Multiple developing"));
+    assert!(
+        result.theme.contains("Economic uncertainty")
+            || result.theme.contains("economic")
+            || result.theme.contains("Multiple developing")
+    );
     assert_eq!(result.sources.len(), 0); // Legacy parser returns empty sources
-    assert!(result.context.is_none() || result.context.as_ref().unwrap().contains("economic stability"));
+    assert!(
+        result.context.is_none()
+            || result
+                .context
+                .as_ref()
+                .unwrap()
+                .contains("economic stability")
+    );
 
     assert_json_snapshot!("markdown_parsing_result", result);
 }
-

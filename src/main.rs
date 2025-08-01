@@ -1,13 +1,13 @@
 use clap::{Parser, ValueEnum};
+mod ai_client;
+mod ars_comments;
 mod ast;
 mod config;
-mod fetch;
-mod ars_comments;
-mod parser;
 mod epub_outputter;
-mod markdown_outputter;
-mod ai_client;
+mod fetch;
 mod front_page;
+mod markdown_outputter;
+mod parser;
 
 #[derive(Debug, Clone, ValueEnum)]
 enum OutputFormatArg {
@@ -88,29 +88,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &channels,
         config.output.title.clone(),
         config.output.author.clone(),
-    ).await?;
+    )
+    .await?;
 
     if args.verbose {
-        println!("Parsed {} feeds with {} total articles", 
-                 document.feeds.len(), 
-                 document.total_articles());
+        println!(
+            "Parsed {} feeds with {} total articles",
+            document.feeds.len(),
+            document.total_articles()
+        );
     }
 
     // Generate front page if enabled (via CLI flag or config)
-    let enable_front_page = args.front_page || 
-        config.front_page.as_ref().map_or(false, |fp| fp.enabled);
-    
+    let enable_front_page =
+        args.front_page || config.front_page.as_ref().map_or(false, |fp| fp.enabled);
+
     if enable_front_page {
         if let Some(front_page_config) = &config.front_page {
             if args.verbose {
                 println!("Generating front page...");
             }
-            
+
             let provider = front_page_config.provider.clone().into();
             let front_page_generator = front_page::FrontPageGenerator::new(provider)
                 .map_err(|e| format!("Failed to create front page generator: {}", e))?;
-            
-            match front_page_generator.generate_structured_front_page_from_document(&document).await {
+
+            match front_page_generator
+                .generate_structured_front_page_from_document(&document)
+                .await
+            {
                 Ok(front_page_blocks) => {
                     // Add structured front page to document
                     document.set_front_page(front_page_blocks);
@@ -135,14 +141,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         // Generate output from AST
         // Adjust filename extension based on format if not explicitly set
-        let output_filename = if config.output.filename.ends_with(".epub") && matches!(config.output.format, config::OutputFormat::Markdown) {
+        let output_filename = if config.output.filename.ends_with(".epub")
+            && matches!(config.output.format, config::OutputFormat::Markdown)
+        {
             config.output.filename.replace(".epub", ".md")
-        } else if config.output.filename.ends_with(".md") && matches!(config.output.format, config::OutputFormat::Epub) {
+        } else if config.output.filename.ends_with(".md")
+            && matches!(config.output.format, config::OutputFormat::Epub)
+        {
             config.output.filename.replace(".md", ".epub")
         } else {
             config.output.filename.clone()
         };
-        
+
         fetch::document_to_output(&document, &output_filename, &config.output.format).await?;
         let format_name = match config.output.format {
             config::OutputFormat::Epub => "EPUB",

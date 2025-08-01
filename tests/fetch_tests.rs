@@ -8,7 +8,7 @@ async fn test_feed_from_file_title() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     insta::assert_snapshot!(channel.title());
 }
 
@@ -17,7 +17,7 @@ async fn test_feed_from_file_description() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     insta::assert_snapshot!(channel.description());
 }
 
@@ -26,7 +26,7 @@ async fn test_feed_from_file_link() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     insta::assert_snapshot!(channel.link());
 }
 
@@ -35,7 +35,7 @@ async fn test_feed_from_file_items_count() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     insta::assert_snapshot!(channel.items().len().to_string());
 }
 
@@ -44,12 +44,16 @@ async fn test_feed_from_file_first_item() {
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
     let rss_content = fs::read_to_string(sample_rss_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let first_item = &channel.items()[0];
-    let item_info = format!("title: {:?}, link: {:?}, desc_contains_test: {}", 
-        first_item.title(), 
-        first_item.link(), 
-        first_item.description().unwrap_or("").contains("test article")
+    let item_info = format!(
+        "title: {:?}, link: {:?}, desc_contains_test: {}",
+        first_item.title(),
+        first_item.link(),
+        first_item
+            .description()
+            .unwrap_or("")
+            .contains("test article")
     );
     insta::assert_snapshot!(item_info);
 }
@@ -59,10 +63,11 @@ async fn test_tech_news_feed_metadata() {
     let tech_news_path = "tests/fixtures/tech_news.xml";
     let rss_content = fs::read_to_string(tech_news_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
-    let metadata = format!("title: {}, desc: {}, items: {}", 
-        channel.title(), 
-        channel.description(), 
+
+    let metadata = format!(
+        "title: {}, desc: {}, items: {}",
+        channel.title(),
+        channel.description(),
         channel.items().len()
     );
     insta::assert_snapshot!(metadata);
@@ -73,7 +78,7 @@ async fn test_tech_news_feed_item_titles() {
     let tech_news_path = "tests/fixtures/tech_news.xml";
     let rss_content = fs::read_to_string(tech_news_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let items = channel.items();
     let titles: Vec<_> = items.iter().map(|i| i.title().unwrap_or("")).collect();
     insta::assert_json_snapshot!(titles);
@@ -84,10 +89,11 @@ async fn test_tech_news_feed_html_preservation() {
     let tech_news_path = "tests/fixtures/tech_news.xml";
     let rss_content = fs::read_to_string(tech_news_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
+
     let items = channel.items();
     let description = items[2].description().unwrap_or("");
-    let html_check = format!("contains_ul: {}, contains_li: {}", 
+    let html_check = format!(
+        "contains_ul: {}, contains_li: {}",
         description.contains("<ul>"),
         description.contains("<li>")
     );
@@ -99,10 +105,11 @@ async fn test_empty_feed() {
     let empty_feed_path = "tests/fixtures/empty_feed.xml";
     let rss_content = fs::read_to_string(empty_feed_path).unwrap();
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
-    
-    let feed_info = format!("title: {}, desc: {}, items: {}", 
-        channel.title(), 
-        channel.description(), 
+
+    let feed_info = format!(
+        "title: {}, desc: {}, items: {}",
+        channel.title(),
+        channel.description(),
         channel.items().len()
     );
     insta::assert_snapshot!(feed_info);
@@ -134,9 +141,15 @@ async fn test_channels_to_epub_single_feed() {
 
     let channels = vec![("Test Feed".to_string(), channel)];
 
-    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let document = channels_to_document(
+        &channels,
+        config.output.title.clone(),
+        config.output.author.clone(),
+    )
+    .await
+    .unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    
+
     let file_exists = epub_path.exists();
     let file_size_valid = if file_exists {
         let size = fs::metadata(&epub_path).unwrap().len();
@@ -144,8 +157,13 @@ async fn test_channels_to_epub_single_feed() {
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        file_exists,
+        file_size_valid
+    ));
 }
 
 #[tokio::test]
@@ -188,9 +206,15 @@ async fn test_channels_to_epub_multiple_feeds() {
         ("Tech News".to_string(), tech_channel),
     ];
 
-    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let document = channels_to_document(
+        &channels,
+        config.output.title.clone(),
+        config.output.author.clone(),
+    )
+    .await
+    .unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    
+
     let file_exists = epub_path.exists();
     let file_size_valid = if file_exists {
         let size = fs::metadata(&epub_path).unwrap().len();
@@ -198,8 +222,13 @@ async fn test_channels_to_epub_multiple_feeds() {
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        file_exists,
+        file_size_valid
+    ));
 }
 
 #[tokio::test]
@@ -228,9 +257,15 @@ async fn test_channels_to_epub_empty_feed() {
 
     let channels = vec![("Empty Feed".to_string(), channel)];
 
-    let document = channels_to_document(&channels, config.output.title.clone(), config.output.author.clone()).await.unwrap();
+    let document = channels_to_document(
+        &channels,
+        config.output.title.clone(),
+        config.output.author.clone(),
+    )
+    .await
+    .unwrap();
     let result = document_to_epub(&document, &config.output.filename).await;
-    
+
     let file_exists = epub_path.exists();
     let file_size_valid = if file_exists {
         let size = fs::metadata(&epub_path).unwrap().len();
@@ -238,8 +273,13 @@ async fn test_channels_to_epub_empty_feed() {
     } else {
         false
     };
-    
-    insta::assert_snapshot!(format!("result_ok: {}, file_exists: {}, file_size_valid: {}", result.is_ok(), file_exists, file_size_valid));
+
+    insta::assert_snapshot!(format!(
+        "result_ok: {}, file_exists: {}, file_size_valid: {}",
+        result.is_ok(),
+        file_exists,
+        file_size_valid
+    ));
 }
 
 #[test]
@@ -252,12 +292,13 @@ fn test_sanitize_html_for_epub() {
     let cybersecurity_item = &items[2];
     let description = cybersecurity_item.description().unwrap();
 
-    let html_tags_present = format!("has_p: {}, has_ul: {}, has_li: {}",
+    let html_tags_present = format!(
+        "has_p: {}, has_ul: {}, has_li: {}",
         description.contains("<p>"),
         description.contains("<ul>"),
         description.contains("<li>")
     );
-    
+
     insta::assert_snapshot!(html_tags_present);
 }
 
@@ -275,8 +316,8 @@ async fn test_invalid_rss_format() {
     let result = rss::Channel::read_from(invalid_rss.as_bytes());
     let parse_result = match result {
         Ok(_) => "success_parsed_despite_invalid".to_string(),
-        Err(e) => format!("error_{}", e.to_string().len())
+        Err(e) => format!("error_{}", e.to_string().len()),
     };
-    
+
     insta::assert_snapshot!(parse_result);
 }

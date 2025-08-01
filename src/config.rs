@@ -1,7 +1,7 @@
+use crate::ai_client::AiProvider;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
-use crate::ai_client::AiProvider;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Feed {
@@ -34,22 +34,18 @@ pub struct FrontPageConfig {
 #[serde(tag = "type")]
 pub enum AiProviderConfig {
     #[serde(rename = "ollama")]
-    Ollama {
-        base_url: String,
-        model: String,
-    },
+    Ollama { base_url: String, model: String },
     #[serde(rename = "anthropic")]
-    Anthropic {
-        api_key: String,
-        model: String,
-    },
+    Anthropic { api_key: String, model: String },
 }
 
 impl From<AiProviderConfig> for AiProvider {
     fn from(config: AiProviderConfig) -> Self {
         match config {
             AiProviderConfig::Ollama { base_url, model } => AiProvider::Ollama { base_url, model },
-            AiProviderConfig::Anthropic { api_key, model } => AiProvider::Anthropic { api_key, model },
+            AiProviderConfig::Anthropic { api_key, model } => {
+                AiProvider::Anthropic { api_key, model }
+            }
         }
     }
 }

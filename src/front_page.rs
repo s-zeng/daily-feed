@@ -1,8 +1,8 @@
-use crate::ai_client::{AiClient, AiProvider, AiClientError};
-use crate::ast::{Document, ContentBlock, TextContent, TextSpan, TextFormatting};
+use crate::ai_client::{AiClient, AiClientError, AiProvider};
+use crate::ast::{ContentBlock, Document, TextContent, TextFormatting, TextSpan};
+use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub enum FrontPageError {
@@ -43,7 +43,6 @@ pub struct SourceSummary {
     pub key_stories: Vec<String>,
 }
 
-
 pub struct FrontPageGenerator {
     ai_client: AiClient,
 }
@@ -54,29 +53,36 @@ impl FrontPageGenerator {
         Ok(FrontPageGenerator { ai_client })
     }
 
-
-    pub async fn generate_structured_front_page_from_document(&self, document: &Document) -> Result<Vec<ContentBlock>, FrontPageError> {
+    pub async fn generate_structured_front_page_from_document(
+        &self,
+        document: &Document,
+    ) -> Result<Vec<ContentBlock>, FrontPageError> {
         let structured_data = self.generate_structured_data_by_source(document).await?;
         Ok(self.convert_to_ast(&structured_data))
     }
 
-
-    async fn generate_structured_data_by_source(&self, document: &Document) -> Result<StructuredFrontPage, FrontPageError> {
+    async fn generate_structured_data_by_source(
+        &self,
+        document: &Document,
+    ) -> Result<StructuredFrontPage, FrontPageError> {
         let content = self.prepare_content_by_source(document)?;
         let prompt = self.build_structured_prompt_by_source(&content);
-        
+
         let response = self.ai_client.generate_text(&prompt).await?;
         self.parse_structured_response_by_source(&response)
     }
 
     pub fn convert_to_ast(&self, front_page: &StructuredFrontPage) -> Vec<ContentBlock> {
         let mut blocks = Vec::new();
-        
+
         // Add theme as opening paragraph
         blocks.push(ContentBlock::Paragraph(TextContent::from_spans(vec![
             TextSpan {
                 text: "Today's World: ".to_string(),
-                formatting: TextFormatting { bold: true, ..Default::default() },
+                formatting: TextFormatting {
+                    bold: true,
+                    ..Default::default()
+                },
             },
             TextSpan::plain(front_page.theme.clone()),
         ])));
@@ -90,7 +96,9 @@ impl FrontPageGenerator {
             });
 
             // Add source summary
-            blocks.push(ContentBlock::Paragraph(TextContent::plain(source.summary.clone())));
+            blocks.push(ContentBlock::Paragraph(TextContent::plain(
+                source.summary.clone(),
+            )));
 
             // Add key stories if present
             if !source.key_stories.is_empty() {
@@ -99,7 +107,9 @@ impl FrontPageGenerator {
                     content: TextContent::plain("Key Stories".to_string()),
                 });
 
-                let story_items: Vec<TextContent> = source.key_stories.iter()
+                let story_items: Vec<TextContent> = source
+                    .key_stories
+                    .iter()
                     .map(|story| TextContent::plain(story.clone()))
                     .collect();
 
@@ -122,7 +132,6 @@ impl FrontPageGenerator {
         blocks
     }
 
-
     pub fn extract_json_from_response(&self, response: &str) -> String {
         // Look for JSON in markdown code blocks first
         if let Some(start) = response.find("```json") {
@@ -131,7 +140,7 @@ impl FrontPageGenerator {
                 return after_start[..end].trim().to_string();
             }
         }
-        
+
         // Look for JSON in generic code blocks
         if let Some(start) = response.find("```") {
             let after_start = &response[start + 3..];
@@ -143,13 +152,13 @@ impl FrontPageGenerator {
                 }
             }
         }
-        
+
         // Look for standalone JSON objects (lines starting with { and ending with })
         let lines: Vec<&str> = response.lines().collect();
         let mut json_start = None;
         let mut json_end = None;
         let mut brace_count = 0;
-        
+
         for (i, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
             if json_start.is_none() && trimmed.starts_with('{') {
@@ -182,20 +191,22 @@ impl FrontPageGenerator {
                 }
             }
         }
-        
+
         if let (Some(start), Some(end)) = (json_start, json_end) {
             return lines[start..=end].join("\n");
         }
-        
+
         // If no JSON found, return original response
         response.to_string()
     }
 
-
-    pub fn parse_structured_response_by_source(&self, response: &str) -> Result<StructuredFrontPage, FrontPageError> {
+    pub fn parse_structured_response_by_source(
+        &self,
+        response: &str,
+    ) -> Result<StructuredFrontPage, FrontPageError> {
         // First, try to extract JSON from markdown code blocks
         let json_content = self.extract_json_from_response(response);
-        
+
         // Try to parse as JSON first
         if let Ok(structured) = serde_json::from_str::<StructuredFrontPage>(&json_content) {
             return Ok(structured);
@@ -205,22 +216,25 @@ impl FrontPageGenerator {
         self.parse_markdown_response_by_source(response)
     }
 
-    fn parse_markdown_response_by_source(&self, response: &str) -> Result<StructuredFrontPage, FrontPageError> {
+    fn parse_markdown_response_by_source(
+        &self,
+        response: &str,
+    ) -> Result<StructuredFrontPage, FrontPageError> {
         let lines: Vec<&str> = response.lines().collect();
         let mut theme = String::new();
         let mut sources = Vec::new();
         let mut context = None;
-        
+
         let mut current_section = "theme";
         let mut current_source: Option<SourceSummary> = None;
-        
+
         for line in lines {
             let line = line.trim();
-            
+
             if line.is_empty() {
                 continue;
             }
-            
+
             // Detect section headers
             if line.contains("Today's World") || line.contains("**Today's World**") {
                 current_section = "theme";
@@ -236,19 +250,21 @@ impl FrontPageGenerator {
                     theme = clean_line;
                 }
                 continue;
-            } else if line.starts_with("##") || line.contains("**") && !line.contains("Looking Ahead") {
+            } else if line.starts_with("##")
+                || line.contains("**") && !line.contains("Looking Ahead")
+            {
                 // This might be a source name
                 if let Some(source) = current_source.take() {
                     sources.push(source);
                 }
-                
+
                 let source_name = line
                     .replace("##", "")
                     .replace("**", "")
                     .replace(":", "")
                     .trim()
                     .to_string();
-                
+
                 current_source = Some(SourceSummary {
                     name: source_name,
                     summary: String::new(),
@@ -263,7 +279,7 @@ impl FrontPageGenerator {
                 current_section = "context";
                 continue;
             }
-            
+
             match current_section {
                 "theme" => {
                     if !theme.is_empty() {
@@ -282,9 +298,15 @@ impl FrontPageGenerator {
                 }
                 "source" => {
                     if let Some(ref mut source) = current_source {
-                        if line.starts_with("• ") || line.starts_with("- ") || line.starts_with("* ") {
+                        if line.starts_with("• ")
+                            || line.starts_with("- ")
+                            || line.starts_with("* ")
+                        {
                             // This is a key story
-                            let story = line.trim_start_matches(&['•', '-', '*', ' '][..]).trim().to_string();
+                            let story = line
+                                .trim_start_matches(&['•', '-', '*', ' '][..])
+                                .trim()
+                                .to_string();
                             source.key_stories.push(story);
                         } else {
                             // This is part of the summary
@@ -309,25 +331,28 @@ impl FrontPageGenerator {
                 _ => {}
             }
         }
-        
+
         // Save the last source
         if let Some(source) = current_source {
             sources.push(source);
         }
-        
+
         if theme.is_empty() && sources.is_empty() {
             return Err(FrontPageError::ParseError(
-                "Could not parse structured front page from AI response".to_string()
+                "Could not parse structured front page from AI response".to_string(),
             ));
         }
-        
+
         Ok(StructuredFrontPage {
-            theme: if theme.is_empty() { "Multiple developing stories shape today's landscape".to_string() } else { theme },
+            theme: if theme.is_empty() {
+                "Multiple developing stories shape today's landscape".to_string()
+            } else {
+                theme
+            },
             sources,
             context,
         })
     }
-
 
     pub fn build_structured_prompt_by_source(&self, content: &str) -> String {
         format!(
@@ -363,38 +388,35 @@ Return only valid JSON with the structure above."#,
         )
     }
 
-
-
     pub fn prepare_content_by_source(&self, document: &Document) -> Result<String, FrontPageError> {
         let mut content = String::new();
-        
+
         for feed in &document.feeds {
             content.push_str(&format!("# Source: {}\n", feed.name));
-            
+
             if let Some(description) = &feed.description {
                 content.push_str(&format!("**Description:** {}\n", description));
             }
-            
+
             if let Some(url) = &feed.url {
                 content.push_str(&format!("**URL:** {}\n", url));
             }
-            
+
             content.push_str("\n**Articles:**\n");
-            
+
             for article in &feed.articles {
                 content.push_str(&format!("- {}", article.title));
-                
+
                 if let Some(date) = &article.metadata.published_date {
                     content.push_str(&format!(" ({})", date));
                 }
-                
+
                 content.push_str("\n");
             }
-            
+
             content.push_str("\n");
         }
-        
+
         Ok(content)
     }
-
 }

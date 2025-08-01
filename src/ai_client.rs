@@ -16,7 +16,10 @@ impl fmt::Display for AiClientError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             AiClientError::RequestError(msg) => write!(f, "Request error: {}", msg),
-            AiClientError::HttpError { status_code, message } => write!(f, "HTTP {} error: {}", status_code, message),
+            AiClientError::HttpError {
+                status_code,
+                message,
+            } => write!(f, "HTTP {} error: {}", status_code, message),
             AiClientError::ParseError(msg) => write!(f, "Parse error: {}", msg),
             AiClientError::ConfigError(msg) => write!(f, "Config error: {}", msg),
         }
@@ -109,9 +112,16 @@ impl AiClient {
         Self::new_with_retry_config(provider, RetryConfig::default())
     }
 
-    pub fn new_with_retry_config(provider: AiProvider, retry_config: RetryConfig) -> Result<Self, AiClientError> {
+    pub fn new_with_retry_config(
+        provider: AiProvider,
+        retry_config: RetryConfig,
+    ) -> Result<Self, AiClientError> {
         let client = reqwest::Client::new();
-        Ok(AiClient { provider, client, retry_config })
+        Ok(AiClient {
+            provider,
+            client,
+            retry_config,
+        })
     }
 
     pub async fn generate_text(&self, prompt: &str) -> Result<String, AiClientError> {
@@ -132,7 +142,12 @@ impl AiClient {
         }
     }
 
-    async fn call_anthropic_with_retry(&self, api_key: &str, model: &str, prompt: &str) -> Result<String, AiClientError> {
+    async fn call_anthropic_with_retry(
+        &self,
+        api_key: &str,
+        model: &str,
+        prompt: &str,
+    ) -> Result<String, AiClientError> {
         let mut delay_ms = self.retry_config.initial_delay_ms;
         let mut last_error = None;
 
@@ -141,12 +156,20 @@ impl AiClient {
                self.retry_config.max_delay_ms, self.retry_config.backoff_multiplier);
 
         for attempt in 0..=self.retry_config.max_retries {
-            println!("Anthropic API attempt {} of {}", attempt + 1, self.retry_config.max_retries + 1);
-            
+            println!(
+                "Anthropic API attempt {} of {}",
+                attempt + 1,
+                self.retry_config.max_retries + 1
+            );
+
             match self.call_anthropic(api_key, model, prompt).await {
                 Ok(result) => {
                     if attempt > 0 {
-                        println!("Anthropic API call succeeded on attempt {} after {} previous failures", attempt + 1, attempt);
+                        println!(
+                            "Anthropic API call succeeded on attempt {} after {} previous failures",
+                            attempt + 1,
+                            attempt
+                        );
                     } else {
                         println!("Anthropic API call succeeded on first attempt");
                     }
@@ -154,21 +177,36 @@ impl AiClient {
                 }
                 Err(err) => {
                     last_error = Some(err);
-                    
+
                     // Log the error details
                     match &last_error {
-                        Some(AiClientError::HttpError { status_code, message }) => {
-                            println!("Anthropic API attempt {} failed with HTTP {}: {}", attempt + 1, status_code, message);
+                        Some(AiClientError::HttpError {
+                            status_code,
+                            message,
+                        }) => {
+                            println!(
+                                "Anthropic API attempt {} failed with HTTP {}: {}",
+                                attempt + 1,
+                                status_code,
+                                message
+                            );
                         }
                         Some(other_err) => {
-                            println!("Anthropic API attempt {} failed with error: {}", attempt + 1, other_err);
+                            println!(
+                                "Anthropic API attempt {} failed with error: {}",
+                                attempt + 1,
+                                other_err
+                            );
                         }
                         None => {}
                     }
-                    
+
                     // Don't retry on the last attempt
                     if attempt == self.retry_config.max_retries {
-                        println!("Anthropic API exhausted all {} attempts, giving up", self.retry_config.max_retries + 1);
+                        println!(
+                            "Anthropic API exhausted all {} attempts, giving up",
+                            self.retry_config.max_retries + 1
+                        );
                         break;
                     }
 
@@ -177,7 +215,10 @@ impl AiClient {
                         Some(AiClientError::HttpError { status_code, .. }) => {
                             let retryable = self.is_retryable_error(*status_code);
                             if retryable {
-                                println!("HTTP {} is retryable, will retry after backoff", status_code);
+                                println!(
+                                    "HTTP {} is retryable, will retry after backoff",
+                                    status_code
+                                );
                             } else {
                                 println!("HTTP {} is not retryable, giving up", status_code);
                             }
@@ -194,14 +235,22 @@ impl AiClient {
                     }
 
                     // Sleep with exponential backoff
-                    println!("Backing off for {}ms before retry attempt {} (backoff multiplier: {})", 
-                          delay_ms, attempt + 2, self.retry_config.backoff_multiplier);
+                    println!(
+                        "Backing off for {}ms before retry attempt {} (backoff multiplier: {})",
+                        delay_ms,
+                        attempt + 2,
+                        self.retry_config.backoff_multiplier
+                    );
                     sleep(Duration::from_millis(delay_ms)).await;
-                    
-                    let next_delay_ms = ((delay_ms as f64 * self.retry_config.backoff_multiplier) as u64)
+
+                    let next_delay_ms = ((delay_ms as f64 * self.retry_config.backoff_multiplier)
+                        as u64)
                         .min(self.retry_config.max_delay_ms);
-                    
-                    println!("Next backoff delay: {}ms (capped at {}ms)", next_delay_ms, self.retry_config.max_delay_ms);
+
+                    println!(
+                        "Next backoff delay: {}ms (capped at {}ms)",
+                        next_delay_ms, self.retry_config.max_delay_ms
+                    );
                     delay_ms = next_delay_ms;
                 }
             }
@@ -212,7 +261,12 @@ impl AiClient {
         Err(last_error.unwrap())
     }
 
-    async fn call_ollama(&self, base_url: &str, model: &str, prompt: &str) -> Result<String, AiClientError> {
+    async fn call_ollama(
+        &self,
+        base_url: &str,
+        model: &str,
+        prompt: &str,
+    ) -> Result<String, AiClientError> {
         let url = format!("{}/v1/chat/completions", base_url);
         let request = ChatCompletionRequest {
             model: model.to_string(),
@@ -247,11 +301,18 @@ impl AiClient {
 
         match chat_response.choices.first() {
             Some(choice) => Ok(choice.message.content.clone()),
-            None => Err(AiClientError::ParseError("No choices in response".to_string())),
+            None => Err(AiClientError::ParseError(
+                "No choices in response".to_string(),
+            )),
         }
     }
 
-    async fn call_anthropic(&self, api_key: &str, model: &str, prompt: &str) -> Result<String, AiClientError> {
+    async fn call_anthropic(
+        &self,
+        api_key: &str,
+        model: &str,
+        prompt: &str,
+    ) -> Result<String, AiClientError> {
         let url = "https://api.anthropic.com/v1/messages";
         let request = AnthropicRequest {
             model: model.to_string(),
@@ -290,7 +351,9 @@ impl AiClient {
 
         match anthropic_response.content.first() {
             Some(content) => Ok(content.text.clone()),
-            None => Err(AiClientError::ParseError("No content in response".to_string())),
+            None => Err(AiClientError::ParseError(
+                "No content in response".to_string(),
+            )),
         }
     }
 }
@@ -305,7 +368,7 @@ mod tests {
             base_url: "http://127.0.0.1:1234".to_string(),
             model: "llama2".to_string(),
         };
-        
+
         let client = AiClient::new(provider);
         assert!(client.is_ok());
     }
@@ -316,7 +379,7 @@ mod tests {
             api_key: "test-key".to_string(),
             model: "claude-3-sonnet-20240229".to_string(),
         };
-        
+
         let client = AiClient::new(provider);
         assert!(client.is_ok());
     }
@@ -332,7 +395,7 @@ mod tests {
                 content: "Hello, world!".to_string(),
             }],
         };
-        
+
         let json = serde_json::to_string_pretty(&request).unwrap();
         insta::assert_snapshot!(json);
     }
@@ -357,7 +420,7 @@ mod tests {
                 "output_tokens": 10
             }
         }"#;
-        
+
         let response: AnthropicResponse = serde_json::from_str(response_json).unwrap();
         insta::assert_json_snapshot!(response);
     }
@@ -386,7 +449,7 @@ mod tests {
             model: "claude-3-sonnet-20240229".to_string(),
         };
         let client = AiClient::new(provider).unwrap();
-        
+
         // Test retryable status codes
         assert!(client.is_retryable_error(429)); // Rate limit
         assert!(client.is_retryable_error(500)); // Internal server error
@@ -394,16 +457,16 @@ mod tests {
         assert!(client.is_retryable_error(503)); // Service unavailable
         assert!(client.is_retryable_error(504)); // Gateway timeout
         assert!(client.is_retryable_error(529)); // Overloaded
-        
+
         // Test non-retryable status codes
         assert!(!client.is_retryable_error(400)); // Bad request
         assert!(!client.is_retryable_error(401)); // Unauthorized
         assert!(!client.is_retryable_error(403)); // Forbidden
         assert!(!client.is_retryable_error(404)); // Not found
-        
+
         let retryable_codes = vec![429u16, 500, 502, 503, 504, 529];
         let non_retryable_codes = vec![400u16, 401, 403, 404, 422];
-        
+
         let test_result = (retryable_codes, non_retryable_codes);
         insta::assert_json_snapshot!(test_result);
     }

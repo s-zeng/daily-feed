@@ -13,7 +13,11 @@ impl EpubOutputter {
         Ok(Self { builder })
     }
 
-    pub fn generate_epub(&mut self, document: &Document, output_filename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn generate_epub(
+        &mut self,
+        document: &Document,
+        output_filename: &str,
+    ) -> Result<(), Box<dyn Error>> {
         self.set_metadata(document)?;
         self.add_stylesheet()?;
         self.add_title_page(document)?;
@@ -27,11 +31,11 @@ impl EpubOutputter {
     fn set_metadata(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
         self.builder.metadata("author", &document.metadata.author)?;
         self.builder.metadata("title", &document.metadata.title)?;
-        
+
         if let Some(description) = &document.metadata.description {
             self.builder.metadata("description", description)?;
         }
-        
+
         Ok(())
     }
 
@@ -110,19 +114,23 @@ impl EpubOutputter {
             line-height: 1.5; 
         }
         "#;
-        
+
         self.builder.stylesheet(css.as_bytes())?;
         Ok(())
     }
 
     fn add_title_page(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
-        let feed_list = document.feeds.iter()
-            .map(|feed| format!(
-                "<li><strong>{}:</strong> {} ({} articles)</li>",
-                feed.name,
-                feed.description.as_deref().unwrap_or("No description"),
-                feed.articles.len()
-            ))
+        let feed_list = document
+            .feeds
+            .iter()
+            .map(|feed| {
+                format!(
+                    "<li><strong>{}:</strong> {} ({} articles)</li>",
+                    feed.name,
+                    feed.description.as_deref().unwrap_or("No description"),
+                    feed.articles.len()
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n        ");
 
@@ -163,7 +171,7 @@ impl EpubOutputter {
             for block in front_page_blocks {
                 content_html.push_str(&self.render_content_block_to_html(block)?);
             }
-            
+
             let front_page_html = format!(
                 r#"<html>
                 <head><title>Front Page Summary</title></head>
@@ -206,7 +214,7 @@ impl EpubOutputter {
         let mut chapter_index = 0;
         for feed in &document.feeds {
             chapter_index += 1;
-            
+
             toc_content.push_str(&format!(
                 r#"            <li class="feed-section"><a href="feed_{}.xhtml">{}</a>
                 <ul>
@@ -244,10 +252,10 @@ impl EpubOutputter {
 
     fn add_content(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
         let mut chapter_index = 0;
-        
+
         for feed in &document.feeds {
             chapter_index += 1;
-            
+
             // Add feed section page
             let feed_section_html = format!(
                 r#"<html>
@@ -276,11 +284,12 @@ impl EpubOutputter {
             for article in &feed.articles {
                 chapter_index += 1;
                 let article_filename = format!("article_{}.xhtml", chapter_index);
-                
+
                 let article_html = self.render_article_to_html(article)?;
-                
-                feed_content = feed_content.child(TocElement::new(&article_filename, &article.title));
-                
+
+                feed_content =
+                    feed_content.child(TocElement::new(&article_filename, &article.title));
+
                 self.builder.add_content(
                     EpubContent::new(article_filename, article_html.as_bytes())
                         .title(&article.title)
@@ -296,7 +305,7 @@ impl EpubOutputter {
 
     fn render_article_to_html(&self, article: &Article) -> Result<String, Box<dyn Error>> {
         let mut content_html = String::new();
-        
+
         for block in &article.content {
             content_html.push_str(&self.render_content_block_to_html(block)?);
         }
@@ -304,15 +313,15 @@ impl EpubOutputter {
         let comments_html = if !article.comments.is_empty() {
             let mut comments_section = String::from(
                 r#"<div class="comments-section">
-                <h2>Top Comments</h2>"#
+                <h2>Top Comments</h2>"#,
             );
-            
+
             for comment in &article.comments {
                 let mut comment_content = String::new();
                 for block in &comment.content {
                     comment_content.push_str(&self.render_content_block_to_html(block)?);
                 }
-                
+
                 comments_section.push_str(&format!(
                     r#"<div class="comment">
                         <div class="comment-author">{}<span class="comment-score">↑{} ↓{}</span></div>
@@ -324,7 +333,7 @@ impl EpubOutputter {
                     comment_content
                 ));
             }
-            
+
             comments_section.push_str("</div>");
             comments_section
         } else {
@@ -337,8 +346,8 @@ impl EpubOutputter {
             <body>
             <h1>{}</h1>
             <div class="pub-date">{} - <strong>Source:</strong> {}</div>
-            <div class="content">{}</div>
             {}
+            <div class="content">{}</div>
             {}
             </body>
             </html>"#,
@@ -346,52 +355,75 @@ impl EpubOutputter {
             article.title,
             article.metadata.published_date.as_deref().unwrap_or(""),
             article.metadata.feed_name,
+            comments_html,
             content_html,
             if let Some(url) = &article.metadata.url {
-                format!("<div class=\"link\"><a href=\"{}\">Read original article</a></div>", url)
+                format!(
+                    "<div class=\"link\"><a href=\"{}\">Read original article</a></div>",
+                    url
+                )
             } else {
                 String::new()
-            },
-            comments_html
+            }
         );
 
         Ok(article_html)
     }
 
-    pub fn render_content_block_to_html(&self, block: &ContentBlock) -> Result<String, Box<dyn Error>> {
+    pub fn render_content_block_to_html(
+        &self,
+        block: &ContentBlock,
+    ) -> Result<String, Box<dyn Error>> {
         match block {
-            ContentBlock::Paragraph(content) => {
-                Ok(format!("<p>{}</p>", self.render_text_content_to_html(content)?))
-            }
-            ContentBlock::Heading { level, content } => {
-                Ok(format!(
-                    "<h{}>{}</h{}>",
-                    level,
-                    self.render_text_content_to_html(content)?,
-                    level
-                ))
-            }
+            ContentBlock::Paragraph(content) => Ok(format!(
+                "<p>{}</p>",
+                self.render_text_content_to_html(content)?
+            )),
+            ContentBlock::Heading { level, content } => Ok(format!(
+                "<h{}>{}</h{}>",
+                level,
+                self.render_text_content_to_html(content)?,
+                level
+            )),
             ContentBlock::List { ordered, items } => {
                 let tag = if *ordered { "ol" } else { "ul" };
                 let items_html = items
                     .iter()
-                    .map(|item| format!("<li>{}</li>", self.render_text_content_to_html(item).unwrap_or_default()))
+                    .map(|item| {
+                        format!(
+                            "<li>{}</li>",
+                            self.render_text_content_to_html(item).unwrap_or_default()
+                        )
+                    })
                     .collect::<Vec<_>>()
                     .join("");
                 Ok(format!("<{}>{}</{}>", tag, items_html, tag))
             }
-            ContentBlock::Quote(content) => {
-                Ok(format!("<blockquote>{}</blockquote>", self.render_text_content_to_html(content)?))
-            }
-            ContentBlock::Code { language: _, content } => {
-                Ok(format!("<pre><code>{}</code></pre>", html_escape::encode_text(content)))
-            }
-            ContentBlock::Link { url, text } => {
-                Ok(format!("<a href=\"{}\">{}</a>", url, html_escape::encode_text(text)))
-            }
+            ContentBlock::Quote(content) => Ok(format!(
+                "<blockquote>{}</blockquote>",
+                self.render_text_content_to_html(content)?
+            )),
+            ContentBlock::Code {
+                language: _,
+                content,
+            } => Ok(format!(
+                "<pre><code>{}</code></pre>",
+                html_escape::encode_text(content)
+            )),
+            ContentBlock::Link { url, text } => Ok(format!(
+                "<a href=\"{}\">{}</a>",
+                url,
+                html_escape::encode_text(text)
+            )),
             ContentBlock::Image { url, alt } => {
-                let alt_attr = alt.as_ref()
-                    .map(|a| format!(" alt=\"{}\"", html_escape::encode_double_quoted_attribute(a)))
+                let alt_attr = alt
+                    .as_ref()
+                    .map(|a| {
+                        format!(
+                            " alt=\"{}\"",
+                            html_escape::encode_double_quoted_attribute(a)
+                        )
+                    })
                     .unwrap_or_default();
                 Ok(format!("<img src=\"{}\"{} />", url, alt_attr))
             }
@@ -399,13 +431,16 @@ impl EpubOutputter {
         }
     }
 
-    pub fn render_text_content_to_html(&self, content: &TextContent) -> Result<String, Box<dyn Error>> {
+    pub fn render_text_content_to_html(
+        &self,
+        content: &TextContent,
+    ) -> Result<String, Box<dyn Error>> {
         let mut html = String::new();
-        
+
         for span in &content.spans {
             let text = html_escape::encode_text(&span.text);
             let mut span_html = text.to_string();
-            
+
             if span.formatting.bold {
                 span_html = format!("<strong>{}</strong>", span_html);
             }
@@ -418,10 +453,10 @@ impl EpubOutputter {
             if let Some(url) = &span.formatting.link {
                 span_html = format!("<a href=\"{}\">{}</a>", url, span_html);
             }
-            
+
             html.push_str(&span_html);
         }
-        
+
         Ok(html)
     }
 
@@ -431,4 +466,3 @@ impl EpubOutputter {
         Ok(())
     }
 }
-

@@ -59,12 +59,27 @@ pub struct Comment {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ContentBlock {
     Paragraph(TextContent),
-    Heading { level: u8, content: TextContent },
-    List { ordered: bool, items: Vec<TextContent> },
+    Heading {
+        level: u8,
+        content: TextContent,
+    },
+    List {
+        ordered: bool,
+        items: Vec<TextContent>,
+    },
     Quote(TextContent),
-    Code { language: Option<String>, content: String },
-    Link { url: String, text: String },
-    Image { url: String, alt: Option<String> },
+    Code {
+        language: Option<String>,
+        content: String,
+    },
+    Link {
+        url: String,
+        text: String,
+    },
+    Image {
+        url: String,
+        alt: Option<String>,
+    },
     Raw(String), // For complex HTML that we want to preserve as-is
 }
 
@@ -259,4 +274,3 @@ impl TextSpan {
         }
     }
 }
-

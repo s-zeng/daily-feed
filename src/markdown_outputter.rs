@@ -10,32 +10,45 @@ impl MarkdownOutputter {
         Self
     }
 
-    pub fn generate_markdown(&self, document: &Document, output_filename: &str) -> Result<(), Box<dyn Error>> {
+    pub fn generate_markdown(
+        &self,
+        document: &Document,
+        output_filename: &str,
+    ) -> Result<(), Box<dyn Error>> {
         let markdown_content = self.render_document_to_markdown(document)?;
-        
+
         // Ensure the output directory exists
         if let Some(parent) = Path::new(output_filename).parent() {
             fs::create_dir_all(parent)?;
         }
-        
+
         fs::write(output_filename, markdown_content)?;
         Ok(())
     }
 
-    pub fn render_document_to_markdown(&self, document: &Document) -> Result<String, Box<dyn Error>> {
+    pub fn render_document_to_markdown(
+        &self,
+        document: &Document,
+    ) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
-        
+
         // Document header
         markdown.push_str(&format!("# {}\n\n", document.metadata.title));
-        
+
         if let Some(description) = &document.metadata.description {
             markdown.push_str(&format!("{}\n\n", description));
         }
-        
+
         markdown.push_str(&format!("**Author:** {}\n", document.metadata.author));
-        markdown.push_str(&format!("**Generated:** {}\n", document.metadata.generated_at));
-        markdown.push_str(&format!("**Total Articles:** {}\n\n", document.total_articles()));
-        
+        markdown.push_str(&format!(
+            "**Generated:** {}\n",
+            document.metadata.generated_at
+        ));
+        markdown.push_str(&format!(
+            "**Total Articles:** {}\n\n",
+            document.total_articles()
+        ));
+
         // Front page summary (if present)
         if let Some(front_page_blocks) = &document.front_page {
             markdown.push_str("## Front Page Summary\n\n");
@@ -44,59 +57,64 @@ impl MarkdownOutputter {
             }
             markdown.push_str("\n---\n\n");
         }
-        
+
         // Table of contents
         markdown.push_str("## Table of Contents\n\n");
-        
+
         // Add front page to TOC if it exists
         if document.front_page.is_some() {
             markdown.push_str("- [Front Page Summary](#front-page-summary)\n");
         }
-        
+
         for feed in &document.feeds {
-            markdown.push_str(&format!("- [{}](#{})\n", feed.name, self.to_anchor(&feed.name)));
+            markdown.push_str(&format!(
+                "- [{}](#{})\n",
+                feed.name,
+                self.to_anchor(&feed.name)
+            ));
             for article in &feed.articles {
-                markdown.push_str(&format!("  - [{}](#{})\n", 
-                    article.title, 
+                markdown.push_str(&format!(
+                    "  - [{}](#{})\n",
+                    article.title,
                     self.to_anchor(&article.title)
                 ));
             }
         }
         markdown.push_str("\n---\n\n");
-        
+
         // Feed sections
         for feed in &document.feeds {
             markdown.push_str(&self.render_feed_to_markdown(feed)?);
         }
-        
+
         Ok(markdown)
     }
 
     fn render_feed_to_markdown(&self, feed: &Feed) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
-        
+
         markdown.push_str(&format!("## {}\n\n", feed.name));
-        
+
         if let Some(description) = &feed.description {
             markdown.push_str(&format!("{}\n\n", description));
         }
-        
+
         markdown.push_str(&format!("**Total Articles:** {}\n\n", feed.articles.len()));
-        
+
         for article in &feed.articles {
             markdown.push_str(&self.render_article_to_markdown(article)?);
             markdown.push_str("\n---\n\n");
         }
-        
+
         Ok(markdown)
     }
 
     fn render_article_to_markdown(&self, article: &Article) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
-        
+
         // Article header
         markdown.push_str(&format!("### {}\n\n", article.title));
-        
+
         // Metadata
         if let Some(date) = &article.metadata.published_date {
             markdown.push_str(&format!("**Published:** {}\n", date));
@@ -109,32 +127,36 @@ impl MarkdownOutputter {
             markdown.push_str(&format!("**Link:** [Read original article]({})\n", url));
         }
         markdown.push_str("\n");
-        
+
+        // Comments (moved to appear after title/metadata but before content)
+        if !article.comments.is_empty() {
+            markdown.push_str("#### Top Comments\n\n");
+            for comment in &article.comments {
+                markdown.push_str(&self.render_comment_to_markdown(comment)?);
+            }
+            markdown.push_str("---\n\n");
+        }
+
         // Content
         for block in &article.content {
             markdown.push_str(&self.render_content_block_to_markdown(block)?);
         }
-        
-        // Comments
-        if !article.comments.is_empty() {
-            markdown.push_str("\n#### Top Comments\n\n");
-            for comment in &article.comments {
-                markdown.push_str(&self.render_comment_to_markdown(comment)?);
-            }
-        }
-        
+
         Ok(markdown)
     }
 
     fn render_comment_to_markdown(&self, comment: &Comment) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
-        
-        markdown.push_str(&format!("> **{}** (↑{} ↓{})\n", comment.author, comment.upvotes, comment.downvotes));
+
+        markdown.push_str(&format!(
+            "> **{}** (↑{} ↓{})\n",
+            comment.author, comment.upvotes, comment.downvotes
+        ));
         if let Some(timestamp) = &comment.timestamp {
             markdown.push_str(&format!("> *{}*\n", timestamp));
         }
         markdown.push_str(">\n");
-        
+
         for block in &comment.content {
             let block_markdown = self.render_content_block_to_markdown(block)?;
             // Prefix each line with "> " for blockquote formatting
@@ -147,18 +169,26 @@ impl MarkdownOutputter {
             }
         }
         markdown.push_str("\n");
-        
+
         Ok(markdown)
     }
 
-    pub fn render_content_block_to_markdown(&self, block: &ContentBlock) -> Result<String, Box<dyn Error>> {
+    pub fn render_content_block_to_markdown(
+        &self,
+        block: &ContentBlock,
+    ) -> Result<String, Box<dyn Error>> {
         match block {
-            ContentBlock::Paragraph(content) => {
-                Ok(format!("{}\n\n", self.render_text_content_to_markdown(content)?))
-            }
+            ContentBlock::Paragraph(content) => Ok(format!(
+                "{}\n\n",
+                self.render_text_content_to_markdown(content)?
+            )),
             ContentBlock::Heading { level, content } => {
                 let heading_prefix = "#".repeat(*level as usize + 3); // +3 because document starts at h1, feeds at h2, articles at h3
-                Ok(format!("{} {}\n\n", heading_prefix, self.render_text_content_to_markdown(content)?))
+                Ok(format!(
+                    "{} {}\n\n",
+                    heading_prefix,
+                    self.render_text_content_to_markdown(content)?
+                ))
             }
             ContentBlock::List { ordered, items } => {
                 let mut list_markdown = String::new();
@@ -168,7 +198,11 @@ impl MarkdownOutputter {
                     } else {
                         "- ".to_string()
                     };
-                    list_markdown.push_str(&format!("{}{}\n", prefix, self.render_text_content_to_markdown(item)?));
+                    list_markdown.push_str(&format!(
+                        "{}{}\n",
+                        prefix,
+                        self.render_text_content_to_markdown(item)?
+                    ));
                 }
                 list_markdown.push('\n');
                 Ok(list_markdown)
@@ -186,9 +220,7 @@ impl MarkdownOutputter {
                 let lang = language.as_deref().unwrap_or("");
                 Ok(format!("```{}\n{}\n```\n\n", lang, content))
             }
-            ContentBlock::Link { url, text } => {
-                Ok(format!("[{}]({})\n\n", text, url))
-            }
+            ContentBlock::Link { url, text } => Ok(format!("[{}]({})\n\n", text, url)),
             ContentBlock::Image { url, alt } => {
                 let alt_text = alt.as_deref().unwrap_or("");
                 Ok(format!("![{}]({})\n\n", alt_text, url))
@@ -200,12 +232,15 @@ impl MarkdownOutputter {
         }
     }
 
-    pub fn render_text_content_to_markdown(&self, content: &TextContent) -> Result<String, Box<dyn Error>> {
+    pub fn render_text_content_to_markdown(
+        &self,
+        content: &TextContent,
+    ) -> Result<String, Box<dyn Error>> {
         let mut markdown = String::new();
-        
+
         for span in &content.spans {
             let mut text = span.text.clone();
-            
+
             // Apply formatting
             if span.formatting.code {
                 text = format!("`{}`", text);
@@ -219,20 +254,25 @@ impl MarkdownOutputter {
             if let Some(url) = &span.formatting.link {
                 text = format!("[{}]({})", text, url);
             }
-            
+
             markdown.push_str(&text);
         }
-        
+
         Ok(markdown)
     }
 
     pub fn to_anchor(&self, text: &str) -> String {
         text.to_lowercase()
             .replace(' ', "-")
-            .replace(['(', ')', '[', ']', '{', '}', '<', '>', '"', '\'', '/', '\\', '|', '?', '*', '&', '%', '$', '#', '@', '!', '^', '~', '`', '+', '=', ',', '.', ';', ':'], "")
+            .replace(
+                [
+                    '(', ')', '[', ']', '{', '}', '<', '>', '"', '\'', '/', '\\', '|', '?', '*',
+                    '&', '%', '$', '#', '@', '!', '^', '~', '`', '+', '=', ',', '.', ';', ':',
+                ],
+                "",
+            )
             .chars()
             .filter(|c| c.is_alphanumeric() || *c == '-' || *c == '_')
             .collect()
     }
 }
-

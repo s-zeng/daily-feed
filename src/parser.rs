@@ -1,7 +1,7 @@
-use crate::ast::*;
 use crate::ars_comments;
+use crate::ast::*;
 use regex::Regex;
-use scraper::{Html, Selector, Node, ElementRef};
+use scraper::{ElementRef, Html, Node, Selector};
 use std::error::Error;
 
 pub struct DocumentParser;
@@ -21,15 +21,17 @@ impl DocumentParser {
         document.metadata.description = Some("Aggregated RSS feeds".to_string());
 
         for (feed_name, channel) in channels {
-            let mut feed = Feed::new(feed_name.clone())
-                .with_description(channel.description().to_string());
-            
+            let mut feed =
+                Feed::new(feed_name.clone()).with_description(channel.description().to_string());
+
             if let Some(link) = channel.link().to_string().into() {
                 feed = feed.with_url(link);
             }
 
             for item in channel.items() {
-                let article = self.parse_rss_item_to_article(item, feed_name, channel).await?;
+                let article = self
+                    .parse_rss_item_to_article(item, feed_name, channel)
+                    .await?;
                 feed.add_article(article);
             }
 
@@ -67,7 +69,8 @@ impl DocumentParser {
                 match ars_comments::fetch_top_5_comments(article_url).await {
                     Ok(raw_comments) => {
                         for raw_comment in raw_comments {
-                            let comment_content = self.parse_html_to_content_blocks(&raw_comment.content)?;
+                            let comment_content =
+                                self.parse_html_to_content_blocks(&raw_comment.content)?;
                             let comment = Comment {
                                 author: raw_comment.author,
                                 content: comment_content,
@@ -88,7 +91,10 @@ impl DocumentParser {
         Ok(article)
     }
 
-    pub fn parse_html_to_content_blocks(&self, html: &str) -> Result<Vec<ContentBlock>, Box<dyn Error>> {
+    pub fn parse_html_to_content_blocks(
+        &self,
+        html: &str,
+    ) -> Result<Vec<ContentBlock>, Box<dyn Error>> {
         if html.trim().is_empty() {
             return Ok(vec![]);
         }
@@ -104,7 +110,9 @@ impl DocumentParser {
             } else if let Node::Text(text_node) = node.value() {
                 let text = text_node.trim();
                 if !text.is_empty() {
-                    blocks.push(ContentBlock::Paragraph(TextContent::plain(text.to_string())));
+                    blocks.push(ContentBlock::Paragraph(TextContent::plain(
+                        text.to_string(),
+                    )));
                 }
             }
         }
@@ -120,7 +128,10 @@ impl DocumentParser {
         Ok(blocks)
     }
 
-    fn parse_element_to_content_block(&self, element: ElementRef) -> Result<Option<ContentBlock>, Box<dyn Error>> {
+    fn parse_element_to_content_block(
+        &self,
+        element: ElementRef,
+    ) -> Result<Option<ContentBlock>, Box<dyn Error>> {
         let tag_name = element.value().name();
 
         match tag_name {
@@ -136,7 +147,10 @@ impl DocumentParser {
                 let level = tag_name.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
                 let text_content = self.parse_element_to_text_content(element)?;
                 if !text_content.is_empty() {
-                    Ok(Some(ContentBlock::Heading { level, content: text_content }))
+                    Ok(Some(ContentBlock::Heading {
+                        level,
+                        content: text_content,
+                    }))
                 } else {
                     Ok(None)
                 }
@@ -145,14 +159,14 @@ impl DocumentParser {
                 let ordered = tag_name == "ol";
                 let li_selector = Selector::parse("li").unwrap();
                 let mut items = Vec::new();
-                
+
                 for li in element.select(&li_selector) {
                     let item_content = self.parse_element_to_text_content(li)?;
                     if !item_content.is_empty() {
                         items.push(item_content);
                     }
                 }
-                
+
                 if !items.is_empty() {
                     Ok(Some(ContentBlock::List { ordered, items }))
                 } else {
@@ -170,15 +184,15 @@ impl DocumentParser {
             "pre" | "code" => {
                 let code_text = element.text().collect::<String>();
                 if !code_text.trim().is_empty() {
-                    let language = element.value().attr("class")
-                        .and_then(|classes| {
-                            classes.split_whitespace()
-                                .find(|class| class.starts_with("language-"))
-                                .map(|class| class.strip_prefix("language-").unwrap().to_string())
-                        });
-                    Ok(Some(ContentBlock::Code { 
-                        language, 
-                        content: code_text 
+                    let language = element.value().attr("class").and_then(|classes| {
+                        classes
+                            .split_whitespace()
+                            .find(|class| class.starts_with("language-"))
+                            .map(|class| class.strip_prefix("language-").unwrap().to_string())
+                    });
+                    Ok(Some(ContentBlock::Code {
+                        language,
+                        content: code_text,
                     }))
                 } else {
                     Ok(None)
@@ -188,9 +202,9 @@ impl DocumentParser {
                 if let Some(href) = element.value().attr("href") {
                     let link_text = element.text().collect::<String>();
                     if !link_text.trim().is_empty() {
-                        Ok(Some(ContentBlock::Link { 
-                            url: href.to_string(), 
-                            text: link_text 
+                        Ok(Some(ContentBlock::Link {
+                            url: href.to_string(),
+                            text: link_text,
                         }))
                     } else {
                         Ok(None)
@@ -202,9 +216,9 @@ impl DocumentParser {
             "img" => {
                 if let Some(src) = element.value().attr("src") {
                     let alt = element.value().attr("alt").map(|s| s.to_string());
-                    Ok(Some(ContentBlock::Image { 
-                        url: src.to_string(), 
-                        alt 
+                    Ok(Some(ContentBlock::Image {
+                        url: src.to_string(),
+                        alt,
                     }))
                 } else {
                     Ok(None)
@@ -231,9 +245,12 @@ impl DocumentParser {
         }
     }
 
-    fn parse_element_to_text_content(&self, element: ElementRef) -> Result<TextContent, Box<dyn Error>> {
+    fn parse_element_to_text_content(
+        &self,
+        element: ElementRef,
+    ) -> Result<TextContent, Box<dyn Error>> {
         let mut spans = Vec::new();
-        
+
         for node in element.children() {
             match node.value() {
                 Node::Text(text_node) => {
@@ -263,10 +280,13 @@ impl DocumentParser {
         Ok(TextContent::from_spans(spans))
     }
 
-    fn parse_inline_element_to_spans(&self, element: ElementRef) -> Result<Vec<TextSpan>, Box<dyn Error>> {
+    fn parse_inline_element_to_spans(
+        &self,
+        element: ElementRef,
+    ) -> Result<Vec<TextSpan>, Box<dyn Error>> {
         let tag_name = element.value().name();
         let text = element.text().collect::<String>();
-        
+
         if text.trim().is_empty() {
             return Ok(vec![]);
         }
@@ -290,14 +310,17 @@ impl DocumentParser {
 
     pub fn strip_html_tags(&self, html: &str) -> String {
         let tag_regex = Regex::new(r"<[^>]*>").unwrap();
-        let entity_regex = Regex::new(r"&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;").unwrap();
-        
+        let entity_regex =
+            Regex::new(r"&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;").unwrap();
+
         let without_tags = tag_regex.replace_all(html, " ");
         let without_entities = entity_regex.replace_all(&without_tags, " ");
-        
+
         // Clean up whitespace
         let whitespace_regex = Regex::new(r"\s+").unwrap();
-        whitespace_regex.replace_all(&without_entities, " ").trim().to_string()
+        whitespace_regex
+            .replace_all(&without_entities, " ")
+            .trim()
+            .to_string()
     }
 }
-
