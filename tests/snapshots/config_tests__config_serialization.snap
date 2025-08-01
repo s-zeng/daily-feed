@@ -5,6 +5,7 @@ expression: deserialized
 {
   "feeds": [
     {
+      "type": "generic",
       "name": "Serialize Test",
       "url": "https://serialize.example.com/feed.xml",
       "description": "Test serialization"

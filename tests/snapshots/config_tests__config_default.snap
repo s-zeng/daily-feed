@@ -5,9 +5,7 @@ expression: config
 {
   "feeds": [
     {
-      "name": "Ars Technica",
-      "url": "https://arstechnica.com/feed/?t=bd10cf5f81b5d0a5edbb2faa32e6d55c7a1efdb3",
-      "description": "Technology news and insights"
+      "type": "ars_technica"
     }
   ],
   "output": {

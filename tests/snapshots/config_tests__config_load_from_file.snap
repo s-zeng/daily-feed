@@ -5,6 +5,7 @@ expression: config
 {
   "feeds": [
     {
+      "type": "generic",
       "name": "File Test Feed",
       "url": "https://file.example.com/feed.xml",
       "description": "A test feed from file"

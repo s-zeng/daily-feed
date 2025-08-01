@@ -5,11 +5,13 @@ expression: deserialized_config
 {
   "feeds": [
     {
+      "type": "generic",
       "name": "Feed 1",
       "url": "https://feed1.example.com/rss.xml",
       "description": "First feed description"
     },
     {
+      "type": "generic",
       "name": "Feed 2",
       "url": "https://feed2.example.com/rss.xml",
       "description": "Second feed description"

@@ -121,7 +121,7 @@ async fn test_channels_to_epub_single_feed() {
     let epub_path = temp_dir.path().join("test_single.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Test Feed".to_string(),
             url: "https://test.example.com/feed.xml".to_string(),
             description: "A test feed".to_string(),
@@ -173,12 +173,12 @@ async fn test_channels_to_epub_multiple_feeds() {
 
     let config = Config {
         feeds: vec![
-            Feed {
+            Feed::Generic {
                 name: "Test Feed".to_string(),
                 url: "https://test.example.com/feed.xml".to_string(),
                 description: "A test feed".to_string(),
             },
-            Feed {
+            Feed::Generic {
                 name: "Tech News".to_string(),
                 url: "https://technews.example.com/feed.xml".to_string(),
                 description: "Technology news".to_string(),
@@ -237,7 +237,7 @@ async fn test_channels_to_epub_empty_feed() {
     let epub_path = temp_dir.path().join("test_empty.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Empty Feed".to_string(),
             url: "https://empty.example.com/feed.xml".to_string(),
             description: "An empty feed".to_string(),

@@ -4,10 +4,55 @@ use std::error::Error;
 use std::fs;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Feed {
-    pub name: String,
-    pub url: String,
-    pub description: String,
+#[serde(tag = "type")]
+pub enum Feed {
+    #[serde(rename = "generic")]
+    Generic {
+        name: String,
+        url: String,
+        description: String,
+    },
+    #[serde(rename = "ars_technica")]
+    ArsTechnica {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        api_token: Option<String>,
+    },
+}
+
+impl Feed {
+    pub fn name(&self) -> &str {
+        match self {
+            Feed::Generic { name, .. } => name,
+            Feed::ArsTechnica { .. } => "Ars Technica",
+        }
+    }
+
+    pub fn url(&self) -> String {
+        match self {
+            Feed::Generic { url, .. } => url.clone(),
+            Feed::ArsTechnica { api_token } => {
+                if let Some(token) = api_token {
+                    format!("https://arstechnica.com/feed/?t={}", token)
+                } else {
+                    "https://arstechnica.com/feed/".to_string()
+                }
+            }
+        }
+    }
+
+    pub fn description(&self) -> &str {
+        match self {
+            Feed::Generic { description, .. } => description,
+            Feed::ArsTechnica { .. } => "Technology news and insights",
+        }
+    }
+
+    pub fn api_token(&self) -> Option<&str> {
+        match self {
+            Feed::Generic { .. } => None,
+            Feed::ArsTechnica { api_token } => api_token.as_deref(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -75,12 +120,7 @@ impl Config {
 
     pub fn default() -> Self {
         Config {
-            feeds: vec![Feed {
-                name: "Ars Technica".to_string(),
-                url: "https://arstechnica.com/feed/?t=bd10cf5f81b5d0a5edbb2faa32e6d55c7a1efdb3"
-                    .to_string(),
-                description: "Technology news and insights".to_string(),
-            }],
+            feeds: vec![Feed::ArsTechnica { api_token: None }],
             output: OutputConfig {
                 filename: "daily-feed.epub".to_string(),
                 title: "Daily Feed Digest".to_string(),

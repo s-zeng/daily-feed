@@ -28,13 +28,13 @@ pub async fn fetch_all_feeds(
     let mut results = Vec::new();
 
     for feed in &config.feeds {
-        match feed_from_url(&feed.url).await {
+        match feed_from_url(&feed.url()).await {
             Ok(channel) => {
-                println!("Successfully fetched: {}", feed.name);
-                results.push((feed.name.clone(), channel));
+                println!("Successfully fetched: {}", feed.name());
+                results.push((feed.name().to_string(), channel));
             }
             Err(e) => {
-                eprintln!("Failed to fetch {}: {}", feed.name, e);
+                eprintln!("Failed to fetch {}: {}", feed.name(), e);
             }
         }
     }

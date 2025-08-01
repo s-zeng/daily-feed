@@ -5,19 +5,19 @@ expression: config
 {
   "feeds": [
     {
+      "type": "generic",
       "name": "Feed 1",
       "url": "https://feed1.example.com/feed.xml",
       "description": "First feed"
     },
     {
+      "type": "generic",
       "name": "Feed 2",
       "url": "https://feed2.example.com/feed.xml",
       "description": "Second feed"
     },
     {
-      "name": "Feed 3",
-      "url": "https://feed3.example.com/feed.xml",
-      "description": "Third feed"
+      "type": "ars_technica"
     }
   ],
   "output": {

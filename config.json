@@ -1,11 +1,10 @@
 {
   "feeds": [
     {
-      "name": "Ars Technica",
-      "url": "https://arstechnica.com/feed",
-      "description": "Technology news and insights"
+      "type": "ars_technica",
     },
     {
+      "type": "generic",
       "name": "BBC News - Technology",
       "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
       "description": "BBC technology news"

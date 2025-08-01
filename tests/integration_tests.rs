@@ -10,7 +10,7 @@ fn test_cli_with_config_file() {
     let epub_path = temp_dir.path().join("test_output.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Test Feed".to_string(),
             url: "https://test.example.com/feed.xml".to_string(),
             description: "A test feed".to_string(),
@@ -71,12 +71,12 @@ fn test_full_workflow_with_local_feeds_success() {
 
     let config = Config {
         feeds: vec![
-            Feed {
+            Feed::Generic {
                 name: "Sample Feed".to_string(),
                 url: "https://sample.example.com/feed.xml".to_string(),
                 description: "Sample RSS feed".to_string(),
             },
-            Feed {
+            Feed::Generic {
                 name: "Tech News".to_string(),
                 url: "https://technews.example.com/feed.xml".to_string(),
                 description: "Technology news".to_string(),
@@ -125,7 +125,7 @@ fn test_full_workflow_creates_epub_file() {
     let epub_path = temp_dir.path().join("workflow_test.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Sample Feed".to_string(),
             url: "https://sample.example.com/feed.xml".to_string(),
             description: "Sample RSS feed".to_string(),
@@ -169,7 +169,7 @@ fn test_full_workflow_epub_size() {
     let epub_path = temp_dir.path().join("workflow_test.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Sample Feed".to_string(),
             url: "https://sample.example.com/feed.xml".to_string(),
             description: "Sample RSS feed".to_string(),
@@ -222,7 +222,7 @@ fn test_workflow_with_empty_feeds() {
     let epub_path = temp_dir.path().join("empty_workflow_test.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "Empty Feed".to_string(),
             url: "https://empty.example.com/feed.xml".to_string(),
             description: "Empty RSS feed".to_string(),
@@ -318,12 +318,12 @@ fn test_workflow_with_no_feeds() {
 fn test_config_serialization_roundtrip() {
     let original_config = Config {
         feeds: vec![
-            Feed {
+            Feed::Generic {
                 name: "Feed 1".to_string(),
                 url: "https://feed1.example.com/rss.xml".to_string(),
                 description: "First feed description".to_string(),
             },
-            Feed {
+            Feed::Generic {
                 name: "Feed 2".to_string(),
                 url: "https://feed2.example.com/rss.xml".to_string(),
                 description: "Second feed description".to_string(),
@@ -382,7 +382,7 @@ fn test_epub_generation_with_html_content() {
     let epub_path = temp_dir.path().join("html_content_test.epub");
 
     let config = Config {
-        feeds: vec![Feed {
+        feeds: vec![Feed::Generic {
             name: "HTML Content Feed".to_string(),
             url: "https://html.example.com/feed.xml".to_string(),
             description: "Feed with HTML content".to_string(),
