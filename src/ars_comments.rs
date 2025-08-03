@@ -33,13 +33,14 @@ pub async fn fetch_top_comments(
     let html_content = response.text().await?;
     let document = Html::parse_document(&html_content);
 
-    // Extract the iframe URL from the data-url attribute
+    // Extract the forum iframe URL from the data-url attribute
+    // Look for the forum URL specifically (contains "civis/threads")
     let data_url_selector = Selector::parse("[data-url]").unwrap();
     let iframe_url = document
         .select(&data_url_selector)
-        .next()
-        .and_then(|element| element.value().attr("data-url"))
-        .ok_or("Could not find iframe URL in article page")?;
+        .filter_map(|element| element.value().attr("data-url"))
+        .find(|url| url.contains("civis/threads"))
+        .ok_or("Could not find forum iframe URL in article page")?;
 
     // Fetch the forum thread page
     let forum_response = client
@@ -180,4 +181,35 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
 
 pub async fn fetch_top_5_comments(article_url: &str) -> Result<Vec<Comment>, Box<dyn Error>> {
     fetch_top_comments(article_url, 5).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_fetch_top_comments_integration() {
+        let article_url = "https://arstechnica.com/space/2025/08/with-trumps-cutbacks-crew-heads-for-iss-unsure-of-when-theyll-come-back/";
+        
+        let comments = fetch_top_comments(article_url, 5).await
+            .expect("Failed to fetch comments");
+        
+        println!("Successfully fetched {} comments", comments.len());
+        assert!(comments.len() > 0, "Should have fetched some comments");
+        
+        for (i, comment) in comments.iter().enumerate() {
+            println!("Comment {}: {} by {} (+{} -{}) at {:?}", 
+                i + 1, 
+                comment.content.chars().take(100).collect::<String>(),
+                comment.author,
+                comment.upvotes,
+                comment.downvotes,
+                comment.timestamp
+            );
+            
+            // Comments should have meaningful content
+            assert!(!comment.content.is_empty(), "Comment content should not be empty");
+            assert!(!comment.author.is_empty(), "Comment author should not be empty");
+        }
+    }
 }
