@@ -3,6 +3,7 @@ use crate::ast::{Comment, Document};
 use crate::parser::DocumentParser;
 use async_trait::async_trait;
 use std::error::Error;
+use std::collections::HashMap;
 
 #[async_trait(?Send)]
 pub trait Source {
@@ -24,6 +25,8 @@ pub enum SourceConfig {
         #[serde(skip_serializing_if = "Option::is_none")]
         api_token: Option<String> 
     },
+    #[serde(rename = "hackernews")]
+    HackerNews,
 }
 
 impl SourceConfig {
@@ -31,6 +34,7 @@ impl SourceConfig {
         match self {
             SourceConfig::Rss { .. } => "RSS Feed",
             SourceConfig::ArsTechnica { .. } => "Ars Technica",
+            SourceConfig::HackerNews => "Hacker News",
         }
     }
 }
@@ -142,6 +146,146 @@ impl Source for ArsTechnicaSource {
     }
 }
 
+#[derive(Debug)]
+pub struct HackerNewsSource;
+
+#[derive(Debug, serde::Deserialize)]
+struct JsonFeedItem {
+    id: String,
+    title: String,
+    content_html: String,
+    url: String,
+    date_published: String,
+    author: JsonFeedAuthor,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct JsonFeedAuthor {
+    name: String,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct JsonFeed {
+    items: Vec<JsonFeedItem>,
+}
+
+impl HackerNewsSource {
+    pub fn new() -> Self {
+        Self
+    }
+
+    async fn fetch_json_feed(&self) -> Result<JsonFeed, Box<dyn Error>> {
+        let client = reqwest::Client::new();
+        let response = client
+            .get("https://hnrss.org/bestcomments.jsonfeed")
+            .header("User-Agent", "daily-feed/0.1.0")
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(format!("HTTP error: {}", response.status()).into());
+        }
+
+        let json_feed: JsonFeed = response.json().await?;
+        Ok(json_feed)
+    }
+
+    fn extract_parent_title(&self, title: &str) -> String {
+        // Title format: "New comment by username in \"Article Title\""
+        if let Some(start) = title.find(" in \"") {
+            if let Some(end) = title.rfind('"') {
+                if end > start + 5 {
+                    return title[start + 5..end].to_string();
+                }
+            }
+        }
+        // Fallback: return the whole title if parsing fails
+        title.to_string()
+    }
+}
+
+#[async_trait(?Send)]
+impl Source for HackerNewsSource {
+    async fn fetch_document(
+        &self,
+        name: String,
+        title: String,
+        author: String,
+    ) -> Result<Document, Box<dyn Error>> {
+        let json_feed = self.fetch_json_feed().await?;
+        let parser = DocumentParser::new();
+        
+        // Group comments by parent article title
+        let mut articles_map: HashMap<String, Vec<JsonFeedItem>> = HashMap::new();
+        
+        for item in json_feed.items {
+            let parent_title = self.extract_parent_title(&item.title);
+            articles_map.entry(parent_title).or_insert_with(Vec::new).push(item);
+        }
+        
+        // Convert to articles with comments
+        let mut articles = Vec::new();
+        for (parent_title, comment_items) in articles_map {
+            let mut comments = Vec::new();
+            let mut article_url: Option<String> = None;
+            
+            // Parse each comment and extract the first URL as article URL
+            for item in comment_items {
+                if article_url.is_none() {
+                    // Extract article URL from comment URL (remove the comment ID part)
+                    if let Some(base_url) = item.url.split("#").next() {
+                        article_url = Some(base_url.to_string());
+                    }
+                }
+                
+                let comment_content = parser.parse_html_to_content_blocks(&item.content_html)?;
+                let comment = Comment {
+                    author: item.author.name,
+                    content: comment_content,
+                    upvotes: 0, // HN comments don't have scores in this feed
+                    downvotes: 0,
+                    timestamp: Some(item.date_published),
+                };
+                comments.push(comment);
+            }
+            
+            // Create article with empty content (just the headline and comments)
+            let article = crate::ast::Article {
+                title: parent_title.clone(),
+                content: vec![], // No article content, just headlines
+                metadata: crate::ast::ArticleMetadata {
+                    published_date: comments.first().map(|c| c.timestamp.clone()).flatten(),
+                    author: None,
+                    url: article_url,
+                    feed_name: name.clone(),
+                },
+                comments,
+            };
+            articles.push(article);
+        }
+        
+        let feed = crate::ast::Feed {
+            name: name.clone(),
+            description: Some("Hacker News best comments and parent articles".to_string()),
+            url: Some("https://hnrss.org/bestcomments.jsonfeed".to_string()),
+            articles,
+        };
+        
+        let document = Document {
+            metadata: crate::ast::DocumentMetadata {
+                title,
+                author,
+                description: Some("Hacker News digest with best comments".to_string()),
+                generated_at: chrono::Utc::now().to_rfc3339(),
+            },
+            front_page: None,
+            feeds: vec![feed],
+        };
+        
+        Ok(document)
+    }
+}
+
 impl From<SourceConfig> for Box<dyn Source> {
     fn from(config: SourceConfig) -> Self {
         match config {
@@ -150,6 +294,9 @@ impl From<SourceConfig> for Box<dyn Source> {
             }
             SourceConfig::ArsTechnica { api_token } => {
                 Box::new(ArsTechnicaSource::new(api_token))
+            }
+            SourceConfig::HackerNews => {
+                Box::new(HackerNewsSource::new())
             }
         }
     }

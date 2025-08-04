@@ -1,13 +1,24 @@
 {
-  "feeds": [
+  "sources": [
     {
       "type": "ars_technica",
+      "name": "Ars Technica",
+    },
+    {
+      "type": "hackernews",
+      "name": "Hacker News"
     },
     {
       "type": "rss",
       "name": "BBC News - Technology",
       "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
       "description": "BBC technology news"
+    },
+    {
+      "type": "rss",
+      "name": "Bloomberg - Technology",
+      "url": "https://feeds.bloomberg.com/technology/news.rss",
+      "description": "Bloomberg technology news"
     }
   ],
   "output": {

@@ -1,0 +1,19 @@
+---
+source: tests/config_tests.rs
+expression: config
+---
+{
+  "sources": [],
+  "feeds": [
+    {
+      "type": "hackernews"
+    }
+  ],
+  "output": {
+    "filename": "hackernews_legacy.epub",
+    "title": "HN Legacy Test",
+    "author": "HN Legacy Author",
+    "format": "epub"
+  },
+  "front_page": null
+}

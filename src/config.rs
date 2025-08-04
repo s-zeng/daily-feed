@@ -31,6 +31,8 @@ pub enum Feed {
         #[serde(skip_serializing_if = "Option::is_none")]
         api_token: Option<String>,
     },
+    #[serde(rename = "hackernews")]
+    HackerNews,
 }
 
 impl Feed {
@@ -38,6 +40,7 @@ impl Feed {
         match self {
             Feed::Rss { name, .. } => name,
             Feed::ArsTechnica { .. } => "Ars Technica",
+            Feed::HackerNews => "Hacker News",
         }
     }
 
@@ -51,6 +54,7 @@ impl Feed {
                     "https://arstechnica.com/feed/".to_string()
                 }
             }
+            Feed::HackerNews => "https://hnrss.org/bestcomments.jsonfeed".to_string(),
         }
     }
 
@@ -58,6 +62,7 @@ impl Feed {
         match self {
             Feed::Rss { description, .. } => description,
             Feed::ArsTechnica { .. } => "Technology news and insights",
+            Feed::HackerNews => "Hacker News best comments and parent articles",
         }
     }
 
@@ -65,6 +70,7 @@ impl Feed {
         match self {
             Feed::Rss { .. } => None,
             Feed::ArsTechnica { api_token } => api_token.as_deref(),
+            Feed::HackerNews => None,
         }
     }
 }
@@ -79,6 +85,10 @@ impl From<Feed> for SourceEntry {
             Feed::ArsTechnica { api_token } => SourceEntry {
                 name: "Ars Technica".to_string(),
                 config: SourceConfig::ArsTechnica { api_token },
+            },
+            Feed::HackerNews => SourceEntry {
+                name: "Hacker News".to_string(),
+                config: SourceConfig::HackerNews,
             },
         }
     }

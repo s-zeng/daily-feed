@@ -140,3 +140,46 @@ fn test_config_multiple_feeds() {
     let config: Config = serde_json::from_str(json_content).unwrap();
     insta::assert_json_snapshot!(config);
 }
+
+#[test]
+fn test_hackernews_config_deserialization() {
+    let json_content = r#"
+    {
+        "sources": [
+            {
+                "name": "Hacker News",
+                "type": "hackernews"
+            }
+        ],
+        "output": {
+            "filename": "hackernews_test.epub",
+            "title": "HN Test Title",
+            "author": "HN Test Author"
+        }
+    }
+    "#;
+
+    let config: Config = serde_json::from_str(json_content).unwrap();
+    insta::assert_json_snapshot!(config);
+}
+
+#[test]
+fn test_hackernews_legacy_feed_format() {
+    let json_content = r#"
+    {
+        "feeds": [
+            {
+                "type": "hackernews"
+            }
+        ],
+        "output": {
+            "filename": "hackernews_legacy.epub",
+            "title": "HN Legacy Test",
+            "author": "HN Legacy Author"
+        }
+    }
+    "#;
+
+    let config: Config = serde_json::from_str(json_content).unwrap();
+    insta::assert_json_snapshot!(config);
+}
