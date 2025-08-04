@@ -133,6 +133,7 @@ async fn test_channels_to_epub_single_feed() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -191,6 +192,7 @@ async fn test_channels_to_epub_multiple_feeds() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -249,6 +251,7 @@ async fn test_channels_to_epub_empty_feed() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";

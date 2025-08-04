@@ -1,8 +1,9 @@
-use crate::ast::Document;
+use crate::ast::{Document, DocumentMetadata};
 use crate::config::{Config, OutputFormat};
 use crate::epub_outputter::EpubOutputter;
 use crate::markdown_outputter::MarkdownOutputter;
 use crate::parser::DocumentParser;
+use crate::sources::Source;
 use std::error::Error;
 
 pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
@@ -60,6 +61,41 @@ pub async fn document_to_epub(
     let mut outputter = EpubOutputter::new()?;
     outputter.generate_epub(document, output_filename)?;
     Ok(())
+}
+
+pub async fn fetch_all_sources(
+    config: &Config,
+) -> Result<Document, Box<dyn Error>> {
+    let sources = config.get_all_sources();
+    let mut feeds = Vec::new();
+    
+    for source_entry in sources {
+        let source: Box<dyn Source> = source_entry.config.clone().into();
+        match source.fetch_document(
+            source_entry.name().to_string(),
+            config.output.title.clone(),
+            config.output.author.clone(),
+        ).await {
+            Ok(document) => {
+                println!("Successfully fetched: {}", source_entry.name());
+                feeds.extend(document.feeds);
+            }
+            Err(e) => {
+                eprintln!("Failed to fetch {}: {}", source_entry.name(), e);
+            }
+        }
+    }
+
+    Ok(Document {
+        metadata: DocumentMetadata {
+            title: config.output.title.clone(),
+            author: config.output.author.clone(),
+            description: None,
+            generated_at: chrono::Utc::now().to_rfc3339(),
+        },
+        feeds,
+        front_page: None,
+    })
 }
 
 pub async fn document_to_output(

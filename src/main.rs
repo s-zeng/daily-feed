@@ -8,6 +8,7 @@ mod fetch;
 mod front_page;
 mod markdown_outputter;
 mod parser;
+mod sources;
 
 #[derive(Debug, Clone, ValueEnum)]
 enum OutputFormatArg {
@@ -75,25 +76,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.output.format = format_arg.into();
     }
 
+    let total_sources = config.get_all_sources().len();
     if args.verbose {
-        println!("Loaded {} feeds", config.feeds.len());
+        println!("Loaded {} sources", total_sources);
     }
 
-    // Fetch all RSS feeds
-    let channels = fetch::fetch_all_feeds(&config).await?;
+    // Fetch all sources using the new interface
+    let mut document = fetch::fetch_all_sources(&config).await?;
 
-    if channels.is_empty() {
-        eprintln!("No feeds were successfully fetched");
+    if document.feeds.is_empty() {
+        eprintln!("No sources were successfully fetched");
         return Ok(());
     }
-
-    // Parse feeds into AST document
-    let mut document = fetch::channels_to_document(
-        &channels,
-        config.output.title.clone(),
-        config.output.author.clone(),
-    )
-    .await?;
 
     if args.verbose {
         println!(

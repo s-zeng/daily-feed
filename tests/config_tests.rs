@@ -100,6 +100,7 @@ fn test_config_serialization() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let json = serde_json::to_string(&config).unwrap();

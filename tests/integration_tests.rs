@@ -22,6 +22,7 @@ fn test_cli_with_config_file() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let config_json = serde_json::to_string_pretty(&config).unwrap();
@@ -89,6 +90,7 @@ fn test_full_workflow_with_local_feeds_success() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -137,6 +139,7 @@ fn test_full_workflow_creates_epub_file() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -181,6 +184,7 @@ fn test_full_workflow_epub_size() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -234,6 +238,7 @@ fn test_workflow_with_empty_feeds() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";
@@ -283,6 +288,7 @@ fn test_workflow_with_no_feeds() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let channels = vec![];
@@ -336,6 +342,7 @@ fn test_config_serialization_roundtrip() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let json = serde_json::to_string_pretty(&original_config).unwrap();
@@ -394,6 +401,7 @@ fn test_epub_generation_with_html_content() {
             format: OutputFormat::Epub,
         },
         front_page: None,
+        sources: vec![],
     };
 
     let tech_news_path = "tests/fixtures/tech_news.xml";

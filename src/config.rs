@@ -1,9 +1,23 @@
 use crate::ai_client::AiProvider;
+use crate::sources::SourceConfig;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SourceEntry {
+    pub name: String,
+    #[serde(flatten)]
+    pub config: SourceConfig,
+}
+
+impl SourceEntry {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum Feed {
     #[serde(rename = "generic")]
@@ -51,6 +65,21 @@ impl Feed {
         match self {
             Feed::Generic { .. } => None,
             Feed::ArsTechnica { api_token } => api_token.as_deref(),
+        }
+    }
+}
+
+impl From<Feed> for SourceEntry {
+    fn from(feed: Feed) -> Self {
+        match feed {
+            Feed::Generic { name, url, description } => SourceEntry {
+                name,
+                config: SourceConfig::Rss { url, description },
+            },
+            Feed::ArsTechnica { api_token } => SourceEntry {
+                name: "Ars Technica".to_string(),
+                config: SourceConfig::ArsTechnica { api_token },
+            },
         }
     }
 }
@@ -106,6 +135,9 @@ pub struct OutputConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default)]
+    pub sources: Vec<SourceEntry>,
+    #[serde(default)]
     pub feeds: Vec<Feed>,
     pub output: OutputConfig,
     pub front_page: Option<FrontPageConfig>,
@@ -118,8 +150,19 @@ impl Config {
         Ok(config)
     }
 
+    pub fn get_all_sources(&self) -> Vec<SourceEntry> {
+        let mut all_sources = self.sources.clone();
+        
+        for feed in &self.feeds {
+            all_sources.push((*feed).clone().into());
+        }
+        
+        all_sources
+    }
+
     pub fn default() -> Self {
         Config {
+            sources: vec![],
             feeds: vec![Feed::ArsTechnica { api_token: None }],
             output: OutputConfig {
                 filename: "daily-feed.epub".to_string(),
