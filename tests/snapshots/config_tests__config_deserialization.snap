@@ -6,7 +6,7 @@ expression: config
   "sources": [],
   "feeds": [
     {
-      "type": "generic",
+      "type": "rss",
       "name": "Test Feed",
       "url": "https://test.example.com/feed.xml",
       "description": "A test feed"

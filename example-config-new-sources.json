@@ -1,0 +1,21 @@
+{
+  "sources": [
+    {
+      "name": "Example RSS Feed",
+      "type": "rss",
+      "url": "https://feeds.ycombinator.com/",
+      "description": "Example RSS feed using new source interface"
+    },
+    {
+      "name": "Ars Technica (with comments)",
+      "type": "ars_technica",
+      "api_token": null
+    }
+  ],
+  "output": {
+    "filename": "daily-feed.epub",
+    "title": "Daily Feed Digest",
+    "author": "RSS Aggregator",
+    "format": "epub"
+  }
+}

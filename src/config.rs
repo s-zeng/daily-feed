@@ -20,8 +20,8 @@ impl SourceEntry {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum Feed {
-    #[serde(rename = "generic")]
-    Generic {
+    #[serde(rename = "rss")]
+    Rss {
         name: String,
         url: String,
         description: String,
@@ -36,14 +36,14 @@ pub enum Feed {
 impl Feed {
     pub fn name(&self) -> &str {
         match self {
-            Feed::Generic { name, .. } => name,
+            Feed::Rss { name, .. } => name,
             Feed::ArsTechnica { .. } => "Ars Technica",
         }
     }
 
     pub fn url(&self) -> String {
         match self {
-            Feed::Generic { url, .. } => url.clone(),
+            Feed::Rss { url, .. } => url.clone(),
             Feed::ArsTechnica { api_token } => {
                 if let Some(token) = api_token {
                     format!("https://arstechnica.com/feed/?t={}", token)
@@ -56,14 +56,14 @@ impl Feed {
 
     pub fn description(&self) -> &str {
         match self {
-            Feed::Generic { description, .. } => description,
+            Feed::Rss { description, .. } => description,
             Feed::ArsTechnica { .. } => "Technology news and insights",
         }
     }
 
     pub fn api_token(&self) -> Option<&str> {
         match self {
-            Feed::Generic { .. } => None,
+            Feed::Rss { .. } => None,
             Feed::ArsTechnica { api_token } => api_token.as_deref(),
         }
     }
@@ -72,7 +72,7 @@ impl Feed {
 impl From<Feed> for SourceEntry {
     fn from(feed: Feed) -> Self {
         match feed {
-            Feed::Generic { name, url, description } => SourceEntry {
+            Feed::Rss { name, url, description } => SourceEntry {
                 name,
                 config: SourceConfig::Rss { url, description },
             },

@@ -8,7 +8,7 @@ fn test_config_deserialization() {
     {
         "feeds": [
             {
-                "type": "generic",
+                "type": "rss",
                 "name": "Test Feed",
                 "url": "https://test.example.com/feed.xml",
                 "description": "A test feed"
@@ -32,7 +32,7 @@ fn test_config_load_from_file() {
     {
         "feeds": [
             {
-                "type": "generic",
+                "type": "rss",
                 "name": "File Test Feed",
                 "url": "https://file.example.com/feed.xml",
                 "description": "A test feed from file"
@@ -88,7 +88,7 @@ fn test_config_default() {
 #[test]
 fn test_config_serialization() {
     let config = Config {
-        feeds: vec![Feed::Generic {
+        feeds: vec![Feed::Rss {
             name: "Serialize Test".to_string(),
             url: "https://serialize.example.com/feed.xml".to_string(),
             description: "Test serialization".to_string(),
@@ -114,13 +114,13 @@ fn test_config_multiple_feeds() {
     {
         "feeds": [
             {
-                "type": "generic",
+                "type": "rss",
                 "name": "Feed 1",
                 "url": "https://feed1.example.com/feed.xml",
                 "description": "First feed"
             },
             {
-                "type": "generic",
+                "type": "rss",
                 "name": "Feed 2",
                 "url": "https://feed2.example.com/feed.xml",
                 "description": "Second feed"

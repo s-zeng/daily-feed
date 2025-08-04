@@ -6,7 +6,7 @@ expression: deserialized
   "sources": [],
   "feeds": [
     {
-      "type": "generic",
+      "type": "rss",
       "name": "Serialize Test",
       "url": "https://serialize.example.com/feed.xml",
       "description": "Test serialization"

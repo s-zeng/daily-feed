@@ -1,0 +1,20 @@
+{
+  "feeds": [
+    {
+      "type": "rss",
+      "name": "Example RSS Feed",
+      "url": "https://feeds.ycombinator.com/",
+      "description": "Hacker News RSS feed using old feeds format"
+    },
+    {
+      "type": "ars_technica",
+      "api_token": null
+    }
+  ],
+  "output": {
+    "filename": "daily-feed.epub",
+    "title": "Daily Feed Digest",
+    "author": "RSS Aggregator",
+    "format": "epub"
+  }
+}
