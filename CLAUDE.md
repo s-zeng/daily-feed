@@ -5,10 +5,10 @@ code in this repository.
 
 ## Project Overview
 
-This is a Rust CLI application called `daily-feed` that aggregates RSS feeds and 
-generates EPUB files for offline reading. The application fetches RSS feeds 
-asynchronously, processes the content, and outputs a structured EPUB with 
-styling and table of contents.
+This is a Rust CLI application called `daily-feed` that aggregates content from multiple sources 
+(RSS feeds, specialized sources like Ars Technica) and generates EPUB or Markdown files for offline reading. 
+The application fetches content asynchronously, processes it through a compiler-style pipeline, 
+and can generate AI-powered front pages using LLM providers.
 
 ## Style
 
@@ -35,64 +35,77 @@ The codebase follows a true compiler-style architecture with distinct phases of 
 
 The application processes data through several transformation phases, similar to a compiler pipeline:
 
-1. **Lexing/Input Phase**: JSON Config + RSS URLs → Raw Network Data
+1. **Lexing/Input Phase**: JSON Config + Source URLs → Raw Network Data
    - Configuration is parsed and validated (`config.rs`)
-   - RSS feeds are fetched from network (`fetch.rs::feed_from_url`, `fetch::fetch_all_feeds`)
+   - Multiple source types are supported via `sources.rs` trait system
+   - RSS feeds and specialized sources (Ars Technica) are fetched from network (`fetch.rs`)
    - Raw RSS XML and HTML content is retrieved
 
-2. **Parsing Phase**: Raw RSS/HTML → Structured AST (`parser.rs`)
+2. **Parsing Phase**: Raw Content → Structured AST (`parser.rs`)
    - `DocumentParser` converts RSS channels into the unified AST structure
    - HTML content is parsed into structured `ContentBlock` enum variants
-   - Comments are fetched and integrated for Ars Technica articles
+   - Comments are fetched and integrated for Ars Technica articles via `ars_comments.rs`
    - Creates strongly-typed `Document` AST with feeds, articles, and metadata
 
-3. **AST Transformation Phase**: Document AST ↔ JSON Serialization
+3. **AI Enhancement Phase**: Document AST → Enhanced AST (`front_page.rs`, `ai_client.rs`)
+   - Optional AI-powered front page generation using LLM providers (Anthropic, Ollama)
+   - `FrontPageGenerator` creates structured summaries and themes
+   - AI client with retry logic and error handling
+
+4. **AST Transformation Phase**: Document AST ↔ JSON Serialization
    - AST can be exported to JSON format (`--export-ast` flag)
    - AST can be loaded from JSON (via `ast-converter` binary)
    - Enables intermediate representation persistence and debugging
 
-4. **Code Generation Phase**: Document AST → EPUB Output (`epub_outputter.rs`)
-   - `EpubOutputter` transforms AST into EPUB-compatible HTML
-   - CSS styling and metadata are applied
+5. **Code Generation Phase**: Document AST → Output Formats
+   - `EpubOutputter` transforms AST into EPUB-compatible HTML (`epub_outputter.rs`)
+   - `MarkdownOutputter` transforms AST into Markdown format (`markdown_outputter.rs`)
+   - CSS styling and metadata are applied for EPUB
    - Table of contents is generated from content hierarchy
-   - Final EPUB file is assembled using `epub-builder`
 
 ### Module Structure
 
 - `src/main.rs`: CLI entry point and pipeline orchestration (compiler driver)
 - `src/lib.rs`: Module exports for library usage
-- `src/config.rs`: Configuration parsing and validation (config lexer)
+- `src/config.rs`: Configuration parsing and validation with multiple source support
+- `src/sources.rs`: Source trait system for different content providers (RSS, Ars Technica)
 - `src/fetch.rs`: Network operations and high-level pipeline functions
-- `src/parser.rs`: RSS/HTML → AST transformation (main parser)
+- `src/parser.rs`: Content → AST transformation (main parser)
 - `src/ast.rs`: Core AST data structures with algebraic types
 - `src/epub_outputter.rs`: AST → EPUB code generation (backend)
+- `src/markdown_outputter.rs`: AST → Markdown code generation (backend)
 - `src/ars_comments.rs`: Specialized comment extraction (domain-specific parser)
+- `src/front_page.rs`: AI-powered front page generation
+- `src/ai_client.rs`: Generic AI client with retry logic and provider abstraction
 - `src/bin/ast-converter.rs`: Standalone AST → EPUB/Markdown converter
 
 ### Data Flow Pipeline
 
 ```
-JSON Config → RSS Feeds → Raw HTML/XML → Document AST → EPUB/JSON Output
-    ↓             ↓            ↓              ↓             ↓
- Config       Network      Parsing        AST         Code Gen
- Parser       Fetch      (parser.rs)   (ast.rs)   (epub_outputter.rs)
+JSON Config → Sources → Raw Content → Document AST → [AI Enhancement] → Output Formats
+    ↓           ↓          ↓              ↓              ↓                ↓
+ Config     Sources    Parsing         AST        Front Page        Code Gen
+ Parser    (RSS/AT)   (parser.rs)   (ast.rs)   (front_page.rs)  (outputters)
 ```
 
 ### AST-Centric Design
 
 The `ast.rs` module defines the core intermediate representation using Rust's algebraic data types:
 
-- `Document`: Root AST node containing metadata and feeds
-- `Feed`: Collection of articles from a single RSS source
+- `Document`: Root AST node containing metadata, optional front page, and feeds
+- `Feed`: Collection of articles from a single source
 - `Article`: Individual content items with metadata and comments
-- `ContentBlock`: Enum representing different content types (paragraphs, headings, lists, etc.)
+- `ContentBlock`: Enum representing different content types (paragraphs, headings, lists, quotes, code, links, images, raw HTML)
 - `TextContent`/`TextSpan`: Rich text with formatting information
+- `Comment`: Comment structures with voting scores and timestamps
+- `Headline`: Individual news headline structure for front page generation
 
 This compiler-like approach with a central AST enables:
 - Clean separation between parsing, transformation, and output generation
 - Easy extension with new input formats or output targets
 - Intermediate representation inspection and debugging
 - Testable, composable pipeline stages
+- AI enhancement as an optional transformation pass
 
 ## Common Commands
 
@@ -121,6 +134,13 @@ cargo check
 # Export AST to JSON for debugging
 cargo run -- --export-ast document.json
 
+# Enable front page generation
+cargo run -- --front-page
+
+# Specify output format
+cargo run -- -f markdown
+cargo run -- -f epub
+
 # Convert AST JSON to EPUB or Markdown
 cargo run --bin ast-converter -- -i document.json -o output.epub
 cargo run --bin ast-converter -- -i document.json -o output.md -f markdown
@@ -128,14 +148,54 @@ cargo run --bin ast-converter -- -i document.json -o output.md -f markdown
 
 ## Configuration
 
-The application uses a JSON configuration file (`config.json` by default) with this structure:
+The application supports two configuration formats:
+
+### New Sources Format (Recommended)
+```json
+{
+  "sources": [
+    {
+      "name": "Example RSS Feed",
+      "type": "rss",
+      "url": "https://example.com/feed.rss",
+      "description": "Example RSS feed"
+    },
+    {
+      "name": "Ars Technica",
+      "type": "ars_technica",
+      "api_token": "optional-api-token"
+    }
+  ],
+  "output": {
+    "filename": "daily-feed.epub",
+    "title": "Daily Feed Digest",
+    "author": "RSS Aggregator",
+    "format": "epub"
+  },
+  "front_page": {
+    "enabled": true,
+    "provider": {
+      "type": "anthropic",
+      "api_key": "your-api-key",
+      "model": "claude-sonnet-4-20250514"
+    }
+  }
+}
+```
+
+### Legacy Feeds Format (Still Supported)
 ```json
 {
   "feeds": [
     {
+      "type": "rss",
       "name": "Feed Name",
       "url": "https://example.com/feed.rss",
       "description": "Description"
+    },
+    {
+      "type": "ars_technica",
+      "api_token": "optional-token"
     }
   ],
   "output": {
@@ -146,6 +206,23 @@ The application uses a JSON configuration file (`config.json` by default) with t
 }
 ```
 
+### Source Types
+
+**RSS Sources**: Standard RSS/Atom feeds
+- `type`: "rss"
+- `url`: Feed URL
+- `description`: Human-readable description
+
+**Ars Technica Sources**: Specialized Ars Technica integration with comments
+- `type`: "ars_technica"
+- `api_token`: Optional API token for authenticated access
+
+### Front Page Configuration
+
+**AI Providers**: 
+- `anthropic`: Uses Claude models via Anthropic API
+- `ollama`: Uses local Ollama installation
+
 ## Development Environment
 
 This project uses Nix for reproducible builds and development environments. The `flake.nix` provides all necessary dependencies including OpenSSL, libiconv, and pkg-config. Use `nix develop` to enter the development shell.
@@ -154,7 +231,7 @@ This project uses Nix for reproducible builds and development environments. The 
 
 - **clap**: CLI argument parsing with derive macros
 - **rss**: RSS feed parsing into structured data
-- **reqwest**: HTTP client for async RSS feed fetching
+- **reqwest**: HTTP client for async content fetching
 - **tokio**: Async runtime with full feature set
 - **futures**: Additional async utilities
 - **epub-builder**: EPUB generation and assembly
@@ -164,6 +241,7 @@ This project uses Nix for reproducible builds and development environments. The 
 - **chrono**: Date/time handling with serde support
 - **base64**: Encoding utilities
 - **html-escape**: HTML entity handling
+- **async-trait**: Async trait support for source abstractions
 - **insta**: Snapshot testing framework for deterministic test assertions
 
 ## Testing
@@ -187,26 +265,31 @@ The project has comprehensive tests across multiple categories:
   - `src/epub_outputter.rs`: EPUB HTML generation tests with string snapshots
   - `src/markdown_outputter.rs`: Markdown generation tests with string snapshots
   - `src/ars_comments.rs`: Comment parsing tests with JSON snapshots
+  - `src/ai_client.rs`: AI client functionality tests with JSON snapshots
+  - `src/front_page.rs`: Front page generation tests (implied by snapshots)
 
-- **Integration tests**: `tests/integration_tests.rs`, `tests/fetch_tests.rs`
-  - Full workflow tests with range-based file size validation
-  - Configuration loading and serialization tests
-  - RSS feed processing tests with string and JSON snapshots
+- **Integration tests**: Multiple test files in `tests/`
+  - `tests/integration_tests.rs`: Full workflow tests with range-based file size validation
+  - `tests/fetch_tests.rs`: Network operations and RSS feed processing
+  - `tests/config_tests.rs`: Configuration parsing and validation with JSON snapshots
+  - `tests/ars_comments_tests.rs`: Ars Technica comment extraction with structured snapshots
+  - `tests/front_page_tests.rs`: AI front page generation tests
+  - `tests/ast_tests.rs`: AST manipulation tests
+  - `tests/epub_outputter_tests.rs`: EPUB generation tests
+  - `tests/markdown_outputter_tests.rs`: Markdown generation tests
+  - `tests/parser_tests.rs`: Content parsing tests
 
 - **Golden file tests**: `tests/golden_tests.rs`
   - End-to-end pipeline tests from RSS to EPUB/Markdown
   - AST roundtrip serialization tests
-  - Tests use normalized timestamps (`"2025-01-01T00:00:00.000000Z"`) and size ranges
-
-- **Module-specific tests**: `tests/config_tests.rs`, `tests/ars_comments_tests.rs`
-  - Configuration parsing and validation with JSON snapshots
-  - Ars Technica comment extraction with structured snapshots
+  - Tests use normalized timestamps and size ranges
 
 - **Cram tests**: `tests/cram_tests.rs`
   - CLI behavior simulation with snapshot assertions
   - Error handling and edge case validation
 
 - **Test fixtures**: Sample RSS feeds in `tests/fixtures/`
+- **Golden outputs**: Reference outputs in `tests/golden_output/`
 
 ### Running Tests
 
@@ -226,7 +309,7 @@ cargo insta accept
 
 ### Snapshot Management
 
-- Snapshots are stored in `tests/snapshots/` directory
+- Snapshots are stored in `src/snapshots/` (unit tests) and `tests/snapshots/` (integration tests)
 - When test behavior changes, run `cargo insta review` to inspect differences
 - Accept valid changes with `cargo insta accept` or reject with `cargo insta reject`
 - Never commit `.snap.new` files - these are pending snapshot updates
@@ -244,21 +327,43 @@ This approach makes tests resilient to environmental differences while maintaini
 
 ## Features
 
-### RSS Feed Aggregation
-- Concurrent RSS feed fetching for performance
-- HTML content sanitization for EPUB compatibility  
-- Proper User-Agent headers for RSS requests
+### Multi-Source Content Aggregation
+- RSS/Atom feed support with concurrent fetching
+- Specialized Ars Technica integration with comment extraction
+- Extensible source system via trait abstractions
+- HTML content sanitization for output compatibility
+
+### AI-Powered Front Pages
+- LLM-generated front page summaries and themes
+- Support for Anthropic Claude and Ollama providers
+- Structured front page generation with source summaries
+- Retry logic with exponential backoff for API calls
+
+### Multiple Output Formats
+- EPUB generation with CSS styling and table of contents
+- Markdown output with proper formatting
+- AST JSON export for debugging and intermediate processing
+- Cross-format content preservation
 
 ### Ars Technica Comment Integration
 - Fetches top comments from Ars Technica articles
 - Parses XenForo forum structure to extract comment data
 - Returns structured Comment objects with author, content, score, and timestamp
-- Main functions:
+- Main functions in `ars_comments.rs`:
   - `fetch_top_comments(article_url, limit)`: Fetch top N comments
   - `fetch_top_5_comments(article_url)`: Convenience wrapper for top 5
+
+### CLI Features
+- Flexible configuration file support (default: `config.json`)
+- AST export and import capabilities
+- Output format selection (`--format epub|markdown`)
+- Front page generation toggle (`--front-page`)
+- Verbose mode for debugging (`-v`)
 
 ## Notes
 
 - Tests include both unit tests and integration tests with real article data
 - Comment fetching handles network failures gracefully
 - HTML parsing uses CSS selectors for robust comment extraction
+- AI features are optional and gracefully degrade when unavailable
+- The compiler-style architecture makes the codebase highly modular and testable
