@@ -1,4 +1,3 @@
-use crate::ars_comments;
 use crate::ast::*;
 use regex::Regex;
 use scraper::{ElementRef, Html, Node, Selector};
@@ -45,7 +44,7 @@ impl DocumentParser {
         &self,
         item: &rss::Item,
         feed_name: &str,
-        channel: &rss::Channel,
+        _channel: &rss::Channel,
     ) -> Result<Article, Box<dyn Error>> {
         let title = item.title().unwrap_or("Untitled").to_string();
         let mut article = Article::new(title.clone(), feed_name.to_string());
@@ -63,30 +62,6 @@ impl DocumentParser {
         let content_blocks = self.parse_html_to_content_blocks(content_html)?;
         article = article.with_content(content_blocks);
 
-        // Fetch comments if this is Ars Technica
-        if channel.link().contains("arstechnica.com") {
-            if let Some(article_url) = item.link() {
-                match ars_comments::fetch_top_5_comments(article_url).await {
-                    Ok(raw_comments) => {
-                        for raw_comment in raw_comments {
-                            let comment_content =
-                                self.parse_html_to_content_blocks(&raw_comment.content)?;
-                            let comment = Comment {
-                                author: raw_comment.author,
-                                content: comment_content,
-                                upvotes: raw_comment.upvotes,
-                                downvotes: raw_comment.downvotes,
-                                timestamp: raw_comment.timestamp,
-                            };
-                            article.add_comment(comment);
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to fetch comments for {}: {}", title, e);
-                    }
-                }
-            }
-        }
 
         Ok(article)
     }

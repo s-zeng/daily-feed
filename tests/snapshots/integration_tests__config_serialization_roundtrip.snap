@@ -3,6 +3,7 @@ source: tests/integration_tests.rs
 expression: deserialized_config
 ---
 {
+  "sources": [],
   "feeds": [
     {
       "type": "generic",

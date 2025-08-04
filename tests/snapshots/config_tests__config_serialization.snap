@@ -3,6 +3,7 @@ source: tests/config_tests.rs
 expression: deserialized
 ---
 {
+  "sources": [],
   "feeds": [
     {
       "type": "generic",

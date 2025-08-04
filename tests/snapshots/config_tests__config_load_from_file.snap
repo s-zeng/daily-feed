@@ -3,6 +3,7 @@ source: tests/config_tests.rs
 expression: config
 ---
 {
+  "sources": [],
   "feeds": [
     {
       "type": "generic",

@@ -3,6 +3,7 @@ source: tests/integration_tests.rs
 expression: default_config
 ---
 {
+  "sources": [],
   "feeds": [
     {
       "type": "ars_technica"
