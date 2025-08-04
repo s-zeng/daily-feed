@@ -4,7 +4,7 @@
       "type": "ars_technica",
     },
     {
-      "type": "generic",
+      "type": "rss",
       "name": "BBC News - Technology",
       "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
       "description": "BBC technology news"

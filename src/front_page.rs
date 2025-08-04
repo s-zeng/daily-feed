@@ -365,7 +365,7 @@ Analyze the provided content and return a JSON response with this exact structur
   "sources": [
     {{
       "name": "Source name",
-      "summary": "2-3 sentences summarizing the main themes and developments from this source",
+      "summary": "2-3 sentences summarizing the main themes and developments from this source, including user reactions when available",
       "key_stories": ["Key story title 1", "Key story title 2", "Key story title 3"]
     }}
   ],
@@ -374,11 +374,14 @@ Analyze the provided content and return a JSON response with this exact structur
 
 Guidelines:
 - For each source, provide a thematic summary of their coverage
+- When user comments are available (marked with comment counts and user reactions), analyze the sentiment and incorporate insights about public reaction into your source summary
+- Pay attention to comment scores (upvotes/downvotes) and content to gauge user sentiment: popular, positive, mixed, or critical reactions
+- Include how users are responding to major stories when comment data is present
 - Include 2-4 most important story titles from each source
-- Maintain neutral tone
+- Maintain neutral tone while noting public sentiment patterns
 - Focus on what each source is emphasizing or covering uniquely
 - Keep source summaries concise but informative
-- The overall theme should reflect patterns across all sources
+- The overall theme should reflect patterns across all sources and user engagement where available
 
 Daily feed content organized by source:
 {}
@@ -411,6 +414,42 @@ Return only valid JSON with the structure above."#,
                     content.push_str(&format!(" ({})", date));
                 }
 
+                // Include comment summary if comments are available
+                if !article.comments.is_empty() {
+                    content.push_str(&format!("\n  Comments ({} total):", article.comments.len()));
+                    
+                    // Include top comments with their reaction scores for user sentiment analysis
+                    let mut sorted_comments = article.comments.clone();
+                    sorted_comments.sort_by(|a, b| {
+                        let a_net = a.upvotes as i32 - a.downvotes as i32;
+                        let b_net = b.upvotes as i32 - b.downvotes as i32;
+                        b_net.cmp(&a_net)
+                    });
+                    
+                    // Include top 3 comments for AI analysis
+                    for (i, comment) in sorted_comments.iter().take(3).enumerate() {
+                        let net_score = comment.upvotes as i32 - comment.downvotes as i32;
+                        
+                        // Extract plain text from comment content blocks
+                        let comment_text = self.extract_text_from_content_blocks(&comment.content);
+                        
+                        content.push_str(&format!(
+                            "\n    {}. {} (+{} -{}, net: {}) by {}: \"{}\"",
+                            i + 1,
+                            if net_score > 10 { "Popular" } else if net_score > 0 { "Positive" } else { "Mixed" },
+                            comment.upvotes,
+                            comment.downvotes,
+                            net_score,
+                            comment.author,
+                            comment_text.chars().take(200).collect::<String>()
+                        ));
+                        
+                        if comment_text.len() > 200 {
+                            content.push_str("...");
+                        }
+                    }
+                }
+
                 content.push_str("\n");
             }
 
@@ -418,5 +457,35 @@ Return only valid JSON with the structure above."#,
         }
 
         Ok(content)
+    }
+
+    fn extract_text_from_content_blocks(&self, blocks: &[ContentBlock]) -> String {
+        let mut text = String::new();
+        
+        for block in blocks {
+            match block {
+                ContentBlock::Paragraph(content) => {
+                    text.push_str(&content.to_plain_text());
+                    text.push(' ');
+                }
+                ContentBlock::Heading { content, .. } => {
+                    text.push_str(&content.to_plain_text());
+                    text.push(' ');
+                }
+                ContentBlock::Quote(content) => {
+                    text.push_str(&content.to_plain_text());
+                    text.push(' ');
+                }
+                ContentBlock::List { items, .. } => {
+                    for item in items {
+                        text.push_str(&item.to_plain_text());
+                        text.push(' ');
+                    }
+                }
+                _ => {} // Skip other block types for comment extraction
+            }
+        }
+        
+        text.trim().to_string()
     }
 }

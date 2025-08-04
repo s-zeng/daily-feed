@@ -1,6 +1,6 @@
 use daily_feed::ai_client::AiProvider;
 use daily_feed::ast::{
-    Article, ArticleMetadata, ContentBlock, Document, DocumentMetadata, Feed, TextContent,
+    Article, ArticleMetadata, Comment, ContentBlock, Document, DocumentMetadata, Feed, TextContent,
 };
 use daily_feed::front_page::{FrontPageGenerator, SourceSummary, StructuredFrontPage};
 use insta::{assert_json_snapshot, assert_snapshot};
@@ -502,4 +502,87 @@ fn test_markdown_response_parsing() {
     );
 
     assert_json_snapshot!("markdown_parsing_result", result);
+}
+
+#[test]
+fn test_content_preparation_with_comments() {
+    let provider = AiProvider::Ollama {
+        base_url: "http://127.0.0.1:1234".to_string(),
+        model: "llama2".to_string(),
+    };
+
+    let generator = FrontPageGenerator::new(provider).unwrap();
+
+    // Create an article with comments (like Ars Technica)
+    let comment1 = Comment {
+        author: "TechEnthusiast".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain(
+            "This is a groundbreaking development! The implications for automation are huge.".to_string()
+        ))],
+        upvotes: 45,
+        downvotes: 2,
+        timestamp: Some("2025-01-01T12:00:00Z".to_string()),
+    };
+
+    let comment2 = Comment {
+        author: "SkepticalReader".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain(
+            "I'm not convinced this is as revolutionary as they claim. We've seen similar promises before.".to_string()
+        ))],
+        upvotes: 12,
+        downvotes: 8,
+        timestamp: Some("2025-01-01T12:15:00Z".to_string()),
+    };
+
+    let comment3 = Comment {
+        author: "IndustryExpert".to_string(),
+        content: vec![ContentBlock::Paragraph(TextContent::plain(
+            "Having worked in this field for 20 years, I can say this is indeed significant progress.".to_string()
+        ))],
+        upvotes: 67,
+        downvotes: 1,
+        timestamp: Some("2025-01-01T12:30:00Z".to_string()),
+    };
+
+    let article_with_comments = Article {
+        title: "Major AI Breakthrough Could Transform Healthcare".to_string(),
+        content: vec![
+            ContentBlock::Paragraph(TextContent::plain(
+                "Researchers have developed a new AI system that can diagnose complex medical conditions with unprecedented accuracy.".to_string()
+            )),
+        ],
+        metadata: ArticleMetadata {
+            published_date: Some("2025-01-01T10:00:00Z".to_string()),
+            author: Some("Science Reporter".to_string()),
+            url: Some("https://arstechnica.com/science/ai-breakthrough".to_string()),
+            feed_name: "Ars Technica".to_string(),
+        },
+        comments: vec![comment1, comment2, comment3],
+    };
+
+    let ars_feed = Feed {
+        name: "Ars Technica".to_string(),
+        description: Some("Technology news and analysis".to_string()),
+        url: Some("https://arstechnica.com".to_string()),
+        articles: vec![article_with_comments],
+    };
+
+    let mut document = Document::new("Daily Feed".to_string(), "Claude Code".to_string());
+    document.add_feed(ars_feed);
+
+    let content = generator.prepare_content_by_source(&document).unwrap();
+
+    // Verify that comments are included in the prepared content
+    assert!(content.contains("Comments (3 total):"));
+    assert!(content.contains("TechEnthusiast"));
+    assert!(content.contains("SkepticalReader"));
+    assert!(content.contains("IndustryExpert"));
+    assert!(content.contains("Popular (+67 -1, net: 66)"));
+    assert!(content.contains("Popular (+45 -2, net: 43)"));
+    assert!(content.contains("Positive (+12 -8, net: 4)"));
+    assert!(content.contains("groundbreaking development"));
+    assert!(content.contains("not convinced"));
+    assert!(content.contains("significant progress"));
+
+    assert_snapshot!("content_preparation_with_comments", content);
 }

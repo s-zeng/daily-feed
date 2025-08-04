@@ -1,0 +1,14 @@
+---
+source: tests/front_page_tests.rs
+expression: content
+---
+# Source: Ars Technica
+**Description:** Technology news and analysis
+**URL:** https://arstechnica.com
+
+**Articles:**
+- Major AI Breakthrough Could Transform Healthcare (2025-01-01T10:00:00Z)
+  Comments (3 total):
+    1. Popular (+67 -1, net: 66) by IndustryExpert: "Having worked in this field for 20 years, I can say this is indeed significant progress."
+    2. Popular (+45 -2, net: 43) by TechEnthusiast: "This is a groundbreaking development! The implications for automation are huge."
+    3. Positive (+12 -8, net: 4) by SkepticalReader: "I'm not convinced this is as revolutionary as they claim. We've seen similar promises before."
