@@ -40,6 +40,10 @@ struct Args {
     #[arg(long)]
     export_ast: Option<String>,
 
+    /// also export AST to JSON file in addition to main output
+    #[arg(long)]
+    also_export_ast: Option<String>,
+
     /// output format (epub or markdown)
     #[arg(short = 'f', long = "format", value_enum)]
     format: Option<OutputFormatArg>,
@@ -159,6 +163,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             config::OutputFormat::Markdown => "Markdown",
         };
         println!("{} generated: {}", format_name, output_filename);
+
+        // Also export AST if requested
+        if let Some(ast_file) = args.also_export_ast {
+            let json = serde_json::to_string_pretty(&document)?;
+            std::fs::write(&ast_file, json)?;
+            println!("AST also exported to: {}", ast_file);
+        }
     }
 
     Ok(())
