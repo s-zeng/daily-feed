@@ -1,0 +1,5 @@
+---
+source: tests/ars_comments_tests.rs
+expression: test_result
+---
+online_comments_count_5_has_votes_true_total_votes_true

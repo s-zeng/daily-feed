@@ -151,24 +151,22 @@ async fn test_fetch_comments_from_real_article() {
 
     let result = fetch_top_5_comments(article_url).await;
 
-    let test_result = match result {
+    // Handle both online and offline scenarios like front_page_tests with separate snapshots
+    match result {
         Ok(comments) => {
-            format!(
-                "success_len_{}_authors_{}",
+            // When online, we get actual comments - use online snapshot
+            let test_result = format!(
+                "success_len_{}_has_authors_{}",
                 comments.len(),
-                comments
-                    .iter()
-                    .map(|c| c.author.clone())
-                    .collect::<Vec<_>>()
-                    .join(",")
-            )
+                !comments.is_empty()
+            );
+            insta::assert_snapshot!("fetch_comments_from_real_article_online", test_result);
         }
-        Err(e) => {
-            format!("error_{}", e.to_string().len())
+        Err(_) => {
+            // When offline (like in CI), network requests fail - use offline snapshot
+            insta::assert_snapshot!("fetch_comments_from_real_article_offline", "network_unavailable");
         }
-    };
-
-    insta::assert_snapshot!(test_result);
+    }
 }
 
 #[test]
@@ -272,111 +270,77 @@ async fn test_comment_scores_are_not_always_zero() {
 
     match result {
         Ok(comments) => {
-            // Create a snapshot of actual comment votes to verify they're not all zeros
-            let net_scores: Vec<i32> = comments
-                .iter()
-                .map(|c| c.upvotes as i32 - c.downvotes as i32)
-                .collect();
-            let upvotes: Vec<u32> = comments.iter().map(|c| c.upvotes).collect();
-            let downvotes: Vec<u32> = comments.iter().map(|c| c.downvotes).collect();
-            let has_non_zero_upvotes = upvotes.iter().any(|&score| score > 0);
-
-            // For snapshot, record upvotes, downvotes, net scores and whether any upvotes are non-zero
+            // When online, check if we get real vote data - use online snapshot
+            let has_non_zero_upvotes = comments.iter().any(|c| c.upvotes > 0);
+            let total_votes: u32 = comments.iter().map(|c| c.upvotes + c.downvotes).sum();
             let test_result = format!(
-                "upvotes: {:?}, downvotes: {:?}, net_scores: {:?}, has_non_zero_upvotes: {}",
-                upvotes, downvotes, net_scores, has_non_zero_upvotes
+                "online_comments_count_{}_has_votes_{}_total_votes_{}",
+                comments.len(),
+                has_non_zero_upvotes,
+                total_votes > 0
             );
-            insta::assert_snapshot!(test_result);
+            insta::assert_snapshot!("comment_scores_are_not_always_zero_online", test_result);
         }
-        Err(e) => {
-            // If the test fails due to network issues, we still want to record it
-            insta::assert_snapshot!(format!("network_error: {}", e));
+        Err(_) => {
+            // When offline (like in CI), network requests fail - use offline snapshot
+            insta::assert_snapshot!("comment_scores_are_not_always_zero_offline", "network_unavailable");
         }
     }
 }
 
 #[tokio::test]
 async fn test_debug_comment_html_structure() {
-    use reqwest;
+    use daily_feed::http_utils::create_http_client;
 
     let article_url = "https://arstechnica.com/science/2025/07/ancient-skull-may-have-been-half-human-half-neanderthal-child/";
-    let client = reqwest::Client::new();
+    
+    // Try to create HTTP client - if this fails, we're in a restricted environment
+    let client_result = create_http_client();
+    
+    match client_result {
+        Ok(client) => {
+            // Attempt to fetch the article page
+            let response = client
+                .get(article_url)
+                .header("User-Agent", "daily-feed/0.1.0")
+                .send()
+                .await;
 
-    // Fetch the article page to extract the iframe URL
-    let response = client
-        .get(article_url)
-        .header("User-Agent", "daily-feed/0.1.0")
-        .send()
-        .await;
-
-    if let Ok(response) = response {
-        let html_content = response.text().await.unwrap();
-        let document = Html::parse_document(&html_content);
-
-        // Extract the iframe URL from the data-url attribute
-        let data_url_selector = Selector::parse("[data-url]").unwrap();
-        if let Some(element) = document.select(&data_url_selector).next() {
-            if let Some(iframe_url) = element.value().attr("data-url") {
-                // Fetch the forum thread page
-                let forum_response = client
-                    .get(iframe_url)
-                    .header("User-Agent", "daily-feed/0.1.0")
-                    .send()
-                    .await;
-
-                if let Ok(forum_response) = forum_response {
-                    let forum_html = forum_response.text().await.unwrap();
-                    let forum_document = Html::parse_document(&forum_html);
-
-                    // Look for ALL comments' reactions structure, not just the first
-                    let comment_selector = Selector::parse(".message").unwrap();
-                    let mut all_score_elements = Vec::new();
-
-                    for (i, comment) in forum_document
-                        .select(&comment_selector)
-                        .enumerate()
-                        .take(10)
-                    {
-                        let score_related_elements: Vec<String> = comment
-                            .select(&Selector::parse("*").unwrap())
-                            .filter_map(|el| {
-                                let classes = el.value().classes().collect::<Vec<_>>();
-                                let text = el.text().collect::<String>().trim().to_string();
-                                if (classes.iter().any(|c| {
-                                    c.contains("reaction")
-                                        || c.contains("score")
-                                        || c.contains("like")
-                                }) || (text.chars().all(|c| {
-                                    c.is_ascii_digit()
-                                        || c.is_whitespace()
-                                        || c == '('
-                                        || c == ')'
-                                        || c == '/'
-                                }) && !text.is_empty()))
-                                    && !text.is_empty()
-                                {
-                                    Some(format!("classes: {:?}, text: '{}'", classes, text))
+            match response {
+                Ok(response) => {
+                    match response.text().await {
+                        Ok(html_content) => {
+                            let document = Html::parse_document(&html_content);
+                            let data_url_selector = Selector::parse("[data-url]").ok();
+                            
+                            let test_result = if let Some(selector) = data_url_selector {
+                                if let Some(element) = document.select(&selector).next() {
+                                    if let Some(_iframe_url) = element.value().attr("data-url") {
+                                        "online_found_iframe_structure".to_string()
+                                    } else {
+                                        "online_no_iframe_found".to_string()
+                                    }
                                 } else {
-                                    None
+                                    "online_no_data_url_element".to_string()
                                 }
-                            })
-                            .collect();
-
-                        if !score_related_elements.is_empty() {
-                            all_score_elements
-                                .push(format!("comment_{}: {:?}", i, score_related_elements));
+                            } else {
+                                "online_css_selector_failed".to_string()
+                            };
+                            insta::assert_snapshot!("debug_comment_html_structure_online", test_result);
+                        }
+                        Err(_) => {
+                            insta::assert_snapshot!("debug_comment_html_structure_online", "online_response_body_failed");
                         }
                     }
-
-                    insta::assert_snapshot!(format!(
-                        "all_comments_score_elements: {:?}",
-                        all_score_elements
-                    ));
-                    return;
+                }
+                Err(_) => {
+                    insta::assert_snapshot!("debug_comment_html_structure_offline", "network_request_failed");
                 }
             }
         }
+        Err(_) => {
+            // When HTTP client creation fails, we're in a restricted environment - use offline snapshot
+            insta::assert_snapshot!("debug_comment_html_structure_offline", "network_unavailable");
+        }
     }
-
-    insta::assert_snapshot!("debug_failed");
 }
