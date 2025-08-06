@@ -294,53 +294,34 @@ async fn test_debug_comment_html_structure() {
 
     let article_url = "https://arstechnica.com/science/2025/07/ancient-skull-may-have-been-half-human-half-neanderthal-child/";
     
-    // Try to create HTTP client - if this fails, we're in a restricted environment
-    let client_result = create_http_client();
-    
-    match client_result {
-        Ok(client) => {
-            // Attempt to fetch the article page
-            let response = client
-                .get(article_url)
-                .header("User-Agent", "daily-feed/0.1.0")
-                .send()
-                .await;
-
-            match response {
-                Ok(response) => {
-                    match response.text().await {
-                        Ok(html_content) => {
-                            let document = Html::parse_document(&html_content);
-                            let data_url_selector = Selector::parse("[data-url]").ok();
-                            
-                            let test_result = if let Some(selector) = data_url_selector {
-                                if let Some(element) = document.select(&selector).next() {
-                                    if let Some(_iframe_url) = element.value().attr("data-url") {
-                                        "online_found_iframe_structure".to_string()
-                                    } else {
-                                        "online_no_iframe_found".to_string()
-                                    }
-                                } else {
-                                    "online_no_data_url_element".to_string()
-                                }
-                            } else {
-                                "online_css_selector_failed".to_string()
-                            };
-                            insta::assert_snapshot!("debug_comment_html_structure_online", test_result);
-                        }
-                        Err(_) => {
-                            insta::assert_snapshot!("debug_comment_html_structure_online", "online_response_body_failed");
-                        }
-                    }
-                }
-                Err(_) => {
-                    insta::assert_snapshot!("debug_comment_html_structure_offline", "network_request_failed");
-                }
+    // Try the full network operation - if any step fails, treat as offline
+    let result: Result<&str, Box<dyn std::error::Error>> = async {
+        let client = create_http_client()?;
+        let response = client
+            .get(article_url)
+            .header("User-Agent", "daily-feed/0.1.0")
+            .send()
+            .await?;
+        let html_content = response.text().await?;
+        let document = Html::parse_document(&html_content);
+        let data_url_selector = Selector::parse("[data-url]")
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+        
+        if let Some(element) = document.select(&data_url_selector).next() {
+            if element.value().attr("data-url").is_some() {
+                Ok("found_iframe_structure")
+            } else {
+                Ok("no_iframe_found") 
             }
+        } else {
+            Ok("no_data_url_element")
         }
-        Err(_) => {
-            // When HTTP client creation fails, we're in a restricted environment - use offline snapshot
-            insta::assert_snapshot!("debug_comment_html_structure_offline", "network_unavailable");
-        }
+    }.await;
+    
+    // Use simple if-let pattern like front_page tests
+    if let Ok(structure_info) = result {
+        insta::assert_snapshot!("debug_comment_html_structure_online", structure_info);
+    } else {
+        insta::assert_snapshot!("debug_comment_html_structure_offline", "network_unavailable");
     }
 }
