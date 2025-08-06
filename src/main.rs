@@ -6,6 +6,7 @@ mod config;
 mod epub_outputter;
 mod fetch;
 mod front_page;
+mod http_utils;
 mod markdown_outputter;
 mod parser;
 mod sources;

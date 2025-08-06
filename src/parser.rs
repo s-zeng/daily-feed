@@ -119,7 +119,10 @@ impl DocumentParser {
                 }
             }
             "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
-                let level = tag_name.chars().nth(1).unwrap().to_digit(10).unwrap() as u8;
+                let level = tag_name.chars().nth(1)
+                    .and_then(|c| c.to_digit(10))
+                    .map(|d| d as u8)
+                    .ok_or_else(|| format!("Invalid heading tag format: {}", tag_name))?;
                 let text_content = self.parse_element_to_text_content(element)?;
                 if !text_content.is_empty() {
                     Ok(Some(ContentBlock::Heading {
@@ -284,15 +287,25 @@ impl DocumentParser {
     }
 
     pub fn strip_html_tags(&self, html: &str) -> String {
-        let tag_regex = Regex::new(r"<[^>]*>").unwrap();
-        let entity_regex =
-            Regex::new(r"&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;").unwrap();
+        use std::sync::OnceLock;
+        
+        static TAG_REGEX: OnceLock<Regex> = OnceLock::new();
+        static ENTITY_REGEX: OnceLock<Regex> = OnceLock::new();
+        static WHITESPACE_REGEX: OnceLock<Regex> = OnceLock::new();
+        
+        let tag_regex = TAG_REGEX.get_or_init(|| Regex::new(r"<[^>]*>").expect("Invalid tag regex"));
+        let entity_regex = ENTITY_REGEX.get_or_init(|| {
+            Regex::new(r"&[a-zA-Z][a-zA-Z0-9]*;|&#[0-9]+;|&#x[0-9a-fA-F]+;")
+                .expect("Invalid entity regex")
+        });
+        let whitespace_regex = WHITESPACE_REGEX.get_or_init(|| {
+            Regex::new(r"\s+").expect("Invalid whitespace regex")
+        });
 
         let without_tags = tag_regex.replace_all(html, " ");
         let without_entities = entity_regex.replace_all(&without_tags, " ");
 
         // Clean up whitespace
-        let whitespace_regex = Regex::new(r"\s+").unwrap();
         whitespace_regex
             .replace_all(&without_entities, " ")
             .trim()

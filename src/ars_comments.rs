@@ -1,5 +1,5 @@
+use crate::http_utils::create_http_client;
 use regex::Regex;
-use reqwest;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -17,12 +17,11 @@ pub async fn fetch_top_comments(
     article_url: &str,
     limit: usize,
 ) -> Result<Vec<Comment>, Box<dyn Error>> {
-    let client = reqwest::Client::new();
+    let client = create_http_client()?;
 
     // First, fetch the article page to extract the iframe URL
     let response = client
         .get(article_url)
-        .header("User-Agent", "daily-feed/0.1.0")
         .send()
         .await?;
 
@@ -35,7 +34,8 @@ pub async fn fetch_top_comments(
 
     // Extract the forum iframe URL from the data-url attribute
     // Look for the forum URL specifically (contains "civis/threads")
-    let data_url_selector = Selector::parse("[data-url]").unwrap();
+    let data_url_selector = Selector::parse("[data-url]")
+        .map_err(|e| format!("Invalid CSS selector '[data-url]': {}", e))?;
     let iframe_url = document
         .select(&data_url_selector)
         .filter_map(|element| element.value().attr("data-url"))
@@ -45,7 +45,6 @@ pub async fn fetch_top_comments(
     // Fetch the forum thread page
     let forum_response = client
         .get(iframe_url)
-        .header("User-Agent", "daily-feed/0.1.0")
         .send()
         .await?;
 
@@ -75,12 +74,14 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
     let mut comments = Vec::new();
 
     // XenForo comment structure selectors
-    let comment_selector = Selector::parse(".message").unwrap();
-    let author_selector = Selector::parse(".username").unwrap();
-    let content_selector = Selector::parse(".message-content .bbWrapper").unwrap();
-    let timestamp_selector =
-        Selector::parse(".message-meta time, .message-attribution time, .message-date time")
-            .unwrap();
+    let comment_selector = Selector::parse(".message")
+        .map_err(|e| format!("Invalid CSS selector '.message': {}", e))?;
+    let author_selector = Selector::parse(".username")
+        .map_err(|e| format!("Invalid CSS selector '.username': {}", e))?;
+    let content_selector = Selector::parse(".message-content .bbWrapper")
+        .map_err(|e| format!("Invalid CSS selector '.message-content .bbWrapper': {}", e))?;
+    let timestamp_selector = Selector::parse(".message-meta time, .message-attribution time, .message-date time")
+        .map_err(|e| format!("Invalid CSS selector for timestamps: {}", e))?;
 
     for comment_element in document.select(&comment_selector) {
         // Extract author
@@ -106,9 +107,12 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
         }
 
         // Extract upvotes and downvotes - try multiple methods
-        let upvote_selector = Selector::parse(".contentVote-score--positive").unwrap();
-        let downvote_selector = Selector::parse(".contentVote-score--negative").unwrap();
-        let combined_selector = Selector::parse(".contentVote-scores").unwrap();
+        let upvote_selector = Selector::parse(".contentVote-score--positive")
+            .map_err(|e| format!("Invalid CSS selector '.contentVote-score--positive': {}", e))?;
+        let downvote_selector = Selector::parse(".contentVote-score--negative")
+            .map_err(|e| format!("Invalid CSS selector '.contentVote-score--negative': {}", e))?;
+        let combined_selector = Selector::parse(".contentVote-scores")
+            .map_err(|e| format!("Invalid CSS selector '.contentVote-scores': {}", e))?;
 
         // Try to parse upvotes from positive score element
         let mut upvotes = comment_element
@@ -159,7 +163,7 @@ pub fn parse_comments_from_html(document: &Html) -> Result<Vec<Comment>, Box<dyn
             .and_then(|el| el.value().attr("datetime"))
             .or_else(|| {
                 // Fallback to any time element if specific selectors don't match
-                let fallback_selector = Selector::parse("time").unwrap();
+                let fallback_selector = Selector::parse("time").ok()?;
                 comment_element
                     .select(&fallback_selector)
                     .next()

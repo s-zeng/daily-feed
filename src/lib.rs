@@ -5,6 +5,7 @@ pub mod config;
 pub mod epub_outputter;
 pub mod fetch;
 pub mod front_page;
+pub mod http_utils;
 pub mod markdown_outputter;
 pub mod parser;
 pub mod sources;

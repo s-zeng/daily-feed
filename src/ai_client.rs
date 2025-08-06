@@ -1,3 +1,4 @@
+use crate::http_utils::create_ai_http_client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
@@ -116,7 +117,8 @@ impl AiClient {
         provider: AiProvider,
         retry_config: RetryConfig,
     ) -> Result<Self, AiClientError> {
-        let client = reqwest::Client::new();
+        let client = create_ai_http_client()
+            .map_err(|e| AiClientError::RequestError(e.to_string()))?;
         Ok(AiClient {
             provider,
             client,
@@ -258,7 +260,7 @@ impl AiClient {
 
         // Return the last error if all retries failed
         println!("All Anthropic API retry attempts failed");
-        Err(last_error.unwrap())
+        Err(last_error.unwrap_or_else(|| AiClientError::RequestError("All retry attempts failed with no recorded error".to_string())))
     }
 
     async fn call_ollama(

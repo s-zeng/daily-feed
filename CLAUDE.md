@@ -27,6 +27,34 @@ This project is in heavy development. Whenever you make a change, make sure to
 check `CLAUDE.md` and update it if necessary to reflect any newly added/changed 
 features or structures
 
+## Error Handling & Safety Guidelines
+
+Based on comprehensive bug audits, follow these critical safety practices:
+
+### Never Use `unwrap()` in Production Code
+- **NEVER** use `.unwrap()` on `Option` or `Result` types in production paths
+- Use proper error handling with `?`, `.ok_or()`, `.map_err()`, or pattern matching
+- Example: Replace `tag_name.chars().nth(1).unwrap()` with proper error handling
+- Exception: Only use `unwrap()` in tests or when preceded by explicit checks that guarantee safety
+
+### Network Operations Safety
+- **ALWAYS** set timeouts for HTTP requests - use the shared `http_utils` module
+- Use the provided HTTP client utilities: `create_http_client()`, `create_ai_http_client()`
+- Handle network failures gracefully with proper error messages
+- Implement concurrent operations where possible for performance
+
+### CSS Selector & Regex Safety
+- **NEVER** use `.unwrap()` on `Selector::parse()` - CSS selectors can be invalid
+- Move regex compilation out of hot paths using `OnceLock` or similar
+- Pre-compile regexes at module or function level, not in loops
+- Use `lazy_static!` or `OnceLock` for expensive operations
+
+### Error Message Quality
+- Include contextual information in error messages (URLs, file paths, etc.)
+- Use structured error types instead of plain strings where possible
+- Provide actionable information for debugging
+- Example: `"Invalid CSS selector '.message': {}"` instead of generic "Parse error"
+
 ## Architecture
 
 The codebase follows a true compiler-style architecture with distinct phases of data transformation:
@@ -69,7 +97,7 @@ The application processes data through several transformation phases, similar to
 - `src/lib.rs`: Module exports for library usage
 - `src/config.rs`: Configuration parsing and validation with multiple source support
 - `src/sources.rs`: Source trait system for different content providers (RSS, Ars Technica)
-- `src/fetch.rs`: Network operations and high-level pipeline functions
+- `src/fetch.rs`: Network operations and high-level pipeline functions with concurrent source fetching
 - `src/parser.rs`: Content → AST transformation (main parser)
 - `src/ast.rs`: Core AST data structures with algebraic types
 - `src/epub_outputter.rs`: AST → EPUB code generation (backend)
@@ -77,6 +105,7 @@ The application processes data through several transformation phases, similar to
 - `src/ars_comments.rs`: Specialized comment extraction (domain-specific parser)
 - `src/front_page.rs`: AI-powered front page generation
 - `src/ai_client.rs`: Generic AI client with retry logic and provider abstraction
+- `src/http_utils.rs`: Shared HTTP client utilities with timeout configuration
 - `src/bin/ast-converter.rs`: Standalone AST → EPUB/Markdown converter
 
 ### Data Flow Pipeline
@@ -231,18 +260,44 @@ This project uses Nix for reproducible builds and development environments. The 
 
 - **clap**: CLI argument parsing with derive macros
 - **rss**: RSS feed parsing into structured data
-- **reqwest**: HTTP client for async content fetching
+- **reqwest**: HTTP client for async content fetching with timeout configuration
 - **tokio**: Async runtime with full feature set
-- **futures**: Additional async utilities
+- **futures**: Additional async utilities for concurrent operations
 - **epub-builder**: EPUB generation and assembly
 - **serde/serde_json**: JSON configuration and AST serialization
-- **regex**: HTML content sanitization and text processing
-- **scraper**: HTML parsing for content extraction and comments
+- **regex**: HTML content sanitization and text processing (with `OnceLock` optimization)
+- **scraper**: HTML parsing for content extraction and comments with error-safe CSS selectors
 - **chrono**: Date/time handling with serde support
 - **base64**: Encoding utilities
 - **html-escape**: HTML entity handling
 - **async-trait**: Async trait support for source abstractions
 - **insta**: Snapshot testing framework for deterministic test assertions
+
+## HTTP Utilities
+
+The `src/http_utils.rs` module provides centralized HTTP client management with safety features:
+
+### Client Functions
+- `create_http_client()`: Standard HTTP client with 30s timeout
+- `create_ai_http_client()`: AI operations client with 2-minute timeout
+- `create_http_client_with_timeout(duration)`: Custom timeout client
+
+### Safety Features
+- **Automatic timeouts**: All clients have connection (10s) and request timeouts
+- **Consistent User-Agent**: Standardized "daily-feed/0.1.0" across all requests
+- **Error handling**: Proper `Result` types for client creation failures
+- **Reusable clients**: Shared across modules to reduce resource overhead
+
+### Usage Patterns
+```rust
+use crate::http_utils::create_http_client;
+
+async fn fetch_data(url: &str) -> Result<String, Box<dyn Error>> {
+    let client = create_http_client()?;
+    let response = client.get(url).send().await?;
+    // Handle response...
+}
+```
 
 ## Testing
 
@@ -328,10 +383,11 @@ This approach makes tests resilient to environmental differences while maintaini
 ## Features
 
 ### Multi-Source Content Aggregation
-- RSS/Atom feed support with concurrent fetching
+- RSS/Atom feed support with concurrent fetching for improved performance
 - Specialized Ars Technica integration with comment extraction
 - Extensible source system via trait abstractions
 - HTML content sanitization for output compatibility
+- Robust error handling with proper timeout configuration
 
 ### AI-Powered Front Pages
 - LLM-generated front page summaries and themes
@@ -363,7 +419,29 @@ This approach makes tests resilient to environmental differences while maintaini
 ## Notes
 
 - Tests include both unit tests and integration tests with real article data
-- Comment fetching handles network failures gracefully
-- HTML parsing uses CSS selectors for robust comment extraction
+- Comment fetching handles network failures gracefully with proper timeout handling
+- HTML parsing uses CSS selectors for robust comment extraction with error handling
 - AI features are optional and gracefully degrade when unavailable
 - The compiler-style architecture makes the codebase highly modular and testable
+- All network operations use shared HTTP clients with appropriate timeouts
+- Error handling follows functional programming principles - no panics in production paths
+
+## Performance Considerations
+
+### Concurrent Operations
+- Source fetching happens concurrently using `futures::future::join_all()`
+- HTTP clients are reused across operations to reduce overhead
+- Regex compilation is moved out of hot paths using `OnceLock`
+
+### Memory Management
+- Avoid excessive string cloning - use string slices where possible
+- Pre-allocate vectors with known capacity when feasible
+- Use streaming approaches for large documents when necessary
+
+### Network Efficiency
+- HTTP clients configured with appropriate timeouts:
+  - Standard requests: 30 seconds
+  - Connection timeout: 10 seconds  
+  - AI operations: 2 minutes
+- Proper User-Agent headers for all requests
+- Retry logic with exponential backoff for AI operations

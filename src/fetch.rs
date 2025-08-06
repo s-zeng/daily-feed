@@ -1,16 +1,17 @@
 use crate::ast::{Document, DocumentMetadata};
 use crate::config::{Config, OutputFormat};
 use crate::epub_outputter::EpubOutputter;
+use crate::http_utils::create_http_client;
 use crate::markdown_outputter::MarkdownOutputter;
 use crate::parser::DocumentParser;
 use crate::sources::Source;
+use futures;
 use std::error::Error;
 
 pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
-    let client = reqwest::Client::new();
+    let client = create_http_client()?;
     let response = client
         .get(url)
-        .header("User-Agent", "daily-feed/0.1.0")
         .send()
         .await?;
 
@@ -69,20 +70,36 @@ pub async fn fetch_all_sources(
     let sources = config.get_all_sources();
     let mut feeds = Vec::new();
     
+    // Create tasks for concurrent fetching
+    let mut tasks = Vec::new();
     for source_entry in sources {
         let source: Box<dyn Source> = source_entry.config.clone().into();
-        match source.fetch_document(
-            source_entry.name().to_string(),
-            config.output.title.clone(),
-            config.output.author.clone(),
-        ).await {
-            Ok(document) => {
-                println!("Successfully fetched: {}", source_entry.name());
-                feeds.extend(document.feeds);
+        let name = source_entry.name().to_string();
+        let title = config.output.title.clone();
+        let author = config.output.author.clone();
+        
+        let task = async move {
+            match source.fetch_document(name.clone(), title, author).await {
+                Ok(document) => {
+                    println!("Successfully fetched: {}", name);
+                    Ok(document.feeds)
+                }
+                Err(e) => {
+                    eprintln!("Failed to fetch {}: {}", name, e);
+                    Err(e)
+                }
             }
-            Err(e) => {
-                eprintln!("Failed to fetch {}: {}", source_entry.name(), e);
-            }
+        };
+        tasks.push(task);
+    }
+    
+    // Execute all tasks concurrently
+    let results = futures::future::join_all(tasks).await;
+    
+    // Collect successful results
+    for result in results {
+        if let Ok(source_feeds) = result {
+            feeds.extend(source_feeds);
         }
     }
 

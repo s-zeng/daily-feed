@@ -1,5 +1,6 @@
 use crate::ars_comments;
 use crate::ast::{Comment, Document};
+use crate::http_utils::create_http_client;
 use crate::parser::DocumentParser;
 use async_trait::async_trait;
 use std::error::Error;
@@ -51,10 +52,9 @@ impl RssSource {
     }
 
     async fn fetch_rss_channel(&self) -> Result<rss::Channel, Box<dyn Error>> {
-        let client = reqwest::Client::new();
+        let client = create_http_client()?;
         let response = client
             .get(&self.url)
-            .header("User-Agent", "daily-feed/0.1.0")
             .send()
             .await?;
 
@@ -175,10 +175,9 @@ impl HackerNewsSource {
     }
 
     async fn fetch_json_feed(&self) -> Result<JsonFeed, Box<dyn Error>> {
-        let client = reqwest::Client::new();
+        let client = create_http_client()?;
         let response = client
             .get("https://hnrss.org/bestcomments.jsonfeed")
-            .header("User-Agent", "daily-feed/0.1.0")
             .send()
             .await?;
 
