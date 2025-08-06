@@ -58,6 +58,7 @@
               rustc
               cargo
               cargo-watch
+              cargo-insta
               rust-analyzer
             ];
           };
