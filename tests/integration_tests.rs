@@ -1,5 +1,6 @@
 use daily_feed::config::{Config, Feed, OutputConfig, OutputFormat};
-use daily_feed::fetch::{channels_to_document, document_to_epub};
+use daily_feed::fetch::document_to_epub;
+use daily_feed::parser::parse_feeds_to_document;
 use std::fs;
 use tempfile::{NamedTempFile, TempDir};
 
@@ -108,7 +109,7 @@ fn test_full_workflow_with_local_feeds_success() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),
@@ -150,7 +151,7 @@ fn test_full_workflow_creates_epub_file() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),
@@ -195,7 +196,7 @@ fn test_full_workflow_epub_size() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),
@@ -249,7 +250,7 @@ fn test_workflow_with_empty_feeds() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),
@@ -295,7 +296,7 @@ fn test_workflow_with_no_feeds() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),
@@ -412,7 +413,7 @@ fn test_epub_generation_with_html_content() {
 
     let rt = tokio::runtime::Runtime::new().unwrap();
     let result = rt.block_on(async {
-        let document = channels_to_document(
+        let document = parse_feeds_to_document(
             &channels,
             config.output.title.clone(),
             config.output.author.clone(),

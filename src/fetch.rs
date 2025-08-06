@@ -1,59 +1,11 @@
 use crate::ast::{Document, DocumentMetadata};
 use crate::config::{Config, OutputFormat};
 use crate::epub_outputter::EpubOutputter;
-use crate::http_utils::create_http_client;
 use crate::markdown_outputter::MarkdownOutputter;
-use crate::parser::DocumentParser;
 use crate::sources::Source;
 use futures;
 use std::error::Error;
 
-pub async fn feed_from_url(url: &str) -> Result<rss::Channel, Box<dyn Error>> {
-    let client = create_http_client()?;
-    let response = client
-        .get(url)
-        .send()
-        .await?;
-
-    if !response.status().is_success() {
-        return Err(format!("HTTP error: {}", response.status()).into());
-    }
-
-    let content = response.bytes().await?;
-    let channel = rss::Channel::read_from(&content[..])?;
-    Ok(channel)
-}
-
-pub async fn fetch_all_feeds(
-    config: &Config,
-) -> Result<Vec<(String, rss::Channel)>, Box<dyn Error>> {
-    let mut results = Vec::new();
-
-    for feed in &config.feeds {
-        match feed_from_url(&feed.url()).await {
-            Ok(channel) => {
-                println!("Successfully fetched: {}", feed.name());
-                results.push((feed.name().to_string(), channel));
-            }
-            Err(e) => {
-                eprintln!("Failed to fetch {}: {}", feed.name(), e);
-            }
-        }
-    }
-
-    Ok(results)
-}
-
-pub async fn channels_to_document(
-    channels: &[(String, rss::Channel)],
-    title: String,
-    author: String,
-) -> Result<Document, Box<dyn Error>> {
-    let parser = DocumentParser::new();
-    parser
-        .parse_feeds_to_document(channels, title, author)
-        .await
-}
 
 pub async fn document_to_epub(
     document: &Document,

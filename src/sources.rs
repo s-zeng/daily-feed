@@ -1,7 +1,7 @@
 use crate::ars_comments;
 use crate::ast::{Comment, Document};
 use crate::http_utils::create_http_client;
-use crate::parser::DocumentParser;
+use crate::parser::{parse_feeds_to_document, parse_html_to_content_blocks};
 use async_trait::async_trait;
 use std::error::Error;
 use std::collections::HashMap;
@@ -79,8 +79,7 @@ impl Source for RssSource {
         let channel = self.fetch_rss_channel().await?;
         let channels = vec![(name, channel)];
         
-        let parser = DocumentParser::new();
-        parser.parse_feeds_to_document(&channels, title, author).await
+        parse_feeds_to_document(&channels, title, author).await
     }
 }
 
@@ -120,10 +119,8 @@ impl Source for ArsTechnicaSource {
                 if let Some(article_url) = &article.metadata.url {
                     match ars_comments::fetch_top_5_comments(article_url).await {
                         Ok(raw_comments) => {
-                            let parser = DocumentParser::new();
                             for raw_comment in raw_comments {
-                                let comment_content = parser
-                                    .parse_html_to_content_blocks(&raw_comment.content)?;
+                                let comment_content = parse_html_to_content_blocks(&raw_comment.content)?;
                                 let comment = Comment {
                                     author: raw_comment.author,
                                     content: comment_content,
@@ -212,7 +209,6 @@ impl Source for HackerNewsSource {
         author: String,
     ) -> Result<Document, Box<dyn Error>> {
         let json_feed = self.fetch_json_feed().await?;
-        let parser = DocumentParser::new();
         
         // Group comments by parent article title
         let mut articles_map: HashMap<String, Vec<JsonFeedItem>> = HashMap::new();
@@ -237,7 +233,7 @@ impl Source for HackerNewsSource {
                     }
                 }
                 
-                let comment_content = parser.parse_html_to_content_blocks(&item.content_html)?;
+                let comment_content = parse_html_to_content_blocks(&item.content_html)?;
                 let comment = Comment {
                     author: item.author.name,
                     content: comment_content,

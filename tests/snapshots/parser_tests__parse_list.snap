@@ -10,7 +10,7 @@ expression: blocks
         {
           "spans": [
             {
-              "text": "Item 1",
+              "text": "First item",
               "formatting": {
                 "bold": false,
                 "italic": false,
@@ -23,7 +23,7 @@ expression: blocks
         {
           "spans": [
             {
-              "text": "Item 2",
+              "text": "Second item",
               "formatting": {
                 "bold": false,
                 "italic": false,

@@ -1,6 +1,5 @@
 ---
 source: src/parser.rs
 expression: result
-snapshot_kind: text
 ---
-Hello world everyone!
+Hello world ! This is a test .

@@ -23,6 +23,7 @@ pub fn create_http_client() -> Result<Client, reqwest::Error> {
 }
 
 /// Creates a configured HTTP client with custom timeout
+#[allow(dead_code)]
 pub fn create_http_client_with_timeout(timeout: Duration) -> Result<Client, reqwest::Error> {
     Client::builder()
         .timeout(timeout)

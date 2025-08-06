@@ -1,7 +1,6 @@
 ---
 source: src/parser.rs
 expression: blocks
-snapshot_kind: text
 ---
 [
   {
@@ -10,7 +9,7 @@ snapshot_kind: text
       "content": {
         "spans": [
           {
-            "text": "Test Heading",
+            "text": "Important News",
             "formatting": {
               "bold": false,
               "italic": false,

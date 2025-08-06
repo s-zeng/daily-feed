@@ -1,5 +1,6 @@
 use daily_feed::config::{Config, Feed, OutputConfig, OutputFormat};
-use daily_feed::fetch::{channels_to_document, document_to_epub};
+use daily_feed::fetch::document_to_epub;
+use daily_feed::parser::parse_feeds_to_document;
 use std::fs;
 use tempfile::TempDir;
 
@@ -142,7 +143,7 @@ async fn test_channels_to_epub_single_feed() {
 
     let channels = vec![("Test Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         config.output.title.clone(),
         config.output.author.clone(),
@@ -208,7 +209,7 @@ async fn test_channels_to_epub_multiple_feeds() {
         ("Tech News".to_string(), tech_channel),
     ];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         config.output.title.clone(),
         config.output.author.clone(),
@@ -260,7 +261,7 @@ async fn test_channels_to_epub_empty_feed() {
 
     let channels = vec![("Empty Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         config.output.title.clone(),
         config.output.author.clone(),

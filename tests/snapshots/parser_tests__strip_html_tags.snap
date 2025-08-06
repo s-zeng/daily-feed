@@ -2,4 +2,4 @@
 source: tests/parser_tests.rs
 expression: result
 ---
-Hello world everyone!
+Hello world ! This is a test .

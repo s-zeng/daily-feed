@@ -2,7 +2,8 @@ use daily_feed::ast::Document;
 use daily_feed::config::OutputFormat;
 /// Cram-style tests for daily-feed AST, EPUB, and Markdown generation
 /// These tests capture expected behavior and outputs in a reproducible way
-use daily_feed::fetch::{channels_to_document, document_to_epub, document_to_output};
+use daily_feed::fetch::{document_to_epub, document_to_output};
+use daily_feed::parser::parse_feeds_to_document;
 use std::fs;
 use tempfile::TempDir;
 
@@ -39,7 +40,7 @@ async fn cram_rss_to_ast_export() {
         rss::Channel::read_from(rss_content.as_bytes()).expect("Failed to parse test RSS");
     let channels = vec![("Cram Test Feed".to_string(), channel)];
 
-    let mut document = channels_to_document(
+    let mut document = parse_feeds_to_document(
         &channels,
         "Cram Test Document".to_string(),
         "Cram Test Author".to_string(),
@@ -147,7 +148,7 @@ async fn cram_end_to_end_content_preservation() {
     let channels = vec![("Content Test Feed".to_string(), channel)];
 
     // Step 1: RSS to AST
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Content Preservation Test".to_string(),
         "Test Author".to_string(),
@@ -244,7 +245,7 @@ async fn cram_error_handling_edge_cases() {
     let channel = rss::Channel::read_from(empty_rss.as_bytes()).unwrap();
     let channels = vec![("Empty Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Empty Feed Test".to_string(),
         "Test Author".to_string(),
@@ -282,7 +283,7 @@ async fn cram_error_handling_edge_cases() {
     let channel = rss::Channel::read_from(malformed_html_rss.as_bytes()).unwrap();
     let channels = vec![("Malformed HTML Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Malformed HTML Test".to_string(),
         "Test Author".to_string(),
@@ -378,7 +379,7 @@ async fn cram_rss_to_markdown_conversion() {
     let channels = vec![("Cram Markdown Feed".to_string(), channel)];
 
     // Run: RSS to AST to Markdown conversion (equivalent to --format markdown)
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Cram Markdown Document".to_string(),
         "Cram Markdown Author".to_string(),
@@ -758,7 +759,7 @@ async fn cram_markdown_edge_cases() {
     let channel = rss::Channel::read_from(empty_rss.as_bytes()).unwrap();
     let channels = vec![("Empty Markdown Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Empty Markdown Test".to_string(),
         "Empty Test Author".to_string(),
@@ -889,7 +890,7 @@ async fn cram_markdown_cli_simulation() {
     let channels = vec![("CLI Test Feed".to_string(), channel)];
 
     // Step 1: Simulate main application flow (RSS to AST)
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "CLI Markdown Test".to_string(),
         "CLI Test Author".to_string(),

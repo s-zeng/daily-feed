@@ -9,7 +9,7 @@ expression: blocks
       "content": {
         "spans": [
           {
-            "text": "Test Heading",
+            "text": "Important News",
             "formatting": {
               "bold": false,
               "italic": false,

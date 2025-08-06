@@ -7,7 +7,6 @@ use std::fmt;
 #[derive(Debug)]
 pub enum FrontPageError {
     AiError(AiClientError),
-    GenerationError(String),
     ParseError(String),
 }
 
@@ -15,7 +14,6 @@ impl fmt::Display for FrontPageError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             FrontPageError::AiError(e) => write!(f, "AI error: {}", e),
-            FrontPageError::GenerationError(msg) => write!(f, "Generation error: {}", msg),
             FrontPageError::ParseError(msg) => write!(f, "Parse error: {}", msg),
         }
     }

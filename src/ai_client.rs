@@ -10,7 +10,6 @@ pub enum AiClientError {
     RequestError(String),
     HttpError { status_code: u16, message: String },
     ParseError(String),
-    ConfigError(String),
 }
 
 impl fmt::Display for AiClientError {
@@ -22,7 +21,6 @@ impl fmt::Display for AiClientError {
                 message,
             } => write!(f, "HTTP {} error: {}", status_code, message),
             AiClientError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            AiClientError::ConfigError(msg) => write!(f, "Config error: {}", msg),
         }
     }
 }

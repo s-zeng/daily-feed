@@ -1,7 +1,6 @@
 ---
 source: src/parser.rs
 expression: blocks
-snapshot_kind: text
 ---
 [
   {
@@ -11,7 +10,7 @@ snapshot_kind: text
         {
           "spans": [
             {
-              "text": "Item 1",
+              "text": "First item",
               "formatting": {
                 "bold": false,
                 "italic": false,
@@ -24,7 +23,7 @@ snapshot_kind: text
         {
           "spans": [
             {
-              "text": "Item 2",
+              "text": "Second item",
               "formatting": {
                 "bold": false,
                 "italic": false,

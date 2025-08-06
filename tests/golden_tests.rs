@@ -1,6 +1,7 @@
 use daily_feed::ast::Document;
 use daily_feed::config::OutputFormat;
-use daily_feed::fetch::{channels_to_document, document_to_epub, document_to_output};
+use daily_feed::fetch::{document_to_epub, document_to_output};
+use daily_feed::parser::parse_feeds_to_document;
 use std::fs;
 use tempfile::TempDir;
 
@@ -14,7 +15,7 @@ async fn test_rss_to_ast_golden() {
 
     let channels = vec![("Test Feed".to_string(), channel)];
 
-    let mut document = channels_to_document(
+    let mut document = parse_feeds_to_document(
         &channels,
         "Golden Test Document".to_string(),
         "Test Author".to_string(),
@@ -132,7 +133,7 @@ async fn test_end_to_end_workflow_golden() {
         ("Tech News".to_string(), tech_channel),
     ];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "End-to-End Test".to_string(),
         "Workflow Tester".to_string(),
@@ -176,7 +177,7 @@ async fn test_ast_roundtrip_golden() {
     let channel = rss::Channel::read_from(rss_content.as_bytes()).unwrap();
     let channels = vec![("Roundtrip Test".to_string(), channel)];
 
-    let original_document = channels_to_document(
+    let original_document = parse_feeds_to_document(
         &channels,
         "Roundtrip Test Document".to_string(),
         "Roundtrip Author".to_string(),
@@ -227,7 +228,7 @@ async fn test_ast_error_handling_golden() {
     let empty_channel = rss::Channel::read_from(empty_rss_content.as_bytes()).unwrap();
     let channels = vec![("Empty Feed".to_string(), empty_channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Empty Feed Test".to_string(),
         "Error Test Author".to_string(),
@@ -345,7 +346,7 @@ async fn test_rss_to_markdown_golden() {
 
     let channels = vec![("Test Feed".to_string(), channel)];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Golden RSS to Markdown Test".to_string(),
         "Test Author".to_string(),
@@ -399,7 +400,7 @@ async fn test_multi_feed_markdown_golden() {
         ("Tech News".to_string(), tech_channel),
     ];
 
-    let document = channels_to_document(
+    let document = parse_feeds_to_document(
         &channels,
         "Multi-Feed Markdown Test".to_string(),
         "Multi-Feed Author".to_string(),

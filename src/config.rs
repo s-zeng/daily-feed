@@ -36,6 +36,7 @@ pub enum Feed {
 }
 
 impl Feed {
+    #[allow(dead_code)]
     pub fn name(&self) -> &str {
         match self {
             Feed::Rss { name, .. } => name,
@@ -44,6 +45,7 @@ impl Feed {
         }
     }
 
+    #[allow(dead_code)]
     pub fn url(&self) -> String {
         match self {
             Feed::Rss { url, .. } => url.clone(),
@@ -58,6 +60,7 @@ impl Feed {
         }
     }
 
+    #[allow(dead_code)]
     pub fn description(&self) -> &str {
         match self {
             Feed::Rss { description, .. } => description,
@@ -66,6 +69,7 @@ impl Feed {
         }
     }
 
+    #[allow(dead_code)]
     pub fn api_token(&self) -> Option<&str> {
         match self {
             Feed::Rss { .. } => None,
