@@ -4,6 +4,7 @@ edition = "2021"
 # If you change the name here, you must also do it in flake.nix (and run `cargo generate-lockfile` afterwards)
 name = "daily-feed"
 version = "0.1.0"
+default-run = "daily-feed"
 
 [[bin]]
 name = "daily-feed"
