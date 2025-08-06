@@ -309,6 +309,27 @@ All tests follow these principles:
 - **Single assertion per test**: Each test has exactly one `insta::assert_snapshot!()` or `insta::assert_json_snapshot!()` call
 - **Deterministic snapshots**: Dynamic data (timestamps, file sizes, temp paths) is normalized to ensure reproducible results
 - **Literal value snapshots**: Snapshots contain only concrete, expected values without variables
+- **Offline resilience**: All tests must pass in offline environments (CI, restricted networks) by using dual-snapshot patterns or graceful degradation
+
+### Network-Dependent Testing Strategy
+
+Tests that require network access (HTTP requests, external APIs) must be designed to work in both online and offline environments:
+
+- **Dual-snapshot pattern**: Tests create separate snapshots for online vs offline scenarios
+  - `test_name_online.snap`: Snapshots for when network requests succeed
+  - `test_name_offline.snap`: Snapshots for when network requests fail gracefully
+  - Example: `tests/ars_comments_tests.rs` and `tests/front_page_tests.rs`
+
+- **Graceful degradation**: Network failures should be handled as expected test outcomes, not test failures
+  - Use `match result { Ok(data) => ..., Err(_) => ... }` patterns
+  - Both success and failure cases should have deterministic, snapshotted outputs
+
+- **Environment independence**: Tests should pass in:
+  - Local development (with internet access)
+  - CI environments (potentially without internet access)
+  - Restricted networks (corporate proxies, firewalls)
+
+This ensures the test suite is robust and can run successfully in any environment without manual intervention.
 
 ### Test Structure
 

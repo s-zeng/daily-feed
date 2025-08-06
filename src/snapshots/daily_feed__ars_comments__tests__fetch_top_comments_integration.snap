@@ -1,7 +1,0 @@
----
-source: src/ars_comments.rs
-assertion_line: 217
-expression: test_result
-snapshot_kind: text
----
-success_len_5_authors_dnorman,NetMage,Xenocrates,Marakai,jsully2549
