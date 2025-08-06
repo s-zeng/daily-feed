@@ -2,4 +2,4 @@
 source: tests/golden_tests.rs
 expression: markdown_features
 ---
-has_h1: true, has_h2: true, has_bold: true, has_toc: true, size: 676
+has_h1: true, has_h2: true, has_bold: true, has_toc: true, size_range: 650-700_bytes

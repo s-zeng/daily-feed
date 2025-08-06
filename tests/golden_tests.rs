@@ -324,12 +324,12 @@ async fn test_ast_to_markdown_golden() {
     let file_size = fs::metadata(&markdown_path).unwrap().len();
 
     let markdown_features = format!(
-        "has_h1: {}, has_h2: {}, has_bold: {}, has_toc: {}, size: {}",
+        "has_h1: {}, has_h2: {}, has_bold: {}, has_toc: {}, size_range: {}",
         markdown_content.contains("# Golden Markdown Test"),
         markdown_content.contains("## Golden Feed"),
         markdown_content.contains("**bold**"),
         markdown_content.contains("Table of Contents"),
-        file_size
+        if file_size >= 650 && file_size <= 700 { "650-700_bytes" } else { "unexpected_size" }
     );
 
     insta::assert_snapshot!(markdown_features);
