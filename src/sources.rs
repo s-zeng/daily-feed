@@ -43,6 +43,7 @@ impl SourceConfig {
 #[derive(Debug)]
 pub struct RssSource {
     url: String,
+    #[allow(dead_code)]
     description: String,
 }
 
@@ -148,6 +149,7 @@ pub struct HackerNewsSource;
 
 #[derive(Debug, serde::Deserialize)]
 struct JsonFeedItem {
+    #[allow(dead_code)]
     id: String,
     title: String,
     content_html: String,
