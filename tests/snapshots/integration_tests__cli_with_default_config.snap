@@ -15,5 +15,6 @@ expression: default_config
     "author": "RSS Aggregator",
     "format": "epub"
   },
-  "front_page": null
+  "front_page": null,
+  "reading_speed_wpm": null
 }

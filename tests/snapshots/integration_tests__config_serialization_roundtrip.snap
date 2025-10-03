@@ -24,5 +24,6 @@ expression: deserialized_config
     "author": "Test Author",
     "format": "epub"
   },
-  "front_page": null
+  "front_page": null,
+  "reading_speed_wpm": null
 }

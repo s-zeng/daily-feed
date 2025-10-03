@@ -24,6 +24,7 @@ fn test_cli_with_config_file() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let config_json = serde_json::to_string_pretty(&config).unwrap();
@@ -92,6 +93,7 @@ fn test_full_workflow_with_local_feeds_success() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -141,6 +143,7 @@ fn test_full_workflow_creates_epub_file() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -186,6 +189,7 @@ fn test_full_workflow_epub_size() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -240,6 +244,7 @@ fn test_workflow_with_empty_feeds() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";
@@ -290,6 +295,7 @@ fn test_workflow_with_no_feeds() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let channels = vec![];
@@ -344,6 +350,7 @@ fn test_config_serialization_roundtrip() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let json = serde_json::to_string_pretty(&original_config).unwrap();
@@ -403,6 +410,7 @@ fn test_epub_generation_with_html_content() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let tech_news_path = "tests/fixtures/tech_news.xml";

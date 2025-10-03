@@ -135,6 +135,7 @@ async fn test_channels_to_epub_single_feed() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -194,6 +195,7 @@ async fn test_channels_to_epub_multiple_feeds() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let sample_rss_path = "tests/fixtures/sample_rss.xml";
@@ -253,6 +255,7 @@ async fn test_channels_to_epub_empty_feed() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let empty_feed_path = "tests/fixtures/empty_feed.xml";

@@ -110,7 +110,8 @@ expression: document
             "url": "https://example.com/article1",
             "feed_name": "Cram Test Feed"
           },
-          "comments": []
+          "comments": [],
+          "reading_time_minutes": null
         },
         {
           "title": "Cram Test Article 2",
@@ -191,9 +192,12 @@ expression: document
             "url": "https://example.com/article2",
             "feed_name": "Cram Test Feed"
           },
-          "comments": []
+          "comments": [],
+          "reading_time_minutes": null
         }
-      ]
+      ],
+      "total_reading_time_minutes": null
     }
-  ]
+  ],
+  "total_reading_time_minutes": null
 }

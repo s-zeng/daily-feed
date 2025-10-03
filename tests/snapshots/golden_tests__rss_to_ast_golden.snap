@@ -41,7 +41,8 @@ expression: document
             "url": "https://test.example.com/article1",
             "feed_name": "Test Feed"
           },
-          "comments": []
+          "comments": [],
+          "reading_time_minutes": null
         },
         {
           "title": "Test Article 2",
@@ -86,9 +87,12 @@ expression: document
             "url": "https://test.example.com/article2",
             "feed_name": "Test Feed"
           },
-          "comments": []
+          "comments": [],
+          "reading_time_minutes": null
         }
-      ]
+      ],
+      "total_reading_time_minutes": null
     }
-  ]
+  ],
+  "total_reading_time_minutes": null
 }

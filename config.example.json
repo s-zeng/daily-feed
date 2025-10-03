@@ -2,7 +2,8 @@
   "sources": [
     {
       "type": "ars_technica",
-      "name": "Ars Technica"
+      "name": "Ars Technica",
+      "api_token": "YOUR_ARS_TECHNICA_API_TOKEN"
     },
     {
       "type": "hackernews",
@@ -29,9 +30,9 @@
   "front_page": {
     "enabled": true,
     "provider": {
-      "type": "ollama",
-      "base_url": "http://127.0.0.1:1234",
-      "model": "openai/gpt-oss-20b"
+      "type": "anthropic",
+      "api_key": "YOUR_ANTHROPIC_API_KEY",
+      "model": "claude-sonnet-4-20250514"
     }
   }
 }

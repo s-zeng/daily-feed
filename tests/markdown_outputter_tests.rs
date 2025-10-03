@@ -103,6 +103,7 @@ fn test_render_document_with_front_page() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let feed = Feed {
@@ -110,6 +111,7 @@ fn test_render_document_with_front_page() {
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
         articles: vec![article],
+        total_reading_time_minutes: None,
     };
 
     let document = Document {
@@ -123,6 +125,7 @@ fn test_render_document_with_front_page() {
             "This is a front page summary with important news highlights.".to_string(),
         ))]),
         feeds: vec![feed],
+        total_reading_time_minutes: None,
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();
@@ -145,6 +148,7 @@ fn test_render_document_without_front_page() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let feed = Feed {
@@ -152,6 +156,7 @@ fn test_render_document_without_front_page() {
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
         articles: vec![article],
+        total_reading_time_minutes: None,
     };
 
     let document = Document {
@@ -163,6 +168,7 @@ fn test_render_document_without_front_page() {
         },
         front_page: None,
         feeds: vec![feed],
+        total_reading_time_minutes: None,
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();
@@ -185,6 +191,7 @@ fn test_front_page_multiline_content() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let feed = Feed {
@@ -192,6 +199,7 @@ fn test_front_page_multiline_content() {
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
         articles: vec![article],
+        total_reading_time_minutes: None,
     };
 
     let document = Document {
@@ -219,6 +227,7 @@ fn test_front_page_multiline_content() {
             },
         ]),
         feeds: vec![feed],
+        total_reading_time_minutes: None,
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();

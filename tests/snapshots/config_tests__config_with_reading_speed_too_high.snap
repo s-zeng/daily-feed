@@ -1,0 +1,5 @@
+---
+source: tests/config_tests.rs
+expression: error_message
+---
+reading_speed_wpm must be between 50 and 500, got 600

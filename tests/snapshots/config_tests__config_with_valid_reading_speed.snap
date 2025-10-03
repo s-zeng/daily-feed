@@ -19,5 +19,5 @@ expression: config
     "format": "epub"
   },
   "front_page": null,
-  "reading_speed_wpm": null
+  "reading_speed_wpm": 250
 }
