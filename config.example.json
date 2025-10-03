@@ -1,0 +1,38 @@
+{
+  "sources": [
+    {
+      "type": "ars_technica",
+      "name": "Ars Technica",
+      "api_token": "YOUR_ARS_TECHNICA_API_TOKEN"
+    },
+    {
+      "type": "hackernews",
+      "name": "Hacker News"
+    },
+    {
+      "type": "rss",
+      "name": "BBC News - Technology",
+      "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
+      "description": "BBC technology news"
+    },
+    {
+      "type": "rss",
+      "name": "Bloomberg - Technology",
+      "url": "https://feeds.bloomberg.com/technology/news.rss",
+      "description": "Bloomberg technology news"
+    }
+  ],
+  "output": {
+    "filename": "daily-feed.epub",
+    "title": "Daily Feed Digest",
+    "author": "RSS Aggregator"
+  },
+  "front_page": {
+    "enabled": true,
+    "provider": {
+      "type": "anthropic",
+      "api_key": "YOUR_ANTHROPIC_API_KEY",
+      "model": "claude-sonnet-4-20250514"
+    }
+  }
+}

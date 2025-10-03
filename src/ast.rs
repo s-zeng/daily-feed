@@ -13,6 +13,7 @@ pub struct Document {
     pub metadata: DocumentMetadata,
     pub front_page: Option<Vec<ContentBlock>>,
     pub feeds: Vec<Feed>,
+    pub total_reading_time_minutes: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -29,6 +30,7 @@ pub struct Feed {
     pub description: Option<String>,
     pub url: Option<String>,
     pub articles: Vec<Article>,
+    pub total_reading_time_minutes: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -37,6 +39,7 @@ pub struct Article {
     pub content: Vec<ContentBlock>,
     pub metadata: ArticleMetadata,
     pub comments: Vec<Comment>,
+    pub reading_time_minutes: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -113,6 +116,7 @@ impl Document {
             },
             front_page: None,
             feeds: Vec::new(),
+            total_reading_time_minutes: None,
         }
     }
 
@@ -150,6 +154,7 @@ impl Feed {
             description: None,
             url: None,
             articles: Vec::new(),
+            total_reading_time_minutes: None,
         }
     }
 
@@ -180,6 +185,7 @@ impl Article {
                 feed_name,
             },
             comments: Vec::new(),
+            reading_time_minutes: None,
         }
     }
 

@@ -155,13 +155,28 @@ pub struct Config {
     pub feeds: Vec<Feed>,
     pub output: OutputConfig,
     pub front_page: Option<FrontPageConfig>,
+    pub reading_speed_wpm: Option<u32>,
 }
 
 impl Config {
     pub fn load_from_file(path: &str) -> Result<Self, Box<dyn Error>> {
         let content = fs::read_to_string(path)?;
         let config: Config = serde_json::from_str(&content)?;
+        config.validate()?;
         Ok(config)
+    }
+
+    fn validate(&self) -> Result<(), Box<dyn Error>> {
+        if let Some(wpm) = self.reading_speed_wpm {
+            if wpm < 50 || wpm > 500 {
+                return Err(format!(
+                    "reading_speed_wpm must be between 50 and 500, got {}",
+                    wpm
+                )
+                .into());
+            }
+        }
+        Ok(())
     }
 
     pub fn get_all_sources(&self) -> Vec<SourceEntry> {
@@ -185,6 +200,7 @@ impl Config {
                 format: OutputFormat::default(),
             },
             front_page: None,
+            reading_speed_wpm: None,
         }
     }
 }

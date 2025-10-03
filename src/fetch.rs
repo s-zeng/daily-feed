@@ -64,6 +64,7 @@ pub async fn fetch_all_sources(
         },
         feeds,
         front_page: None,
+        total_reading_time_minutes: None,
     })
 }
 

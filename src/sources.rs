@@ -257,6 +257,7 @@ impl Source for HackerNewsSource {
                     feed_name: name.clone(),
                 },
                 comments,
+                reading_time_minutes: None,
             };
             articles.push(article);
         }
@@ -266,6 +267,7 @@ impl Source for HackerNewsSource {
             description: Some("Hacker News best comments and parent articles".to_string()),
             url: Some("https://hnrss.org/bestcomments.jsonfeed".to_string()),
             articles,
+            total_reading_time_minutes: None,
         };
         
         let document = Document {
@@ -277,6 +279,7 @@ impl Source for HackerNewsSource {
             },
             front_page: None,
             feeds: vec![feed],
+            total_reading_time_minutes: None,
         };
         
         Ok(document)

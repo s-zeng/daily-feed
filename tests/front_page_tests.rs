@@ -23,6 +23,7 @@ fn create_test_document() -> Document {
             feed_name: "Technology News".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let political_article = Article {
@@ -39,6 +40,7 @@ fn create_test_document() -> Document {
             feed_name: "Political News".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let health_article = Article {
@@ -55,6 +57,7 @@ fn create_test_document() -> Document {
             feed_name: "Health News".to_string(),
         },
         comments: vec![],
+        reading_time_minutes: None,
     };
 
     let tech_feed = Feed {
@@ -62,6 +65,7 @@ fn create_test_document() -> Document {
         description: Some("Latest technology developments".to_string()),
         url: Some("https://techexample.com".to_string()),
         articles: vec![breaking_article],
+        total_reading_time_minutes: None,
     };
 
     let politics_feed = Feed {
@@ -69,6 +73,7 @@ fn create_test_document() -> Document {
         description: Some("Global political developments".to_string()),
         url: Some("https://newsexample.com".to_string()),
         articles: vec![political_article],
+        total_reading_time_minutes: None,
     };
 
     let health_feed = Feed {
@@ -76,6 +81,7 @@ fn create_test_document() -> Document {
         description: Some("Health and medical news".to_string()),
         url: Some("https://healthexample.com".to_string()),
         articles: vec![health_article],
+        total_reading_time_minutes: None,
     };
 
     Document {
@@ -87,6 +93,7 @@ fn create_test_document() -> Document {
         },
         front_page: None,
         feeds: vec![tech_feed, politics_feed, health_feed],
+        total_reading_time_minutes: None,
     }
 }
 
@@ -558,6 +565,7 @@ fn test_content_preparation_with_comments() {
             feed_name: "Ars Technica".to_string(),
         },
         comments: vec![comment1, comment2, comment3],
+        reading_time_minutes: None,
     };
 
     let ars_feed = Feed {
@@ -565,6 +573,7 @@ fn test_content_preparation_with_comments() {
         description: Some("Technology news and analysis".to_string()),
         url: Some("https://arstechnica.com".to_string()),
         articles: vec![article_with_comments],
+        total_reading_time_minutes: None,
     };
 
     let mut document = Document::new("Daily Feed".to_string(), "Claude Code".to_string());

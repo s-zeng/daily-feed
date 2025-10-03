@@ -101,6 +101,7 @@ fn test_config_serialization() {
         },
         front_page: None,
         sources: vec![],
+        reading_speed_wpm: None,
     };
 
     let json = serde_json::to_string(&config).unwrap();
@@ -181,5 +182,119 @@ fn test_hackernews_legacy_feed_format() {
     "#;
 
     let config: Config = serde_json::from_str(json_content).unwrap();
+    insta::assert_json_snapshot!(config);
+}
+
+#[test]
+fn test_config_with_valid_reading_speed() {
+    let json_content = r#"
+    {
+        "feeds": [
+            {
+                "type": "rss",
+                "name": "Test Feed",
+                "url": "https://test.example.com/feed.xml",
+                "description": "A test feed"
+            }
+        ],
+        "output": {
+            "filename": "test_output.epub",
+            "title": "Test Title",
+            "author": "Test Author"
+        },
+        "reading_speed_wpm": 250
+    }
+    "#;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    fs::write(temp_file.path(), json_content).unwrap();
+
+    let config = Config::load_from_file(temp_file.path().to_str().unwrap()).unwrap();
+    insta::assert_json_snapshot!(config);
+}
+
+#[test]
+fn test_config_with_reading_speed_too_low() {
+    let json_content = r#"
+    {
+        "feeds": [
+            {
+                "type": "rss",
+                "name": "Test Feed",
+                "url": "https://test.example.com/feed.xml",
+                "description": "A test feed"
+            }
+        ],
+        "output": {
+            "filename": "test_output.epub",
+            "title": "Test Title",
+            "author": "Test Author"
+        },
+        "reading_speed_wpm": 30
+    }
+    "#;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    fs::write(temp_file.path(), json_content).unwrap();
+
+    let result = Config::load_from_file(temp_file.path().to_str().unwrap());
+    let error_message = result.unwrap_err().to_string();
+    insta::assert_snapshot!(error_message);
+}
+
+#[test]
+fn test_config_with_reading_speed_too_high() {
+    let json_content = r#"
+    {
+        "feeds": [
+            {
+                "type": "rss",
+                "name": "Test Feed",
+                "url": "https://test.example.com/feed.xml",
+                "description": "A test feed"
+            }
+        ],
+        "output": {
+            "filename": "test_output.epub",
+            "title": "Test Title",
+            "author": "Test Author"
+        },
+        "reading_speed_wpm": 600
+    }
+    "#;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    fs::write(temp_file.path(), json_content).unwrap();
+
+    let result = Config::load_from_file(temp_file.path().to_str().unwrap());
+    let error_message = result.unwrap_err().to_string();
+    insta::assert_snapshot!(error_message);
+}
+
+#[test]
+fn test_config_without_reading_speed() {
+    let json_content = r#"
+    {
+        "feeds": [
+            {
+                "type": "rss",
+                "name": "Test Feed",
+                "url": "https://test.example.com/feed.xml",
+                "description": "A test feed"
+            }
+        ],
+        "output": {
+            "filename": "test_output.epub",
+            "title": "Test Title",
+            "author": "Test Author"
+        }
+    }
+    "#;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    fs::write(temp_file.path(), json_content).unwrap();
+
+    let config = Config::load_from_file(temp_file.path().to_str().unwrap()).unwrap();
+    assert!(config.reading_speed_wpm.is_none());
     insta::assert_json_snapshot!(config);
 }

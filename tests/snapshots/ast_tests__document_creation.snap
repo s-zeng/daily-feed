@@ -41,9 +41,12 @@ expression: doc
             "url": null,
             "feed_name": "Test Feed"
           },
-          "comments": []
+          "comments": [],
+          "reading_time_minutes": null
         }
-      ]
+      ],
+      "total_reading_time_minutes": null
     }
-  ]
+  ],
+  "total_reading_time_minutes": null
 }
