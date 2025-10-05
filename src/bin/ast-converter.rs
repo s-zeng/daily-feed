@@ -48,10 +48,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let json_content = std::fs::read_to_string(&args.input)?;
     let document: Document = serde_json::from_str(&json_content)?;
 
+    let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
     println!(
         "Loaded document: {} with {} feeds",
         document.metadata.title,
-        document.feeds.len()
+        feed_count
     );
 
     // Generate output from AST

@@ -1,0 +1,15 @@
+---
+source: tests/ast_tests.rs
+expression: article
+---
+{
+  "title": "Test Article",
+  "metadata": {
+    "published_date": "2025-01-01",
+    "author": "Test Author",
+    "url": "https://example.com/article",
+    "feed_name": "Test Feed"
+  },
+  "comments": [],
+  "content": null
+}

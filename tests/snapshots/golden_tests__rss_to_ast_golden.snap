@@ -10,85 +10,97 @@ expression: document
     "generated_at": "2025-01-01T00:00:00.000000Z"
   },
   "front_page": null,
-  "feeds": [
-    {
-      "name": "Test Feed",
-      "description": "A test RSS feed for unit testing",
-      "url": "https://test.example.com",
-      "articles": [
-        {
-          "title": "Test Article 1",
-          "content": [
+  "content": {
+    "feeds": [
+      {
+        "name": "Test Feed",
+        "description": "A test RSS feed for unit testing",
+        "url": "https://test.example.com",
+        "content": {
+          "articles": [
             {
-              "Paragraph": {
-                "spans": [
+              "title": "Test Article 1",
+              "metadata": {
+                "published_date": "Wed, 15 Jul 2025 10:00:00 +0000",
+                "author": null,
+                "url": "https://test.example.com/article1",
+                "feed_name": "Test Feed"
+              },
+              "comments": [],
+              "content": {
+                "blocks": [
                   {
-                    "text": "This is a test article with HTML content and & entities.",
-                    "formatting": {
-                      "bold": false,
-                      "italic": false,
-                      "code": false,
-                      "link": null
+                    "Paragraph": {
+                      "spans": [
+                        {
+                          "text": "This is a test article with HTML content and & entities.",
+                          "formatting": {
+                            "bold": false,
+                            "italic": false,
+                            "code": false,
+                            "link": null
+                          }
+                        }
+                      ]
                     }
                   }
-                ]
+                ],
+                "reading_time_minutes": 0
+              }
+            },
+            {
+              "title": "Test Article 2",
+              "metadata": {
+                "published_date": "Wed, 15 Jul 2025 11:00:00 +0000",
+                "author": null,
+                "url": "https://test.example.com/article2",
+                "feed_name": "Test Feed"
+              },
+              "comments": [],
+              "content": {
+                "blocks": [
+                  {
+                    "Paragraph": {
+                      "spans": [
+                        {
+                          "text": "This is another test article with ",
+                          "formatting": {
+                            "bold": false,
+                            "italic": false,
+                            "code": false,
+                            "link": null
+                          }
+                        },
+                        {
+                          "text": "HTML",
+                          "formatting": {
+                            "bold": true,
+                            "italic": false,
+                            "code": false,
+                            "link": null
+                          }
+                        },
+                        {
+                          "text": " content.",
+                          "formatting": {
+                            "bold": false,
+                            "italic": false,
+                            "code": false,
+                            "link": null
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "reading_time_minutes": 0
               }
             }
           ],
-          "metadata": {
-            "published_date": "Wed, 15 Jul 2025 10:00:00 +0000",
-            "author": null,
-            "url": "https://test.example.com/article1",
-            "feed_name": "Test Feed"
-          },
-          "comments": []
-        },
-        {
-          "title": "Test Article 2",
-          "content": [
-            {
-              "Paragraph": {
-                "spans": [
-                  {
-                    "text": "This is another test article with ",
-                    "formatting": {
-                      "bold": false,
-                      "italic": false,
-                      "code": false,
-                      "link": null
-                    }
-                  },
-                  {
-                    "text": "HTML",
-                    "formatting": {
-                      "bold": true,
-                      "italic": false,
-                      "code": false,
-                      "link": null
-                    }
-                  },
-                  {
-                    "text": " content.",
-                    "formatting": {
-                      "bold": false,
-                      "italic": false,
-                      "code": false,
-                      "link": null
-                    }
-                  }
-                ]
-              }
-            }
-          ],
-          "metadata": {
-            "published_date": "Wed, 15 Jul 2025 11:00:00 +0000",
-            "author": null,
-            "url": "https://test.example.com/article2",
-            "feed_name": "Test Feed"
-          },
-          "comments": []
+          "total_reading_time_minutes": 0
         }
-      ]
-    }
-  ]
+      }
+    ],
+    "total_reading_time_minutes": 0
+  }
 }

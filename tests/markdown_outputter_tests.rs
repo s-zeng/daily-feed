@@ -1,5 +1,6 @@
 use daily_feed::ast::*;
 use daily_feed::markdown_outputter::*;
+use nonempty::NonEmpty;
 
 #[test]
 fn test_render_text_content() {
@@ -93,9 +94,6 @@ fn test_render_document_with_front_page() {
 
     let article = Article {
         title: "Test Article".to_string(),
-        content: vec![ContentBlock::Paragraph(TextContent::plain(
-            "Article content".to_string(),
-        ))],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Test Author".to_string()),
@@ -103,13 +101,22 @@ fn test_render_document_with_front_page() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "Article content".to_string(),
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let feed = Feed {
         name: "Test Feed".to_string(),
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
-        articles: vec![article],
+        content: Some(FeedContent {
+            articles: NonEmpty::new(article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let document = Document {
@@ -120,9 +127,12 @@ fn test_render_document_with_front_page() {
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
         front_page: Some(vec![ContentBlock::Paragraph(TextContent::plain(
-            "This is a front page summary with important news highlights.".to_string(),
+            "This is a front page summary with important news highlights".to_string(),
         ))]),
-        feeds: vec![feed],
+        content: Some(DocumentContent {
+            feeds: NonEmpty::new(feed),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();
@@ -135,9 +145,6 @@ fn test_render_document_without_front_page() {
 
     let article = Article {
         title: "Test Article".to_string(),
-        content: vec![ContentBlock::Paragraph(TextContent::plain(
-            "Article content".to_string(),
-        ))],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Test Author".to_string()),
@@ -145,13 +152,22 @@ fn test_render_document_without_front_page() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "Article content".to_string(),
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let feed = Feed {
         name: "Test Feed".to_string(),
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
-        articles: vec![article],
+        content: Some(FeedContent {
+            articles: NonEmpty::new(article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let document = Document {
@@ -162,7 +178,10 @@ fn test_render_document_without_front_page() {
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
         front_page: None,
-        feeds: vec![feed],
+        content: Some(DocumentContent {
+            feeds: NonEmpty::new(feed),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();
@@ -175,9 +194,6 @@ fn test_front_page_multiline_content() {
 
     let article = Article {
         title: "Test Article".to_string(),
-        content: vec![ContentBlock::Paragraph(TextContent::plain(
-            "Article content".to_string(),
-        ))],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Test Author".to_string()),
@@ -185,13 +201,22 @@ fn test_front_page_multiline_content() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "Article content".to_string(),
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let feed = Feed {
         name: "Test Feed".to_string(),
         description: Some("A test feed".to_string()),
         url: Some("https://example.com/feed".to_string()),
-        articles: vec![article],
+        content: Some(FeedContent {
+            articles: NonEmpty::new(article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let document = Document {
@@ -218,7 +243,10 @@ fn test_front_page_multiline_content() {
                 ],
             },
         ]),
-        feeds: vec![feed],
+        content: Some(DocumentContent {
+            feeds: NonEmpty::new(feed),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let markdown = outputter.render_document_to_markdown(&document).unwrap();

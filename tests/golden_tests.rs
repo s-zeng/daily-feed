@@ -2,6 +2,7 @@ use daily_feed::ast::Document;
 use daily_feed::config::OutputFormat;
 use daily_feed::fetch::{document_to_epub, document_to_output};
 use daily_feed::parser::parse_feeds_to_document;
+use nonempty::NonEmpty;
 use std::fs;
 use tempfile::TempDir;
 
@@ -48,7 +49,7 @@ async fn test_ast_to_epub_golden() {
         daily_feed::ast::Article::new("Golden Test Article".to_string(), "Golden Feed".to_string())
             .with_published_date("2025-01-01T12:00:00Z".to_string());
 
-    article.content = vec![
+    let content_blocks = NonEmpty::from((
         daily_feed::ast::ContentBlock::Paragraph(daily_feed::ast::TextContent::from_spans(vec![
             daily_feed::ast::TextSpan::plain("This is a ".to_string()),
             daily_feed::ast::TextSpan::bold("bold".to_string()),
@@ -56,29 +57,33 @@ async fn test_ast_to_epub_golden() {
             daily_feed::ast::TextSpan::italic("italic".to_string()),
             daily_feed::ast::TextSpan::plain(" text example.".to_string()),
         ])),
-        daily_feed::ast::ContentBlock::Heading {
-            level: 2,
-            content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
-        },
-        daily_feed::ast::ContentBlock::List {
-            ordered: false,
-            items: vec![
-                daily_feed::ast::TextContent::plain("First item".to_string()),
-                daily_feed::ast::TextContent::plain("Second item".to_string()),
-            ],
-        },
-        daily_feed::ast::ContentBlock::Quote(daily_feed::ast::TextContent::plain(
-            "This is a quote block".to_string(),
-        )),
-        daily_feed::ast::ContentBlock::Code {
-            language: Some("rust".to_string()),
-            content: "fn main() { println!(\"Hello, world!\"); }".to_string(),
-        },
-        daily_feed::ast::ContentBlock::Link {
-            url: "https://example.com".to_string(),
-            text: "Example Link".to_string(),
-        },
-    ];
+        vec![
+            daily_feed::ast::ContentBlock::Heading {
+                level: 2,
+                content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
+            },
+            daily_feed::ast::ContentBlock::List {
+                ordered: false,
+                items: vec![
+                    daily_feed::ast::TextContent::plain("First item".to_string()),
+                    daily_feed::ast::TextContent::plain("Second item".to_string()),
+                ],
+            },
+            daily_feed::ast::ContentBlock::Quote(daily_feed::ast::TextContent::plain(
+                "This is a quote block".to_string(),
+            )),
+            daily_feed::ast::ContentBlock::Code {
+                language: Some("rust".to_string()),
+                content: "fn main() { println!(\"Hello, world!\"); }".to_string(),
+            },
+            daily_feed::ast::ContentBlock::Link {
+                url: "https://example.com".to_string(),
+                text: "Example Link".to_string(),
+            },
+        ],
+    ));
+
+    article.set_content(content_blocks, 0);
 
     let comment = daily_feed::ast::Comment {
         author: "Test Commenter".to_string(),
@@ -91,8 +96,8 @@ async fn test_ast_to_epub_golden() {
     };
     article.add_comment(comment);
 
-    feed.add_article(article);
-    document.add_feed(feed);
+    feed.set_content(NonEmpty::new(article), 0);
+    document.set_content(NonEmpty::new(feed), 0);
 
     document_to_epub(&document, epub_path.to_str().unwrap())
         .await
@@ -148,8 +153,9 @@ async fn test_end_to_end_workflow_golden() {
         .await
         .unwrap();
 
+    let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
     let workflow_result = format!("feeds: {}, articles: {}, ast_exists: {}, epub_exists: {}, ast_size_valid: {}, epub_size_valid: {}",
-        document.feeds.len(),
+        feed_count,
         document.total_articles(),
         ast_path.exists(),
         epub_path.exists(),
@@ -206,10 +212,12 @@ async fn test_ast_roundtrip_golden() {
     let loaded_metadata = fs::metadata(&loaded_epub_path).unwrap();
     let size_diff = (original_metadata.len() as i64 - loaded_metadata.len() as i64).abs();
 
+    let original_feed_count = original_document.content.as_ref().map_or(0, |c| c.feeds.len());
+    let loaded_feed_count = loaded_document.content.as_ref().map_or(0, |c| c.feeds.len());
     let roundtrip_result = format!("title_match: {}, author_match: {}, feeds_match: {}, articles_match: {}, size_diff_acceptable: {}",
         original_document.metadata.title == loaded_document.metadata.title,
         original_document.metadata.author == loaded_document.metadata.author,
-        original_document.feeds.len() == loaded_document.feeds.len(),
+        original_feed_count == loaded_feed_count,
         original_document.total_articles() == loaded_document.total_articles(),
         size_diff < 100
     );
@@ -247,9 +255,10 @@ async fn test_ast_error_handling_golden() {
         0
     };
 
+    let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
     let error_handling_result = format!(
         "feeds: {}, articles: {}, file_exists: {}, file_size_valid: {}",
-        document.feeds.len(),
+        feed_count,
         document.total_articles(),
         epub_path.exists(),
         file_size > 1000 && file_size < 10000
@@ -278,7 +287,7 @@ async fn test_ast_to_markdown_golden() {
             .with_published_date("2025-01-01T12:00:00Z".to_string())
             .with_url("https://example.com/article".to_string());
 
-    article.content = vec![
+    let content_blocks = NonEmpty::from((
         daily_feed::ast::ContentBlock::Paragraph(daily_feed::ast::TextContent::from_spans(vec![
             daily_feed::ast::TextSpan::plain("This is a ".to_string()),
             daily_feed::ast::TextSpan::bold("bold".to_string()),
@@ -286,18 +295,22 @@ async fn test_ast_to_markdown_golden() {
             daily_feed::ast::TextSpan::italic("italic".to_string()),
             daily_feed::ast::TextSpan::plain(" text example.".to_string()),
         ])),
-        daily_feed::ast::ContentBlock::Heading {
-            level: 2,
-            content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
-        },
-        daily_feed::ast::ContentBlock::List {
-            ordered: false,
-            items: vec![
-                daily_feed::ast::TextContent::plain("First item".to_string()),
-                daily_feed::ast::TextContent::plain("Second item".to_string()),
-            ],
-        },
-    ];
+        vec![
+            daily_feed::ast::ContentBlock::Heading {
+                level: 2,
+                content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
+            },
+            daily_feed::ast::ContentBlock::List {
+                ordered: false,
+                items: vec![
+                    daily_feed::ast::TextContent::plain("First item".to_string()),
+                    daily_feed::ast::TextContent::plain("Second item".to_string()),
+                ],
+            },
+        ],
+    ));
+
+    article.set_content(content_blocks, 0);
 
     let comment = daily_feed::ast::Comment {
         author: "Test Commenter".to_string(),
@@ -310,8 +323,8 @@ async fn test_ast_to_markdown_golden() {
     };
     article.add_comment(comment);
 
-    feed.add_article(article);
-    document.add_feed(feed);
+    feed.set_content(NonEmpty::new(article), 0);
+    document.set_content(NonEmpty::new(feed), 0);
 
     document_to_output(
         &document,
@@ -367,13 +380,14 @@ async fn test_rss_to_markdown_golden() {
 
     let markdown_content = fs::read_to_string(&markdown_path).unwrap();
 
+    let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
     let rss_markdown_features = format!(
         "has_title: {}, has_feed: {}, has_article: {}, has_toc: {}, feeds: {}, articles: {}",
         markdown_content.contains("# Golden RSS to Markdown Test"),
         markdown_content.contains("## Test Feed"),
         markdown_content.contains("### Test Article"),
         markdown_content.contains("Table of Contents"),
-        document.feeds.len(),
+        feed_count,
         document.total_articles()
     );
 

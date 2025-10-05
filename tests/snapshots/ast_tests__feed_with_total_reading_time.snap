@@ -1,0 +1,25 @@
+---
+source: tests/ast_tests.rs
+expression: feed
+---
+{
+  "name": "Test Feed",
+  "description": "Test description",
+  "url": "https://example.com/feed",
+  "content": {
+    "articles": [
+      {
+        "title": "Article 1",
+        "metadata": {
+          "published_date": null,
+          "author": null,
+          "url": null,
+          "feed_name": "Test Feed"
+        },
+        "comments": [],
+        "content": null
+      }
+    ],
+    "total_reading_time_minutes": 45
+  }
+}

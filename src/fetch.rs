@@ -1,9 +1,10 @@
-use crate::ast::{Document, DocumentMetadata};
+use crate::ast::{Document, DocumentMetadata, Feed};
 use crate::config::{Config, OutputFormat};
 use crate::epub_outputter::EpubOutputter;
 use crate::markdown_outputter::MarkdownOutputter;
 use crate::sources::Source;
 use futures;
+use nonempty::NonEmpty;
 use std::error::Error;
 
 
@@ -21,7 +22,7 @@ pub async fn fetch_all_sources(
 ) -> Result<Document, Box<dyn Error>> {
     let sources = config.get_all_sources();
     let mut feeds = Vec::new();
-    
+
     // Create tasks for concurrent fetching
     let mut tasks = Vec::new();
     for source_entry in sources {
@@ -29,12 +30,13 @@ pub async fn fetch_all_sources(
         let name = source_entry.name().to_string();
         let title = config.output.title.clone();
         let author = config.output.author.clone();
-        
+
         let task = async move {
             match source.fetch_document(name.clone(), title, author).await {
                 Ok(document) => {
                     println!("Successfully fetched: {}", name);
-                    Ok(document.feeds)
+                    // Extract feeds from document.content
+                    Ok(document.content.map(|c| c.feeds.into_iter().collect::<Vec<Feed>>()).unwrap_or_default())
                 }
                 Err(e) => {
                     eprintln!("Failed to fetch {}: {}", name, e);
@@ -44,10 +46,10 @@ pub async fn fetch_all_sources(
         };
         tasks.push(task);
     }
-    
+
     // Execute all tasks concurrently
     let results = futures::future::join_all(tasks).await;
-    
+
     // Collect successful results
     for result in results {
         if let Ok(source_feeds) = result {
@@ -55,16 +57,24 @@ pub async fn fetch_all_sources(
         }
     }
 
-    Ok(Document {
+    let mut document = Document {
         metadata: DocumentMetadata {
             title: config.output.title.clone(),
             author: config.output.author.clone(),
             description: None,
             generated_at: chrono::Utc::now().to_rfc3339(),
         },
-        feeds,
         front_page: None,
-    })
+        content: None,
+    };
+
+    // Set document content if there are feeds
+    if let Some(nonempty_feeds) = NonEmpty::from_vec(feeds) {
+        // TODO: Calculate actual reading time once the feature is implemented
+        document.set_content(nonempty_feeds, 0);
+    }
+
+    Ok(document)
 }
 
 pub async fn document_to_output(

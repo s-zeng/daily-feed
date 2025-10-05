@@ -1,4 +1,23 @@
+use nonempty::NonEmpty;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ArticleContent {
+    pub blocks: NonEmpty<ContentBlock>,
+    pub reading_time_minutes: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FeedContent {
+    pub articles: NonEmpty<Article>,
+    pub total_reading_time_minutes: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct DocumentContent {
+    pub feeds: NonEmpty<Feed>,
+    pub total_reading_time_minutes: u32,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Headline {
@@ -12,7 +31,7 @@ pub struct Headline {
 pub struct Document {
     pub metadata: DocumentMetadata,
     pub front_page: Option<Vec<ContentBlock>>,
-    pub feeds: Vec<Feed>,
+    pub content: Option<DocumentContent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -28,15 +47,15 @@ pub struct Feed {
     pub name: String,
     pub description: Option<String>,
     pub url: Option<String>,
-    pub articles: Vec<Article>,
+    pub content: Option<FeedContent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Article {
     pub title: String,
-    pub content: Vec<ContentBlock>,
     pub metadata: ArticleMetadata,
     pub comments: Vec<Comment>,
+    pub content: Option<ArticleContent>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -112,12 +131,15 @@ impl Document {
                 generated_at: chrono::Utc::now().to_rfc3339(),
             },
             front_page: None,
-            feeds: Vec::new(),
+            content: None,
         }
     }
 
-    pub fn add_feed(&mut self, feed: Feed) {
-        self.feeds.push(feed);
+    pub fn set_content(&mut self, feeds: NonEmpty<Feed>, total_reading_time_minutes: u32) {
+        self.content = Some(DocumentContent {
+            feeds,
+            total_reading_time_minutes,
+        });
     }
 
     pub fn set_front_page(&mut self, front_page: Vec<ContentBlock>) {
@@ -125,21 +147,31 @@ impl Document {
     }
 
     pub fn total_articles(&self) -> usize {
-        self.feeds.iter().map(|f| f.articles.len()).sum()
+        self.content
+            .as_ref()
+            .map(|c| c.feeds.iter().map(|f| f.content.as_ref().map_or(0, |fc| fc.articles.len())).sum())
+            .unwrap_or(0)
     }
 
     pub fn extract_headlines(&self) -> Vec<Headline> {
-        self.feeds
-            .iter()
-            .flat_map(|feed| {
-                feed.articles.iter().map(|article| Headline {
-                    title: article.title.clone(),
-                    published_date: article.metadata.published_date.clone(),
-                    source_name: article.metadata.feed_name.clone(),
-                    url: article.metadata.url.clone(),
-                })
+        self.content
+            .as_ref()
+            .map(|c| {
+                c.feeds
+                    .iter()
+                    .flat_map(|feed| {
+                        feed.content.as_ref().map(|fc| {
+                            fc.articles.iter().map(|article| Headline {
+                                title: article.title.clone(),
+                                published_date: article.metadata.published_date.clone(),
+                                source_name: article.metadata.feed_name.clone(),
+                                url: article.metadata.url.clone(),
+                            }).collect::<Vec<_>>()
+                        }).unwrap_or_default()
+                    })
+                    .collect()
             })
-            .collect()
+            .unwrap_or_default()
     }
 }
 
@@ -149,7 +181,7 @@ impl Feed {
             name,
             description: None,
             url: None,
-            articles: Vec::new(),
+            content: None,
         }
     }
 
@@ -163,8 +195,11 @@ impl Feed {
         self
     }
 
-    pub fn add_article(&mut self, article: Article) {
-        self.articles.push(article);
+    pub fn set_content(&mut self, articles: NonEmpty<Article>, total_reading_time_minutes: u32) {
+        self.content = Some(FeedContent {
+            articles,
+            total_reading_time_minutes,
+        });
     }
 }
 
@@ -172,7 +207,6 @@ impl Article {
     pub fn new(title: String, feed_name: String) -> Self {
         Self {
             title,
-            content: Vec::new(),
             metadata: ArticleMetadata {
                 published_date: None,
                 author: None,
@@ -180,12 +214,15 @@ impl Article {
                 feed_name,
             },
             comments: Vec::new(),
+            content: None,
         }
     }
 
-    pub fn with_content(mut self, content: Vec<ContentBlock>) -> Self {
-        self.content = content;
-        self
+    pub fn set_content(&mut self, blocks: NonEmpty<ContentBlock>, reading_time_minutes: u32) {
+        self.content = Some(ArticleContent {
+            blocks,
+            reading_time_minutes,
+        });
     }
 
     pub fn with_published_date(mut self, date: String) -> Self {
