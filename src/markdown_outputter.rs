@@ -66,25 +66,31 @@ impl MarkdownOutputter {
             markdown.push_str("- [Front Page Summary](#front-page-summary)\n");
         }
 
-        for feed in &document.feeds {
-            markdown.push_str(&format!(
-                "- [{}](#{})\n",
-                feed.name,
-                self.to_anchor(&feed.name)
-            ));
-            for article in &feed.articles {
+        if let Some(doc_content) = &document.content {
+            for feed in &doc_content.feeds {
                 markdown.push_str(&format!(
-                    "  - [{}](#{})\n",
-                    article.title,
-                    self.to_anchor(&article.title)
+                    "- [{}](#{})\n",
+                    feed.name,
+                    self.to_anchor(&feed.name)
                 ));
+                if let Some(feed_content) = &feed.content {
+                    for article in &feed_content.articles {
+                        markdown.push_str(&format!(
+                            "  - [{}](#{})\n",
+                            article.title,
+                            self.to_anchor(&article.title)
+                        ));
+                    }
+                }
             }
         }
         markdown.push_str("\n---\n\n");
 
         // Feed sections
-        for feed in &document.feeds {
-            markdown.push_str(&self.render_feed_to_markdown(feed)?);
+        if let Some(doc_content) = &document.content {
+            for feed in &doc_content.feeds {
+                markdown.push_str(&self.render_feed_to_markdown(feed)?);
+            }
         }
 
         Ok(markdown)
@@ -99,11 +105,14 @@ impl MarkdownOutputter {
             markdown.push_str(&format!("{}\n\n", description));
         }
 
-        markdown.push_str(&format!("**Total Articles:** {}\n\n", feed.articles.len()));
+        let article_count = feed.content.as_ref().map_or(0, |fc| fc.articles.len());
+        markdown.push_str(&format!("**Total Articles:** {}\n\n", article_count));
 
-        for article in &feed.articles {
-            markdown.push_str(&self.render_article_to_markdown(article)?);
-            markdown.push_str("\n---\n\n");
+        if let Some(feed_content) = &feed.content {
+            for article in &feed_content.articles {
+                markdown.push_str(&self.render_article_to_markdown(article)?);
+                markdown.push_str("\n---\n\n");
+            }
         }
 
         Ok(markdown)
@@ -138,8 +147,10 @@ impl MarkdownOutputter {
         }
 
         // Content
-        for block in &article.content {
-            markdown.push_str(&self.render_content_block_to_markdown(block)?);
+        if let Some(article_content) = &article.content {
+            for block in &article_content.blocks {
+                markdown.push_str(&self.render_content_block_to_markdown(block)?);
+            }
         }
 
         Ok(markdown)

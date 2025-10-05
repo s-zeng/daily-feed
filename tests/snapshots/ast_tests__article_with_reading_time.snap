@@ -4,23 +4,6 @@ expression: article
 ---
 {
   "title": "Test Article",
-  "content": [
-    {
-      "Paragraph": {
-        "spans": [
-          {
-            "text": "Test content",
-            "formatting": {
-              "bold": false,
-              "italic": false,
-              "code": false,
-              "link": null
-            }
-          }
-        ]
-      }
-    }
-  ],
   "metadata": {
     "published_date": "2025-01-01",
     "author": "Test Author",
@@ -28,5 +11,24 @@ expression: article
     "feed_name": "Test Feed"
   },
   "comments": [],
-  "reading_time_minutes": 5
+  "content": {
+    "blocks": [
+      {
+        "Paragraph": {
+          "spans": [
+            {
+              "text": "Test content",
+              "formatting": {
+                "bold": false,
+                "italic": false,
+                "code": false,
+                "link": null
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "reading_time_minutes": 5
+  }
 }

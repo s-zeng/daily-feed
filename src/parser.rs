@@ -1,4 +1,5 @@
 use crate::ast::*;
+use nonempty::NonEmpty;
 use regex::Regex;
 use scraper::{ElementRef, Html, Node, Selector};
 use std::error::Error;
@@ -11,6 +12,8 @@ pub async fn parse_feeds_to_document(
     let mut document = Document::new(title, author);
     document.metadata.description = Some("Aggregated RSS feeds".to_string());
 
+    let mut feeds = Vec::new();
+
     for (feed_name, channel) in channels {
         let mut feed =
             Feed::new(feed_name.clone()).with_description(channel.description().to_string());
@@ -19,12 +22,25 @@ pub async fn parse_feeds_to_document(
             feed = feed.with_url(link);
         }
 
+        let mut articles = Vec::new();
         for item in channel.items() {
             let article = parse_rss_item_to_article(item, feed_name, channel).await?;
-            feed.add_article(article);
+            articles.push(article);
         }
 
-        document.add_feed(feed);
+        // Only set feed content if there are articles
+        if let Some(nonempty_articles) = NonEmpty::from_vec(articles) {
+            // TODO: Calculate actual reading time once the feature is implemented
+            feed.set_content(nonempty_articles, 0);
+        }
+
+        feeds.push(feed);
+    }
+
+    // Set document content if there are feeds
+    if let Some(nonempty_feeds) = NonEmpty::from_vec(feeds) {
+        // TODO: Calculate actual reading time once the feature is implemented
+        document.set_content(nonempty_feeds, 0);
     }
 
     Ok(document)
@@ -49,8 +65,12 @@ async fn parse_rss_item_to_article(
     // Parse content
     let content_html = item.content().or_else(|| item.description()).unwrap_or("");
     let content_blocks = parse_html_to_content_blocks(content_html)?;
-    article = article.with_content(content_blocks);
 
+    // Only set article content if there are blocks
+    if let Some(nonempty_blocks) = NonEmpty::from_vec(content_blocks) {
+        // TODO: Calculate actual reading time once the feature is implemented
+        article.set_content(nonempty_blocks, 0);
+    }
 
     Ok(article)
 }

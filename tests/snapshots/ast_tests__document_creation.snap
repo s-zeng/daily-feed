@@ -10,43 +10,49 @@ expression: doc
     "generated_at": "2025-01-01T00:00:00.000000Z"
   },
   "front_page": null,
-  "feeds": [
-    {
-      "name": "Test Feed",
-      "description": "A test feed",
-      "url": null,
-      "articles": [
-        {
-          "title": "Test Article",
-          "content": [
+  "content": {
+    "feeds": [
+      {
+        "name": "Test Feed",
+        "description": "A test feed",
+        "url": null,
+        "content": {
+          "articles": [
             {
-              "Paragraph": {
-                "spans": [
+              "title": "Test Article",
+              "metadata": {
+                "published_date": null,
+                "author": null,
+                "url": null,
+                "feed_name": "Test Feed"
+              },
+              "comments": [],
+              "content": {
+                "blocks": [
                   {
-                    "text": "Test content",
-                    "formatting": {
-                      "bold": false,
-                      "italic": false,
-                      "code": false,
-                      "link": null
+                    "Paragraph": {
+                      "spans": [
+                        {
+                          "text": "Test content",
+                          "formatting": {
+                            "bold": false,
+                            "italic": false,
+                            "code": false,
+                            "link": null
+                          }
+                        }
+                      ]
                     }
                   }
-                ]
+                ],
+                "reading_time_minutes": 0
               }
             }
           ],
-          "metadata": {
-            "published_date": null,
-            "author": null,
-            "url": null,
-            "feed_name": "Test Feed"
-          },
-          "comments": [],
-          "reading_time_minutes": null
+          "total_reading_time_minutes": 0
         }
-      ],
-      "total_reading_time_minutes": null
-    }
-  ],
-  "total_reading_time_minutes": null
+      }
+    ],
+    "total_reading_time_minutes": 0
+  }
 }

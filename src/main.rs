@@ -85,15 +85,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Fetch all sources using the new interface
     let mut document = fetch::fetch_all_sources(&config).await?;
 
-    if document.feeds.is_empty() {
+    if document.content.is_none() {
         eprintln!("No sources were successfully fetched");
         return Ok(());
     }
 
     if args.verbose {
+        let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
         println!(
             "Parsed {} feeds with {} total articles",
-            document.feeds.len(),
+            feed_count,
             document.total_articles()
         );
     }

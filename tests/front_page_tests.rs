@@ -1,21 +1,15 @@
 use daily_feed::ai_client::AiProvider;
 use daily_feed::ast::{
-    Article, ArticleMetadata, Comment, ContentBlock, Document, DocumentMetadata, Feed, TextContent,
+    Article, ArticleContent, ArticleMetadata, Comment, ContentBlock, Document, DocumentContent,
+    DocumentMetadata, Feed, FeedContent, TextContent,
 };
 use daily_feed::front_page::{FrontPageGenerator, SourceSummary, StructuredFrontPage};
 use insta::{assert_json_snapshot, assert_snapshot};
+use nonempty::NonEmpty;
 
 fn create_test_document() -> Document {
     let breaking_article = Article {
         title: "Major Tech Company Announces Revolutionary AI Breakthrough".to_string(),
-        content: vec![
-            ContentBlock::Paragraph(TextContent::plain(
-                "A major technology company today announced a significant breakthrough in artificial intelligence that could revolutionize healthcare, transportation, and manufacturing industries.".to_string()
-            )),
-            ContentBlock::Paragraph(TextContent::plain(
-                "The new AI system demonstrates unprecedented capabilities in complex reasoning and problem-solving, potentially affecting millions of jobs worldwide.".to_string()
-            )),
-        ],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Tech Reporter".to_string()),
@@ -23,16 +17,21 @@ fn create_test_document() -> Document {
             feed_name: "Technology News".to_string(),
         },
         comments: vec![],
-        reading_time_minutes: None,
+        content: Some(ArticleContent {
+            blocks: NonEmpty::from((
+                ContentBlock::Paragraph(TextContent::plain(
+                    "A major technology company today announced a significant breakthrough in artificial intelligence that could revolutionize healthcare, transportation, and manufacturing industries.".to_string()
+                )),
+                vec![ContentBlock::Paragraph(TextContent::plain(
+                    "The new AI system demonstrates unprecedented capabilities in complex reasoning and problem-solving, potentially affecting millions of jobs worldwide.".to_string()
+                ))],
+            )),
+            reading_time_minutes: 0,
+        }),
     };
 
     let political_article = Article {
         title: "International Trade Agreement Faces Opposition".to_string(),
-        content: vec![
-            ContentBlock::Paragraph(TextContent::plain(
-                "A proposed international trade agreement has generated significant opposition from labor unions and environmental groups across three continents.".to_string()
-            )),
-        ],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Political Reporter".to_string()),
@@ -40,16 +39,16 @@ fn create_test_document() -> Document {
             feed_name: "Political News".to_string(),
         },
         comments: vec![],
-        reading_time_minutes: None,
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "A proposed international trade agreement has generated significant opposition from labor unions and environmental groups across three continents.".to_string()
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let health_article = Article {
         title: "Global Health Organization Issues New Guidelines".to_string(),
-        content: vec![
-            ContentBlock::Paragraph(TextContent::plain(
-                "The World Health Organization has released updated vaccination guidelines that will impact public health policies in over 100 countries.".to_string()
-            )),
-        ],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T00:00:00.000000Z".to_string()),
             author: Some("Health Reporter".to_string()),
@@ -57,31 +56,42 @@ fn create_test_document() -> Document {
             feed_name: "Health News".to_string(),
         },
         comments: vec![],
-        reading_time_minutes: None,
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "The World Health Organization has released updated vaccination guidelines that will impact public health policies in over 100 countries.".to_string()
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let tech_feed = Feed {
         name: "Technology News".to_string(),
         description: Some("Latest technology developments".to_string()),
         url: Some("https://techexample.com".to_string()),
-        articles: vec![breaking_article],
-        total_reading_time_minutes: None,
+        content: Some(FeedContent {
+            articles: NonEmpty::new(breaking_article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let politics_feed = Feed {
         name: "Political News".to_string(),
         description: Some("Global political developments".to_string()),
         url: Some("https://newsexample.com".to_string()),
-        articles: vec![political_article],
-        total_reading_time_minutes: None,
+        content: Some(FeedContent {
+            articles: NonEmpty::new(political_article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let health_feed = Feed {
         name: "Health News".to_string(),
         description: Some("Health and medical news".to_string()),
         url: Some("https://healthexample.com".to_string()),
-        articles: vec![health_article],
-        total_reading_time_minutes: None,
+        content: Some(FeedContent {
+            articles: NonEmpty::new(health_article),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     Document {
@@ -92,8 +102,10 @@ fn create_test_document() -> Document {
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
         front_page: None,
-        feeds: vec![tech_feed, politics_feed, health_feed],
-        total_reading_time_minutes: None,
+        content: Some(DocumentContent {
+            feeds: NonEmpty::from((tech_feed, vec![politics_feed, health_feed])),
+            total_reading_time_minutes: 0,
+        }),
     }
 }
 
@@ -553,11 +565,6 @@ fn test_content_preparation_with_comments() {
 
     let article_with_comments = Article {
         title: "Major AI Breakthrough Could Transform Healthcare".to_string(),
-        content: vec![
-            ContentBlock::Paragraph(TextContent::plain(
-                "Researchers have developed a new AI system that can diagnose complex medical conditions with unprecedented accuracy.".to_string()
-            )),
-        ],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01T10:00:00Z".to_string()),
             author: Some("Science Reporter".to_string()),
@@ -565,19 +572,26 @@ fn test_content_preparation_with_comments() {
             feed_name: "Ars Technica".to_string(),
         },
         comments: vec![comment1, comment2, comment3],
-        reading_time_minutes: None,
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "Researchers have developed a new AI system that can diagnose complex medical conditions with unprecedented accuracy.".to_string()
+            ))),
+            reading_time_minutes: 0,
+        }),
     };
 
     let ars_feed = Feed {
         name: "Ars Technica".to_string(),
         description: Some("Technology news and analysis".to_string()),
         url: Some("https://arstechnica.com".to_string()),
-        articles: vec![article_with_comments],
-        total_reading_time_minutes: None,
+        content: Some(FeedContent {
+            articles: NonEmpty::new(article_with_comments),
+            total_reading_time_minutes: 0,
+        }),
     };
 
     let mut document = Document::new("Daily Feed".to_string(), "Claude Code".to_string());
-    document.add_feed(ars_feed);
+    document.set_content(NonEmpty::new(ars_feed), 0);
 
     let content = generator.prepare_content_by_source(&document).unwrap();
 

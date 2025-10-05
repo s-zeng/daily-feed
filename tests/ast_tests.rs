@@ -1,4 +1,5 @@
 use daily_feed::ast::*;
+use nonempty::NonEmpty;
 
 #[test]
 fn test_document_creation() {
@@ -6,13 +7,14 @@ fn test_document_creation() {
 
     let mut feed = Feed::new("Test Feed".to_string()).with_description("A test feed".to_string());
 
-    let article =
-        Article::new("Test Article".to_string(), "Test Feed".to_string()).with_content(vec![
-            ContentBlock::Paragraph(TextContent::plain("Test content".to_string())),
-        ]);
+    let mut article = Article::new("Test Article".to_string(), "Test Feed".to_string());
+    article.set_content(
+        NonEmpty::new(ContentBlock::Paragraph(TextContent::plain("Test content".to_string()))),
+        0,
+    );
 
-    feed.add_article(article);
-    doc.add_feed(feed);
+    feed.set_content(NonEmpty::new(article), 0);
+    doc.set_content(NonEmpty::new(feed), 0);
 
     // Filter out the timestamp for reproducible snapshots
     doc.metadata.generated_at = "2025-01-01T00:00:00.000000Z".to_string();
@@ -47,9 +49,6 @@ fn test_text_content_structure() {
 fn test_article_with_reading_time() {
     let article = Article {
         title: "Test Article".to_string(),
-        content: vec![ContentBlock::Paragraph(TextContent::plain(
-            "Test content".to_string(),
-        ))],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01".to_string()),
             author: Some("Test Author".to_string()),
@@ -57,7 +56,12 @@ fn test_article_with_reading_time() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
-        reading_time_minutes: Some(5),
+        content: Some(ArticleContent {
+            blocks: NonEmpty::new(ContentBlock::Paragraph(TextContent::plain(
+                "Test content".to_string(),
+            ))),
+            reading_time_minutes: 5,
+        }),
     };
 
     insta::assert_json_snapshot!(article);
@@ -67,9 +71,6 @@ fn test_article_with_reading_time() {
 fn test_article_without_reading_time() {
     let article = Article {
         title: "Test Article".to_string(),
-        content: vec![ContentBlock::Paragraph(TextContent::plain(
-            "Test content".to_string(),
-        ))],
         metadata: ArticleMetadata {
             published_date: Some("2025-01-01".to_string()),
             author: Some("Test Author".to_string()),
@@ -77,7 +78,7 @@ fn test_article_without_reading_time() {
             feed_name: "Test Feed".to_string(),
         },
         comments: vec![],
-        reading_time_minutes: None,
+        content: None,
     };
 
     insta::assert_json_snapshot!(article);
@@ -85,35 +86,32 @@ fn test_article_without_reading_time() {
 
 #[test]
 fn test_feed_with_total_reading_time() {
-    let mut feed = Feed {
+    let feed = Feed {
         name: "Test Feed".to_string(),
         description: Some("Test description".to_string()),
         url: Some("https://example.com/feed".to_string()),
-        articles: vec![],
-        total_reading_time_minutes: Some(45),
+        content: Some(FeedContent {
+            articles: NonEmpty::new(Article {
+                title: "Article 1".to_string(),
+                metadata: ArticleMetadata {
+                    published_date: None,
+                    author: None,
+                    url: None,
+                    feed_name: "Test Feed".to_string(),
+                },
+                comments: vec![],
+                content: None,
+            }),
+            total_reading_time_minutes: 45,
+        }),
     };
-
-    let article = Article {
-        title: "Article 1".to_string(),
-        content: vec![],
-        metadata: ArticleMetadata {
-            published_date: None,
-            author: None,
-            url: None,
-            feed_name: "Test Feed".to_string(),
-        },
-        comments: vec![],
-        reading_time_minutes: Some(15),
-    };
-
-    feed.add_article(article);
 
     insta::assert_json_snapshot!(feed);
 }
 
 #[test]
 fn test_document_with_total_reading_time() {
-    let mut doc = Document {
+    let doc = Document {
         metadata: DocumentMetadata {
             title: "Test Document".to_string(),
             author: "Test Author".to_string(),
@@ -121,33 +119,29 @@ fn test_document_with_total_reading_time() {
             generated_at: "2025-01-01T00:00:00.000000Z".to_string(),
         },
         front_page: None,
-        feeds: vec![],
-        total_reading_time_minutes: Some(120),
+        content: Some(DocumentContent {
+            feeds: NonEmpty::new(Feed {
+                name: "Test Feed".to_string(),
+                description: None,
+                url: None,
+                content: Some(FeedContent {
+                    articles: NonEmpty::new(Article {
+                        title: "Test Article".to_string(),
+                        metadata: ArticleMetadata {
+                            published_date: None,
+                            author: None,
+                            url: None,
+                            feed_name: "Test Feed".to_string(),
+                        },
+                        comments: vec![],
+                        content: None,
+                    }),
+                    total_reading_time_minutes: 60,
+                }),
+            }),
+            total_reading_time_minutes: 120,
+        }),
     };
-
-    let mut feed = Feed {
-        name: "Test Feed".to_string(),
-        description: None,
-        url: None,
-        articles: vec![],
-        total_reading_time_minutes: Some(60),
-    };
-
-    let article = Article {
-        title: "Test Article".to_string(),
-        content: vec![],
-        metadata: ArticleMetadata {
-            published_date: None,
-            author: None,
-            url: None,
-            feed_name: "Test Feed".to_string(),
-        },
-        comments: vec![],
-        reading_time_minutes: Some(20),
-    };
-
-    feed.add_article(article);
-    doc.add_feed(feed);
 
     insta::assert_json_snapshot!(doc);
 }

@@ -4,6 +4,7 @@ use daily_feed::config::OutputFormat;
 /// These tests capture expected behavior and outputs in a reproducible way
 use daily_feed::fetch::{document_to_epub, document_to_output};
 use daily_feed::parser::parse_feeds_to_document;
+use nonempty::NonEmpty;
 use std::fs;
 use tempfile::TempDir;
 
@@ -69,28 +70,32 @@ async fn cram_ast_to_epub_conversion() {
     let mut article =
         daily_feed::ast::Article::new("Test Article".to_string(), "Test Feed".to_string());
 
-    article.content = vec![
+    let content_blocks = NonEmpty::from((
         daily_feed::ast::ContentBlock::Paragraph(daily_feed::ast::TextContent::from_spans(vec![
             daily_feed::ast::TextSpan::plain("Plain text with ".to_string()),
             daily_feed::ast::TextSpan::bold("bold".to_string()),
             daily_feed::ast::TextSpan::plain(" and ".to_string()),
             daily_feed::ast::TextSpan::italic("italic".to_string()),
         ])),
-        daily_feed::ast::ContentBlock::Heading {
-            level: 2,
-            content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
-        },
-        daily_feed::ast::ContentBlock::List {
-            ordered: false,
-            items: vec![
-                daily_feed::ast::TextContent::plain("List item 1".to_string()),
-                daily_feed::ast::TextContent::plain("List item 2".to_string()),
-            ],
-        },
-    ];
+        vec![
+            daily_feed::ast::ContentBlock::Heading {
+                level: 2,
+                content: daily_feed::ast::TextContent::plain("Test Heading".to_string()),
+            },
+            daily_feed::ast::ContentBlock::List {
+                ordered: false,
+                items: vec![
+                    daily_feed::ast::TextContent::plain("List item 1".to_string()),
+                    daily_feed::ast::TextContent::plain("List item 2".to_string()),
+                ],
+            },
+        ],
+    ));
 
-    feed.add_article(article);
-    document.add_feed(feed);
+    article.set_content(content_blocks, 0);
+
+    feed.set_content(NonEmpty::new(article), 0);
+    document.set_content(NonEmpty::new(feed), 0);
 
     document_to_epub(&document, epub_path.to_str().unwrap())
         .await
@@ -168,24 +173,24 @@ async fn cram_end_to_end_content_preservation() {
     // Expected outputs (cram-style content validation):
 
     // 1. AST should preserve content structure
-    assert_eq!(document.feeds.len(), 1);
-    assert_eq!(document.feeds[0].articles.len(), 1);
+    let doc_content = document.content.as_ref().unwrap();
+    assert_eq!(doc_content.feeds.len(), 1);
+    let feed_content = doc_content.feeds[0].content.as_ref().unwrap();
+    assert_eq!(feed_content.articles.len(), 1);
 
-    let article = &document.feeds[0].articles[0];
+    let article = &feed_content.articles[0];
     assert_eq!(article.title, "Content Preservation Test");
-    assert!(!article.content.is_empty());
+    assert!(article.content.is_some());
 
     // 2. AST should contain different content block types
-    let has_paragraph = article
-        .content
+    let content_blocks = &article.content.as_ref().unwrap().blocks;
+    let has_paragraph = content_blocks
         .iter()
         .any(|block| matches!(block, daily_feed::ast::ContentBlock::Paragraph(_)));
-    let has_heading = article
-        .content
+    let has_heading = content_blocks
         .iter()
         .any(|block| matches!(block, daily_feed::ast::ContentBlock::Heading { .. }));
-    let has_list = article
-        .content
+    let has_list = content_blocks
         .iter()
         .any(|block| matches!(block, daily_feed::ast::ContentBlock::List { .. }));
 
@@ -210,7 +215,9 @@ async fn cram_end_to_end_content_preservation() {
     let loaded_document: Document = serde_json::from_str(&loaded_json).unwrap();
 
     assert_eq!(loaded_document.metadata.title, document.metadata.title);
-    assert_eq!(loaded_document.feeds.len(), document.feeds.len());
+    let orig_feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
+    let loaded_feed_count = loaded_document.content.as_ref().map_or(0, |c| c.feeds.len());
+    assert_eq!(loaded_feed_count, orig_feed_count);
     assert_eq!(loaded_document.total_articles(), document.total_articles());
 
     println!("✓ End-to-end content preservation - Expected behavior verified");
@@ -254,8 +261,10 @@ async fn cram_error_handling_edge_cases() {
     .unwrap();
 
     // Expected: Should handle empty feed gracefully
-    assert_eq!(document.feeds.len(), 1);
-    assert_eq!(document.feeds[0].articles.len(), 0);
+    let doc_content = document.content.as_ref().unwrap();
+    assert_eq!(doc_content.feeds.len(), 1);
+    // Empty feeds won't have content
+    assert!(doc_content.feeds[0].content.is_none());
     assert_eq!(document.total_articles(), 0);
 
     // Should still be able to generate EPUB
@@ -292,9 +301,11 @@ async fn cram_error_handling_edge_cases() {
     .unwrap();
 
     // Expected: Should parse despite malformed HTML
-    assert_eq!(document.feeds.len(), 1);
-    assert_eq!(document.feeds[0].articles.len(), 1);
-    assert!(!document.feeds[0].articles[0].content.is_empty());
+    let doc_content = document.content.as_ref().unwrap();
+    assert_eq!(doc_content.feeds.len(), 1);
+    let feed_content = doc_content.feeds[0].content.as_ref().unwrap();
+    assert_eq!(feed_content.articles.len(), 1);
+    assert!(feed_content.articles[0].content.is_some());
 
     // Should still generate valid EPUB
     let malformed_epub_path = temp_dir.path().join("malformed.epub");
@@ -334,12 +345,15 @@ async fn cram_output_format_validation() {
         "Format Test Feed".to_string(),
     );
 
-    article.content = vec![daily_feed::ast::ContentBlock::Paragraph(
-        daily_feed::ast::TextContent::plain("Test paragraph content.".to_string()),
-    )];
+    article.set_content(
+        NonEmpty::new(daily_feed::ast::ContentBlock::Paragraph(
+            daily_feed::ast::TextContent::plain("Test paragraph content.".to_string()),
+        )),
+        0,
+    );
 
-    feed.add_article(article);
-    document.add_feed(feed);
+    feed.set_content(NonEmpty::new(article), 0);
+    document.set_content(NonEmpty::new(feed), 0);
 
     // Test JSON export format
     let json_path = temp_dir.path().join("format_test.json");
@@ -349,8 +363,8 @@ async fn cram_output_format_validation() {
     // Expected JSON structure
     let json_value: serde_json::Value = serde_json::from_str(&json).unwrap();
     assert!(json_value["metadata"]["title"].is_string());
-    assert!(json_value["feeds"].is_array());
-    assert!(json_value["feeds"][0]["articles"].is_array());
+    assert!(json_value["content"].is_object());
+    assert!(json_value["content"]["feeds"].is_array());
 
     // Test EPUB export format
     let epub_path = temp_dir.path().join("format_test.epub");
@@ -512,9 +526,10 @@ async fn cram_rss_to_markdown_conversion() {
 
     println!("✓ RSS to Markdown conversion - Expected behavior verified");
     println!("  Markdown size: {} bytes", metadata.len());
+    let feed_count = document.content.as_ref().map_or(0, |c| c.feeds.len());
     println!(
         "  Document: {} feeds, {} articles",
-        document.feeds.len(),
+        feed_count,
         document.total_articles()
     );
 }
@@ -546,7 +561,7 @@ async fn cram_ast_to_markdown_comprehensive() {
     article.metadata.author = Some("Test Author".to_string());
 
     // Add all content block types
-    article.content = vec![
+    let content_blocks = NonEmpty::from((
         // Paragraph with mixed formatting
         daily_feed::ast::ContentBlock::Paragraph(daily_feed::ast::TextContent::from_spans(vec![
             daily_feed::ast::TextSpan::plain("This paragraph has ".to_string()),
@@ -559,6 +574,7 @@ async fn cram_ast_to_markdown_comprehensive() {
             daily_feed::ast::TextSpan::link("link".to_string(), "https://example.com".to_string()),
             daily_feed::ast::TextSpan::plain(".".to_string()),
         ])),
+        vec![
         // Different heading levels
         daily_feed::ast::ContentBlock::Heading {
             level: 1,
@@ -624,7 +640,10 @@ async fn cram_ast_to_markdown_comprehensive() {
         daily_feed::ast::ContentBlock::Raw(
             "<div class=\"custom\"><p>Raw HTML content</p></div>".to_string(),
         ),
-    ];
+        ],
+    ));
+
+    article.set_content(content_blocks, 0);
 
     // Add a comment with various content
     let comment = daily_feed::ast::Comment {
@@ -655,8 +674,8 @@ async fn cram_ast_to_markdown_comprehensive() {
     };
     article.add_comment(comment);
 
-    feed.add_article(article);
-    document.add_feed(feed);
+    feed.set_content(NonEmpty::new(article), 0);
+    document.set_content(NonEmpty::new(feed), 0);
 
     // Convert AST to Markdown
     document_to_output(
@@ -799,8 +818,8 @@ async fn cram_markdown_edge_cases() {
         daily_feed::ast::Article::new("Minimal Article".to_string(), "Minimal Feed".to_string());
     // Article with no content blocks, metadata, or comments
 
-    minimal_feed.add_article(minimal_article);
-    minimal_document.add_feed(minimal_feed);
+    minimal_feed.set_content(NonEmpty::new(minimal_article), 0);
+    minimal_document.set_content(NonEmpty::new(minimal_feed), 0);
 
     let minimal_markdown_path = temp_dir.path().join("minimal_markdown.md");
     document_to_output(
@@ -833,12 +852,15 @@ async fn cram_markdown_edge_cases() {
         "Feed <with> & \"quotes\"".to_string(),
     );
 
-    special_article.content = vec![daily_feed::ast::ContentBlock::Paragraph(
-        daily_feed::ast::TextContent::plain("Content with special chars: & < > \" '".to_string()),
-    )];
+    special_article.set_content(
+        NonEmpty::new(daily_feed::ast::ContentBlock::Paragraph(
+            daily_feed::ast::TextContent::plain("Content with special chars: & < > \" '".to_string()),
+        )),
+        0,
+    );
 
-    special_feed.add_article(special_article);
-    special_document.add_feed(special_feed);
+    special_feed.set_content(NonEmpty::new(special_article), 0);
+    special_document.set_content(NonEmpty::new(special_feed), 0);
 
     let special_markdown_path = temp_dir.path().join("special_chars_markdown.md");
     document_to_output(

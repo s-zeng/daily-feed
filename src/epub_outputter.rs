@@ -121,18 +121,24 @@ impl EpubOutputter {
 
     fn add_title_page(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
         let feed_list = document
-            .feeds
-            .iter()
-            .map(|feed| {
-                format!(
-                    "<li><strong>{}:</strong> {} ({} articles)</li>",
-                    feed.name,
-                    feed.description.as_deref().unwrap_or("No description"),
-                    feed.articles.len()
-                )
+            .content
+            .as_ref()
+            .map(|c| {
+                c.feeds
+                    .iter()
+                    .map(|feed| {
+                        let article_count = feed.content.as_ref().map_or(0, |fc| fc.articles.len());
+                        format!(
+                            "<li><strong>{}:</strong> {} ({} articles)</li>",
+                            feed.name,
+                            feed.description.as_deref().unwrap_or("No description"),
+                            article_count
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n        ")
             })
-            .collect::<Vec<_>>()
-            .join("\n        ");
+            .unwrap_or_default();
 
         let title_page = format!(
             r#"<html>
@@ -212,26 +218,30 @@ impl EpubOutputter {
         }
 
         let mut chapter_index = 0;
-        for feed in &document.feeds {
-            chapter_index += 1;
+        if let Some(doc_content) = &document.content {
+            for feed in &doc_content.feeds {
+                chapter_index += 1;
 
-            toc_content.push_str(&format!(
-                r#"            <li class="feed-section"><a href="feed_{}.xhtml">{}</a>
+                toc_content.push_str(&format!(
+                    r#"            <li class="feed-section"><a href="feed_{}.xhtml">{}</a>
                 <ul>
                 "#,
-                chapter_index, feed.name
-            ));
-
-            for article in &feed.articles {
-                chapter_index += 1;
-                toc_content.push_str(&format!(
-                    r#"                    <li class="article-item"><a href="article_{}.xhtml">{}</a></li>
-                    "#,
-                    chapter_index, article.title
+                    chapter_index, feed.name
                 ));
-            }
 
-            toc_content.push_str("                </ul>\n            </li>\n");
+                if let Some(feed_content) = &feed.content {
+                    for article in &feed_content.articles {
+                        chapter_index += 1;
+                        toc_content.push_str(&format!(
+                            r#"                    <li class="article-item"><a href="article_{}.xhtml">{}</a></li>
+                    "#,
+                            chapter_index, article.title
+                        ));
+                    }
+                }
+
+                toc_content.push_str("                </ul>\n            </li>\n");
+            }
         }
 
         toc_content.push_str(
@@ -253,12 +263,15 @@ impl EpubOutputter {
     fn add_content(&mut self, document: &Document) -> Result<(), Box<dyn Error>> {
         let mut chapter_index = 0;
 
-        for feed in &document.feeds {
-            chapter_index += 1;
+        if let Some(doc_content) = &document.content {
+            for feed in &doc_content.feeds {
+                chapter_index += 1;
 
-            // Add feed section page
-            let feed_section_html = format!(
-                r#"<html>
+                let article_count = feed.content.as_ref().map_or(0, |fc| fc.articles.len());
+
+                // Add feed section page
+                let feed_section_html = format!(
+                    r#"<html>
                 <head><title>{} - Feed</title></head>
                 <body>
                 <h1>{}</h1>
@@ -267,37 +280,40 @@ impl EpubOutputter {
                 <hr/>
                 </body>
                 </html>"#,
-                feed.name,
-                feed.name,
-                feed.description.as_deref().unwrap_or("No description"),
-                feed.articles.len()
-            );
+                    feed.name,
+                    feed.name,
+                    feed.description.as_deref().unwrap_or("No description"),
+                    article_count
+                );
 
-            let mut feed_content = EpubContent::new(
-                format!("feed_{}.xhtml", chapter_index),
-                feed_section_html.as_bytes(),
-            )
-            .title(&format!("{} - Feed", feed.name))
-            .reftype(ReferenceType::Text);
+                let mut feed_content = EpubContent::new(
+                    format!("feed_{}.xhtml", chapter_index),
+                    feed_section_html.as_bytes(),
+                )
+                .title(&format!("{} - Feed", feed.name))
+                .reftype(ReferenceType::Text);
 
-            // Add articles
-            for article in &feed.articles {
-                chapter_index += 1;
-                let article_filename = format!("article_{}.xhtml", chapter_index);
+                // Add articles
+                if let Some(feed_content_data) = &feed.content {
+                    for article in &feed_content_data.articles {
+                        chapter_index += 1;
+                        let article_filename = format!("article_{}.xhtml", chapter_index);
 
-                let article_html = self.render_article_to_html(article)?;
+                        let article_html = self.render_article_to_html(article)?;
 
-                feed_content =
-                    feed_content.child(TocElement::new(&article_filename, &article.title));
+                        feed_content =
+                            feed_content.child(TocElement::new(&article_filename, &article.title));
 
-                self.builder.add_content(
-                    EpubContent::new(article_filename, article_html.as_bytes())
-                        .title(&article.title)
-                        .reftype(ReferenceType::Text),
-                )?;
+                        self.builder.add_content(
+                            EpubContent::new(article_filename, article_html.as_bytes())
+                                .title(&article.title)
+                                .reftype(ReferenceType::Text),
+                        )?;
+                    }
+                }
+
+                self.builder.add_content(feed_content)?;
             }
-
-            self.builder.add_content(feed_content)?;
         }
 
         Ok(())
@@ -306,8 +322,10 @@ impl EpubOutputter {
     fn render_article_to_html(&self, article: &Article) -> Result<String, Box<dyn Error>> {
         let mut content_html = String::new();
 
-        for block in &article.content {
-            content_html.push_str(&self.render_content_block_to_html(block)?);
+        if let Some(article_content) = &article.content {
+            for block in &article_content.blocks {
+                content_html.push_str(&self.render_content_block_to_html(block)?);
+            }
         }
 
         let comments_html = if !article.comments.is_empty() {

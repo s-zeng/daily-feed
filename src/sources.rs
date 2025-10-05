@@ -3,6 +3,7 @@ use crate::ast::{Comment, Document};
 use crate::http_utils::create_http_client;
 use crate::parser::{parse_feeds_to_document, parse_html_to_content_blocks};
 use async_trait::async_trait;
+use nonempty::NonEmpty;
 use std::error::Error;
 use std::collections::HashMap;
 
@@ -113,33 +114,39 @@ impl Source for ArsTechnicaSource {
     ) -> Result<Document, Box<dyn Error>> {
         // First get the base RSS document
         let mut document = self.rss_source.fetch_document(name, title, author).await?;
-        
+
         // Then enhance each article with Ars Technica comments
-        for feed in &mut document.feeds {
-            for article in &mut feed.articles {
-                if let Some(article_url) = &article.metadata.url {
-                    match ars_comments::fetch_top_5_comments(article_url).await {
-                        Ok(raw_comments) => {
-                            for raw_comment in raw_comments {
-                                let comment_content = parse_html_to_content_blocks(&raw_comment.content)?;
-                                let comment = Comment {
-                                    author: raw_comment.author,
-                                    content: comment_content,
-                                    upvotes: raw_comment.upvotes,
-                                    downvotes: raw_comment.downvotes,
-                                    timestamp: raw_comment.timestamp,
-                                };
-                                article.comments.push(comment);
+        if let Some(mut doc_content) = document.content.take() {
+            for feed in doc_content.feeds.iter_mut() {
+                if let Some(mut feed_content) = feed.content.take() {
+                    for article in feed_content.articles.iter_mut() {
+                        if let Some(article_url) = &article.metadata.url {
+                            match ars_comments::fetch_top_5_comments(article_url).await {
+                                Ok(raw_comments) => {
+                                    for raw_comment in raw_comments {
+                                        let comment_content = parse_html_to_content_blocks(&raw_comment.content)?;
+                                        let comment = Comment {
+                                            author: raw_comment.author,
+                                            content: comment_content,
+                                            upvotes: raw_comment.upvotes,
+                                            downvotes: raw_comment.downvotes,
+                                            timestamp: raw_comment.timestamp,
+                                        };
+                                        article.comments.push(comment);
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Failed to fetch comments for {}: {}", article.title, e);
+                                }
                             }
                         }
-                        Err(e) => {
-                            eprintln!("Failed to fetch comments for {}: {}", article.title, e);
-                        }
                     }
+                    feed.content = Some(feed_content);
                 }
             }
+            document.content = Some(doc_content);
         }
-        
+
         Ok(document)
     }
 }
@@ -249,28 +256,32 @@ impl Source for HackerNewsSource {
             // Create article with empty content (just the headline and comments)
             let article = crate::ast::Article {
                 title: parent_title.clone(),
-                content: vec![], // No article content, just headlines
                 metadata: crate::ast::ArticleMetadata {
-                    published_date: comments.first().map(|c| c.timestamp.clone()).flatten(),
+                    published_date: comments.first().and_then(|c| c.timestamp.clone()),
                     author: None,
                     url: article_url,
                     feed_name: name.clone(),
                 },
                 comments,
-                reading_time_minutes: None,
+                content: None, // No article content, just headlines
             };
             articles.push(article);
         }
-        
-        let feed = crate::ast::Feed {
+
+        let mut feed = crate::ast::Feed {
             name: name.clone(),
             description: Some("Hacker News best comments and parent articles".to_string()),
             url: Some("https://hnrss.org/bestcomments.jsonfeed".to_string()),
-            articles,
-            total_reading_time_minutes: None,
+            content: None,
         };
-        
-        let document = Document {
+
+        // Set feed content if there are articles
+        if let Some(nonempty_articles) = NonEmpty::from_vec(articles) {
+            // TODO: Calculate actual reading time once the feature is implemented
+            feed.set_content(nonempty_articles, 0);
+        }
+
+        let mut document = Document {
             metadata: crate::ast::DocumentMetadata {
                 title,
                 author,
@@ -278,10 +289,15 @@ impl Source for HackerNewsSource {
                 generated_at: chrono::Utc::now().to_rfc3339(),
             },
             front_page: None,
-            feeds: vec![feed],
-            total_reading_time_minutes: None,
+            content: None,
         };
-        
+
+        // Set document content
+        if let Some(nonempty_feeds) = NonEmpty::from_vec(vec![feed]) {
+            // TODO: Calculate actual reading time once the feature is implemented
+            document.set_content(nonempty_feeds, 0);
+        }
+
         Ok(document)
     }
 }

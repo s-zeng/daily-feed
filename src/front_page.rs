@@ -392,20 +392,22 @@ Return only valid JSON with the structure above."#,
     pub fn prepare_content_by_source(&self, document: &Document) -> Result<String, FrontPageError> {
         let mut content = String::new();
 
-        for feed in &document.feeds {
-            content.push_str(&format!("# Source: {}\n", feed.name));
+        if let Some(doc_content) = &document.content {
+            for feed in &doc_content.feeds {
+                content.push_str(&format!("# Source: {}\n", feed.name));
 
-            if let Some(description) = &feed.description {
-                content.push_str(&format!("**Description:** {}\n", description));
-            }
+                if let Some(description) = &feed.description {
+                    content.push_str(&format!("**Description:** {}\n", description));
+                }
 
-            if let Some(url) = &feed.url {
-                content.push_str(&format!("**URL:** {}\n", url));
-            }
+                if let Some(url) = &feed.url {
+                    content.push_str(&format!("**URL:** {}\n", url));
+                }
 
-            content.push_str("\n**Articles:**\n");
+                content.push_str("\n**Articles:**\n");
 
-            for article in &feed.articles {
+                if let Some(feed_content) = &feed.content {
+                    for article in &feed_content.articles {
                 content.push_str(&format!("- {}", article.title));
 
                 if let Some(date) = &article.metadata.published_date {
@@ -448,10 +450,12 @@ Return only valid JSON with the structure above."#,
                     }
                 }
 
-                content.push_str("\n");
-            }
+                        content.push_str("\n");
+                    }
 
-            content.push_str("\n");
+                    content.push_str("\n");
+                }
+            }
         }
 
         Ok(content)
